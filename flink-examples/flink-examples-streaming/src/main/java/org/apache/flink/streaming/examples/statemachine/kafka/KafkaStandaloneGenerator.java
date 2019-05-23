@@ -32,13 +32,14 @@ import java.util.Properties;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
+ * note: 向 kafka 随机打一批数据
  * A generator that pushes the data into Kafka.
  */
 public class KafkaStandaloneGenerator extends StandaloneThreadedGenerator {
 
 	public static final String BROKER_ADDRESS = "localhost:9092";
 
-	public static final String TOPIC = "flink-demo-topic-1";
+	public static final String TOPIC = "matt_test1";
 
 	public static final int NUM_PARTITIONS = 1;
 

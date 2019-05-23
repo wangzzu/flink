@@ -239,6 +239,7 @@ public class KafkaConsumerThread extends Thread {
 				}
 
 				try {
+					//note: 新增的 partition 信息
 					if (hasAssignedPartitions) {
 						newPartitions = unassignedPartitionsQueue.pollBatch();
 					}
@@ -247,6 +248,7 @@ public class KafkaConsumerThread extends Thread {
 						// instead of hot spinning this loop. We rely on a fact that
 						// unassignedPartitionsQueue will be closed on a shutdown, so
 						// we don't block indefinitely
+						//note: 首次启动时，当时还没有分配相应的 partition，这里会返回所有的 partition 列表，并且会阻塞直到拿到partition
 						newPartitions = unassignedPartitionsQueue.getBatchBlocking();
 					}
 					if (newPartitions != null) {
@@ -422,10 +424,12 @@ public class KafkaConsumerThread extends Thread {
 			newPartitionAssignments.addAll(convertKafkaPartitions(newPartitions));
 
 			// reassign with the new partitions
+			//note: 订阅所有的 partition
 			consumerCallBridge.assignPartitions(consumerTmp, newPartitionAssignments);
 			reassignmentStarted = true;
 
 			// old partitions should be seeked to their previous position
+			//note: 对 old partition，这里会 seek 到之前的位置
 			for (Map.Entry<TopicPartition, Long> oldPartitionToPosition : oldPartitionAssignmentsToPosition.entrySet()) {
 				consumerTmp.seek(oldPartitionToPosition.getKey(), oldPartitionToPosition.getValue());
 			}
@@ -436,19 +440,24 @@ public class KafkaConsumerThread extends Thread {
 			//       been replaced with actual offset values yet, or
 			//   (3) the partition was newly discovered after startup;
 			// replace those with actual offsets, according to what the sentinel value represent.
+			//note: 对于新增的 topic，其 offset 应该从什么位置开始获取
 			for (KafkaTopicPartitionState<TopicPartition> newPartitionState : newPartitions) {
 				if (newPartitionState.getOffset() == KafkaTopicPartitionStateSentinel.EARLIEST_OFFSET) {
+					//note: 最旧
 					consumerCallBridge.seekPartitionToBeginning(consumerTmp, newPartitionState.getKafkaPartitionHandle());
 					newPartitionState.setOffset(consumerTmp.position(newPartitionState.getKafkaPartitionHandle()) - 1);
 				} else if (newPartitionState.getOffset() == KafkaTopicPartitionStateSentinel.LATEST_OFFSET) {
+					//note: 最新
 					consumerCallBridge.seekPartitionToEnd(consumerTmp, newPartitionState.getKafkaPartitionHandle());
 					newPartitionState.setOffset(consumerTmp.position(newPartitionState.getKafkaPartitionHandle()) - 1);
 				} else if (newPartitionState.getOffset() == KafkaTopicPartitionStateSentinel.GROUP_OFFSET) {
+					//note: kafka 上记录的 offset
 					// the KafkaConsumer by default will automatically seek the consumer position
 					// to the committed group offset, so we do not need to do it.
 
 					newPartitionState.setOffset(consumerTmp.position(newPartitionState.getKafkaPartitionHandle()) - 1);
 				} else {
+					//note: newPartitionState已经设置了其 offset 信息
 					consumerTmp.seek(newPartitionState.getKafkaPartitionHandle(), newPartitionState.getOffset() + 1);
 				}
 			}

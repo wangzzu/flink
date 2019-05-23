@@ -140,6 +140,7 @@ import org.apache.flink.runtime.state.FunctionSnapshotContext;
  *
  * @see ListCheckpointed
  * @see RuntimeContext
+ * note: checkpoint 的接口
  */
 @PublicEvolving
 @SuppressWarnings("deprecation")

@@ -714,8 +714,10 @@ public abstract class FlinkKafkaConsumerBase<T> extends RichParallelSourceFuncti
 		}
 	}
 
+	//note: partition 自动识别，自动 rebalance
 	private void runWithPartitionDiscovery() throws Exception {
 		final AtomicReference<Exception> discoveryLoopErrorRef = new AtomicReference<>();
+		//note: 单独的线程做 partition 发现
 		createAndStartDiscoveryLoop(discoveryLoopErrorRef);
 
 		kafkaFetcher.runFetchLoop();
@@ -752,6 +754,7 @@ public abstract class FlinkKafkaConsumerBase<T> extends RichParallelSourceFuncti
 						LOG.debug("Consumer subtask {} is trying to discover new partitions ...", getRuntimeContext().getIndexOfThisSubtask());
 					}
 
+					//note: 找到新增的 partition，并且如果新增的 partition 需要分配到这个线程上时，才会返回
 					final List<KafkaTopicPartition> discoveredPartitions;
 					try {
 						discoveredPartitions = partitionDiscoverer.discoverPartitions();
@@ -884,6 +887,7 @@ public abstract class FlinkKafkaConsumerBase<T> extends RichParallelSourceFuncti
 	}
 
 	@Override
+	//note: snapshot 存储当前的 offset 信息
 	public final void snapshotState(FunctionSnapshotContext context) throws Exception {
 		if (!running) {
 			LOG.debug("snapshotState() called on closed source");

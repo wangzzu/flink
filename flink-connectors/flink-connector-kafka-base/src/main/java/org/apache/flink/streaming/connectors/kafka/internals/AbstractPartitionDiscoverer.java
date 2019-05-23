@@ -195,6 +195,7 @@ public abstract class AbstractPartitionDiscoverer {
 	 */
 	public boolean setAndCheckDiscoveredPartition(KafkaTopicPartition partition) {
 		if (isUndiscoveredPartition(partition)) {
+			//note: 如果还是没有发现的 partition，也就是新增的 partition
 			discoveredPartitions.add(partition);
 
 			return KafkaTopicPartitionAssigner.assign(partition, numParallelSubtasks) == indexOfThisSubtask;

@@ -34,6 +34,7 @@ import _root_.scala.collection.mutable
 
 /**
   * Unified interface to search for a [[TableFactory]] of provided type and properties.
+  * note： 根据提供的 type 和 property 查询相应的 TableFactory，这个类提供了统一的接口
   */
 object TableFactoryService extends Logging {
 
@@ -103,6 +104,7 @@ object TableFactoryService extends Logging {
   /**
     * Finds a table factory of the given class, property map, and classloader.
     *
+    * note: 查找对应的 TableFactory
     * @param factoryClass desired factory class
     * @param propertyMap properties that describe the factory configuration
     * @param classLoader classloader for service loading
@@ -210,6 +212,7 @@ object TableFactoryService extends Logging {
       plainContext.forall(e => properties.contains(e._1) && properties(e._1) == e._2)
     }
 
+    //note: 找不到对应类的话，这里会抛出相应的异常
     if (matchingFactories.isEmpty) {
       throw new NoMatchingTableFactoryException(
         "No context matches.",

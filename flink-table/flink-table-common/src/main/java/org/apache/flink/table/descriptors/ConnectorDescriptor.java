@@ -31,6 +31,7 @@ import static org.apache.flink.table.descriptors.ConnectorDescriptorValidator.CO
 @PublicEvolving
 public abstract class ConnectorDescriptor extends DescriptorBase implements Descriptor {
 
+	//note: connector type
 	private String type;
 
 	private int version;

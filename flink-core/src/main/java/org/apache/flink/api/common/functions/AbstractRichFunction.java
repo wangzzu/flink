@@ -46,6 +46,7 @@ public abstract class AbstractRichFunction implements RichFunction, Serializable
 	}
 
 	@Override
+	//note: 返回作业的上下文信息
 	public RuntimeContext getRuntimeContext() {
 		if (this.runtimeContext != null) {
 			return this.runtimeContext;

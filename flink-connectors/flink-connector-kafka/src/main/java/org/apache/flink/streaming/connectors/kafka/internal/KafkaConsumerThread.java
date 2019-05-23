@@ -392,16 +392,19 @@ public class KafkaConsumerThread extends Thread {
 				oldPartitionAssignmentsToPosition.put(oldPartition, consumerTmp.position(oldPartition));
 			}
 
+			//note: 获得全部的 TopicPartitionList
 			final List<TopicPartition> newPartitionAssignments =
 				new ArrayList<>(newPartitions.size() + oldPartitionAssignmentsToPosition.size());
 			newPartitionAssignments.addAll(oldPartitionAssignmentsToPosition.keySet());
 			newPartitionAssignments.addAll(convertKafkaPartitions(newPartitions));
 
 			// reassign with the new partitions
+			//note: assign to new partition list
 			consumerTmp.assign(newPartitionAssignments);
 			reassignmentStarted = true;
 
 			// old partitions should be seeked to their previous position
+			//note: old partition seek 到之前的位置
 			for (Map.Entry<TopicPartition, Long> oldPartitionToPosition : oldPartitionAssignmentsToPosition.entrySet()) {
 				consumerTmp.seek(oldPartitionToPosition.getKey(), oldPartitionToPosition.getValue());
 			}

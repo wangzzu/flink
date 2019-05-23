@@ -105,6 +105,7 @@ import java.io.Serializable;
  *
  * @see org.apache.flink.api.common.functions.StoppableFunction
  * @see org.apache.flink.streaming.api.TimeCharacteristic
+ * note: source 的接口
  */
 @Public
 public interface SourceFunction<T> extends Function, Serializable {

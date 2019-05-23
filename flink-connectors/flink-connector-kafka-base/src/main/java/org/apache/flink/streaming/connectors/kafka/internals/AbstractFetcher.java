@@ -396,6 +396,7 @@ public abstract class AbstractFetcher<T, KPH> {
 				// atomicity of record emission and offset state update
 				synchronized (checkpointLock) {
 					sourceContext.collectWithTimestamp(record, timestamp);
+					//note: 这里会更新 offset 信息
 					partitionState.setOffset(offset);
 				}
 			} else if (timestampWatermarkMode == PERIODIC_WATERMARKS) {
