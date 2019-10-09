@@ -482,6 +482,7 @@ public class TypeExtractor {
 
 	/**
 	 * Returns the unary operator's return type.
+	 * note：获取一元操作符的 return type
 	 *
 	 * <p>This method can extract a type in 4 different ways:
 	 *
@@ -598,6 +599,7 @@ public class TypeExtractor {
 
 	/**
 	 * Returns the binary operator's return type.
+	 * note：获得二元操作符的 return type
 	 *
 	 * <p>This method can extract a type in 4 different ways:
 	 *

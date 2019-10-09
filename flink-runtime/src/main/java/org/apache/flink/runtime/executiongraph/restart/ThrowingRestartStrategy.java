@@ -27,6 +27,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * A restart strategy that validates that it is not in use by throwing {@link IllegalStateException}
  * on any method call.
+ * note：禁止重启，如果调用的话，直接抛出异常
  */
 public class ThrowingRestartStrategy implements RestartStrategy {
 

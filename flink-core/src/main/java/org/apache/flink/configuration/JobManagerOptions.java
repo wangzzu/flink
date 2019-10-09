@@ -174,6 +174,7 @@ public class JobManagerOptions {
 			.withDescription("The timeout in milliseconds for a idle slot in Slot Pool.");
 	/**
 	 * Config parameter determining the scheduler implementation.
+	 * note：具体调度实现的参数配置
 	 */
 	@Documentation.ExcludeFromDocumentation("SchedulerNG is still in development.")
 	public static final ConfigOption<String> SCHEDULER =

@@ -116,6 +116,8 @@ object AkkaUtils {
   /**
     * Creates an actor system with the given akka config.
     *
+    * note：根据 configure 创建 ActorSystem
+    *
     * @param akkaConfig configuration for the actor system
     * @return created actor system
     */
@@ -802,6 +804,7 @@ object AkkaUtils {
   /** Returns the address of the given [[ActorSystem]]. The [[Address]] object contains
     * the port and the host under which the actor system is reachable
     *
+    * note：返回 ActorSystem 使用的连接地址
     * @param system [[ActorSystem]] for which the [[Address]] shall be retrieved
     * @return [[Address]] of the given [[ActorSystem]]
     */

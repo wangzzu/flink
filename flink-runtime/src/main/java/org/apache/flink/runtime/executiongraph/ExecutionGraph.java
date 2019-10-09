@@ -123,6 +123,7 @@ import static org.apache.flink.util.Preconditions.checkState;
  * The execution graph is the central data structure that coordinates the distributed
  * execution of a data flow. It keeps representations of each parallel task, each
  * intermediate stream, and the communication between them.
+ * note：execution graph 是调度分布式 dataflow 任务执行的核心数据结构，它会维护每个并行 taks、中间的 stream 以及它们之间的联系
  *
  * <p>The execution graph consists of the following constructs:
  * <ul>
@@ -1174,6 +1175,7 @@ public class ExecutionGraph implements AccessExecutionGraph {
 		}
 	}
 
+	//note: restart 策略
 	public void restart(long expectedGlobalVersion) {
 
 		assertRunningInJobMasterMainThread();

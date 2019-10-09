@@ -167,6 +167,7 @@ public class MetricOptions {
 	/**
 	 * The thread priority for Flink's internal metric query service. The {@code 1} means the min priority and the
 	 * {@code 10} means the max priority.
+	 * note：flink 内部 metrics 查询服务的线程优先级，可以看下这个是如何实现的？（是 java 本身就提供线程优先级还是？）
 	 */
 	public static final ConfigOption<Integer> QUERY_SERVICE_THREAD_PRIORITY =
 		key("metrics.internal.query-service.thread-priority")

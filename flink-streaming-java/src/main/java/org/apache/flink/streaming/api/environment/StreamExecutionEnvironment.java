@@ -1494,6 +1494,7 @@ public abstract class StreamExecutionEnvironment {
 	 * the program that have resulted in a "sink" operation. Sink operations are
 	 * for example printing results or forwarding them to a message queue.
 	 *
+	 * note: 触发作业执行
 	 * <p>The program execution will be logged and displayed with the provided name
 	 *
 	 * @param jobName
@@ -1504,6 +1505,7 @@ public abstract class StreamExecutionEnvironment {
 	public JobExecutionResult execute(String jobName) throws Exception {
 		Preconditions.checkNotNull(jobName, "Streaming Job name should not be null.");
 
+		//note: 这里真正执行的是一个 StreamGraph
 		return execute(getStreamGraph(jobName));
 	}
 
@@ -1532,6 +1534,7 @@ public abstract class StreamExecutionEnvironment {
 	/**
 	 * Getter of the {@link org.apache.flink.streaming.api.graph.StreamGraph} of the streaming job.
 	 *
+	 * note: 构建 stream graph
 	 * @param jobName Desired name of the job
 	 * @return The streamgraph representing the transformations
 	 */
@@ -1567,6 +1570,7 @@ public abstract class StreamExecutionEnvironment {
 	/**
 	 * Returns a "closure-cleaned" version of the given function. Cleans only if closure cleaning
 	 * is not disabled in the {@link org.apache.flink.api.common.ExecutionConfig}
+	 * note：对于指定的函数返回一个新的版本
 	 */
 	@Internal
 	public <F> F clean(F f) {
@@ -1581,6 +1585,7 @@ public abstract class StreamExecutionEnvironment {
 	 * Adds an operator to the list of operators that should be executed when calling
 	 * {@link #execute}.
 	 *
+	 * note: 添加 Operator
 	 * <p>When calling {@link #execute()} only the operators that where previously added to the list
 	 * are executed.
 	 *
@@ -1602,6 +1607,7 @@ public abstract class StreamExecutionEnvironment {
 	 * program is currently executed. If the program is invoked standalone, this
 	 * method returns a local execution environment, as returned by
 	 * {@link #createLocalEnvironment()}.
+	 * note: 创建一个当前作业可执行的上下文环境，如果该作业是 standalone 触发，这个方法会返回一个本地的执行环境
 	 *
 	 * @return The execution environment of the context in which the program is
 	 * executed.
@@ -1609,7 +1615,7 @@ public abstract class StreamExecutionEnvironment {
 	public static StreamExecutionEnvironment getExecutionEnvironment() {
 		return Utils.resolveFactory(threadLocalContextEnvironmentFactory, contextEnvironmentFactory)
 			.map(StreamExecutionEnvironmentFactory::createExecutionEnvironment)
-			.orElseGet(StreamExecutionEnvironment::createStreamExecutionEnvironment);
+			.orElseGet(StreamExecutionEnvironment::createStreamExecutionEnvironment); //如果为 null 的话，走这个方法
 	}
 
 	private static StreamExecutionEnvironment createStreamExecutionEnvironment() {
@@ -1623,6 +1629,7 @@ public abstract class StreamExecutionEnvironment {
 		} else if (env instanceof OptimizerPlanEnvironment || env instanceof PreviewPlanEnvironment) {
 			return new StreamPlanEnvironment(env);
 		} else {
+			//note: local 环境
 			return createLocalEnvironment();
 		}
 	}

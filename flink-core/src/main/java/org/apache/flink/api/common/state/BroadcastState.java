@@ -26,6 +26,7 @@ import java.util.Map;
 /**
  * A type of state that can be created to store the state of a {@code BroadcastStream}. This state assumes that
  * <b>the same elements are sent to all instances of an operator.</b>
+ * note：一种用于存储 BroadcastStream 状态的 state type，这种状态会认为同一个元素将被发送到这个 operator 的所有实例
  *
  * <p><b>CAUTION:</b> the user has to guarantee that all task instances store the same elements in this type of state.
  *

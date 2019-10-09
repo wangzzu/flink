@@ -28,6 +28,7 @@ import java.util.List;
 /**
  * A {@code FailoverStrategy} describes how the job computation recovers from task
  * failures.
+ * note：如果 task fail 的话，作业 recover 的策略
  * 
  * <p>Failover strategies implement recovery logic for failures of tasks. The execution
  * graph still implements "global failure / recovery" (which restarts all tasks) as

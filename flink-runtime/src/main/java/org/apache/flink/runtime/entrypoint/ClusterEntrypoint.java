@@ -115,6 +115,7 @@ public abstract class ClusterEntrypoint implements AutoCloseableAsync, FatalErro
 
 	private final AtomicBoolean isShutDown = new AtomicBoolean(false);
 
+	//note: 这个私有变量，只有在持有 lock 锁时，才能被访问
 	@GuardedBy("lock")
 	private DispatcherResourceManagerComponent<?> clusterComponent;
 
@@ -156,8 +157,10 @@ public abstract class ClusterEntrypoint implements AutoCloseableAsync, FatalErro
 
 		try {
 
+			//note: 配置 file System
 			configureFileSystems(configuration);
 
+			//note: 安全配置
 			SecurityContext securityContext = installSecurityContext(configuration);
 
 			securityContext.runSecured((Callable<Void>) () -> {
@@ -197,8 +200,10 @@ public abstract class ClusterEntrypoint implements AutoCloseableAsync, FatalErro
 		return SecurityUtils.getInstalledContext();
 	}
 
+	//note: run cluster real start-point
 	private void runCluster(Configuration configuration) throws Exception {
 		synchronized (lock) {
+			//note: 首先会初始化相关的服务
 			initializeServices(configuration);
 
 			// write host information into configuration
@@ -221,6 +226,7 @@ public abstract class ClusterEntrypoint implements AutoCloseableAsync, FatalErro
 			clusterComponent.getShutDownFuture().whenComplete(
 				(ApplicationStatus applicationStatus, Throwable throwable) -> {
 					if (throwable != null) {
+						//note: 抛出异常的情况下
 						shutDownAsync(
 							ApplicationStatus.UNKNOWN,
 							ExceptionUtils.stringifyException(throwable),
@@ -237,6 +243,7 @@ public abstract class ClusterEntrypoint implements AutoCloseableAsync, FatalErro
 		}
 	}
 
+	//note: 初始化相关的服务
 	protected void initializeServices(Configuration configuration) throws Exception {
 
 		LOG.info("Initializing cluster services.");
@@ -245,24 +252,32 @@ public abstract class ClusterEntrypoint implements AutoCloseableAsync, FatalErro
 			final String bindAddress = configuration.getString(JobManagerOptions.ADDRESS);
 			final String portRange = getRPCPortRange(configuration);
 
+			//note: 创建 RPC 服务
 			commonRpcService = createRpcService(configuration, bindAddress, portRange);
 
 			// update the configuration used to create the high availability services
+			//note: 根据当前创建的 RPC 服务信息做相关的配置（之前设置的端口可能是一个 range）
 			configuration.setString(JobManagerOptions.ADDRESS, commonRpcService.getAddress());
 			configuration.setInteger(JobManagerOptions.PORT, commonRpcService.getPort());
 
 			ioExecutor = Executors.newFixedThreadPool(
 				Hardware.getNumberCPUCores(),
 				new ExecutorThreadFactory("cluster-io"));
+			//note: HA service
 			haServices = createHaServices(configuration, ioExecutor);
+			//note: blob server：process requests
 			blobServer = new BlobServer(configuration, haServices.createBlobStore());
 			blobServer.start();
+			//note: heartbeat service
 			heartbeatServices = createHeartbeatServices(configuration);
+			//note: metrics reporter
 			metricRegistry = createMetricRegistry(configuration);
 
 			final RpcService metricQueryServiceRpcService = MetricUtils.startMetricsRpcService(configuration, bindAddress);
+			//note: start MetricQueryService
 			metricRegistry.startQueryService(metricQueryServiceRpcService, null);
 
+			//note: 创建一个 archivedExecutionGraphStore 对象，用于存储用户作业的物理 graph
 			archivedExecutionGraphStore = createSerializableExecutionGraphStore(configuration, commonRpcService.getScheduledExecutor());
 		}
 	}
@@ -275,6 +290,7 @@ public abstract class ClusterEntrypoint implements AutoCloseableAsync, FatalErro
 	/**
 	 * Returns the port range for the common {@link RpcService}.
 	 *
+	 * note: 获取 JobManager 的端口
 	 * @param configuration to extract the port range from
 	 * @return Port range for the common {@link RpcService}
 	 */
@@ -286,6 +302,7 @@ public abstract class ClusterEntrypoint implements AutoCloseableAsync, FatalErro
 		}
 	}
 
+	//note: 创建一个 HighAvailabilityServices 对象，如果 HA 不开启的话就是 StandaloneHaServices 对象
 	protected HighAvailabilityServices createHaServices(
 		Configuration configuration,
 		Executor executor) throws Exception {
@@ -472,7 +489,9 @@ public abstract class ClusterEntrypoint implements AutoCloseableAsync, FatalErro
 	}
 
 	protected static Configuration loadConfiguration(EntrypointClusterConfiguration entrypointClusterConfiguration) {
+		//note: load property 文件
 		final Configuration dynamicProperties = ConfigurationUtils.createConfiguration(entrypointClusterConfiguration.getDynamicProperties());
+		//note: load flink-conf 文件，并将 properties 添加进去
 		final Configuration configuration = GlobalConfiguration.loadConfiguration(entrypointClusterConfiguration.getConfigDir(), dynamicProperties);
 
 		final int restPort = entrypointClusterConfiguration.getRestPort();
@@ -498,12 +517,14 @@ public abstract class ClusterEntrypoint implements AutoCloseableAsync, FatalErro
 
 		final String clusterEntrypointName = clusterEntrypoint.getClass().getSimpleName();
 		try {
+			//note: 启动集群
 			clusterEntrypoint.startCluster();
 		} catch (ClusterEntrypointException e) {
 			LOG.error(String.format("Could not start cluster entrypoint %s.", clusterEntrypointName), e);
 			System.exit(STARTUP_FAILURE_RETURN_CODE);
 		}
 
+		//note: 下面这个 JDK8 的新特性，可以捕获任意阶段的异常输出
 		clusterEntrypoint.getTerminationFuture().whenComplete((applicationStatus, throwable) -> {
 			final int returnCode;
 

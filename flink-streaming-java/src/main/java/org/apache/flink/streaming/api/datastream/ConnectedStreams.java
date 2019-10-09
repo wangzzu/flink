@@ -43,6 +43,7 @@ import static java.util.Objects.requireNonNull;
  * ConnectedStreams represent two connected streams of (possibly) different data types.
  * Connected streams are useful for cases where operations on one stream directly
  * affect the operations on the other stream, usually via shared state between the streams.
+ * note：ConnectedStreams 它代表了两个 Stream（有不同的类型），比如：一个 stream 上的 operation 会直接影响另一个 stream 上的 operation
  *
  * <p>An example for the use of connected streams would be to apply rules that change over time
  * onto another stream. One of the connected streams has the rules, the other stream the

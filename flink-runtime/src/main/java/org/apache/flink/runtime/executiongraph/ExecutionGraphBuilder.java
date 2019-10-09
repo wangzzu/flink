@@ -81,6 +81,7 @@ public class ExecutionGraphBuilder {
 	 * Builds the ExecutionGraph from the JobGraph.
 	 * If a prior execution graph exists, the JobGraph will be attached. If no prior execution
 	 * graph exists, then the JobGraph will become attach to a new empty execution graph.
+	 * note：根据 JobGraph 构建 ExecutionGraph 对象，如果之前的 ExecutionGraph 存在，将会使用之前的对象
 	 */
 	public static ExecutionGraph buildGraph(
 			@Nullable ExecutionGraph prior,
@@ -100,6 +101,8 @@ public class ExecutionGraphBuilder {
 			ShuffleMaster<?> shuffleMaster,
 			PartitionTracker partitionTracker) throws JobExecutionException, JobException {
 
+
+		//note: failover 的策略
 		final FailoverStrategy.Factory failoverStrategy =
 			FailoverStrategyLoader.loadFailoverStrategy(jobManagerConfig, log);
 

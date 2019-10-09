@@ -28,6 +28,7 @@ import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
  * {@link org.apache.flink.streaming.api.operators.AbstractStreamOperator} as a base class if
  * you want to implement a custom operator.
  *
+ * note：只有一个输入的 stream operator，AbstractStreamOperator 是基类（如果你要实现一个自定义的 operator）
  * @param <IN> The input type of the operator
  * @param <OUT> The output type of the operator
  */

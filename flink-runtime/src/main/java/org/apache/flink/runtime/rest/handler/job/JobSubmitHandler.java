@@ -54,6 +54,7 @@ import java.util.stream.Collectors;
 
 /**
  * This handler can be used to submit jobs to a Flink cluster.
+ * note: handler 用于向 Flink 集群提交作业
  */
 public final class JobSubmitHandler extends AbstractRestHandler<DispatcherGateway, JobSubmitRequestBody, JobSubmitResponseBody, EmptyMessageParameters> {
 
@@ -110,6 +111,7 @@ public final class JobSubmitHandler extends AbstractRestHandler<DispatcherGatewa
 
 		CompletableFuture<JobGraph> finalizedJobGraphFuture = uploadJobGraphFiles(gateway, jobGraphFuture, jarFiles, artifacts, configuration);
 
+		//note: 这里会提交作业
 		CompletableFuture<Acknowledge> jobSubmissionFuture = finalizedJobGraphFuture.thenCompose(jobGraph -> gateway.submitJob(jobGraph, timeout));
 
 		return jobSubmissionFuture.thenCombine(jobGraphFuture,

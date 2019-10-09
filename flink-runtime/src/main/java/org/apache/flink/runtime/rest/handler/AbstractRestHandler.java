@@ -41,6 +41,7 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * Super class for netty-based handlers that work with {@link RequestBody}s and {@link ResponseBody}s.
+ * note：依赖 netty handler 的基类，用于处理 RequestBody 和 ResponseBody
  *
  * <p>Subclasses must be thread-safe.
  *

@@ -75,6 +75,9 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * It triggers the checkpoint by sending the messages to the relevant tasks and collects the
  * checkpoint acknowledgements. It also collects and maintains the overview of the state handles
  * reported by the tasks that acknowledge the checkpoint.
+ * note：CheckpointCoordinator 协调 Operator 和 state 的分布式快照
+ * note：它通过向相关的 task 发送 msg，并且接收 cp ack
+ * note：它也会接收和维护确认 cp 的任务的全局概况
  */
 public class CheckpointCoordinator {
 
@@ -1007,6 +1010,7 @@ public class CheckpointCoordinator {
 
 	/**
 	 * Restores the latest checkpointed state.
+	 * note：从最近一次的 cp 恢复，如果这个状态存储的话，这里就会返回 true，否则返回 false
 	 *
 	 * @param tasks Map of job vertices to restore. State for these vertices is
 	 * restored via {@link Execution#setInitialState(JobManagerTaskRestore)}.
@@ -1105,6 +1109,7 @@ public class CheckpointCoordinator {
 
 	/**
 	 * Restore the state with given savepoint.
+	 * note：从指定的 savepoint 恢复状态
 	 *
 	 * @param savepointPointer The pointer to the savepoint.
 	 * @param allowNonRestored True if allowing checkpoint state that cannot be

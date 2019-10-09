@@ -37,6 +37,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * A {@code Transformation} represents the operation that creates a
  * DataStream. Every DataStream has an underlying
  * {@code Transformation} that is the origin of said DataStream.
+ * note: 它代表创建 DataStream 的 operation(一个 DataStream 到另外一个 DataStream 都会已经过一个 Transform)
  *
  * <p>API operations such as DataStream#map create
  * a tree of {@code Transformation}s underneath. When the stream program is to be executed
@@ -99,6 +100,7 @@ public abstract class Transformation<T> {
 	public static final int UPPER_BOUND_MAX_PARALLELISM = 1 << 15;
 
 	// This is used to assign a unique ID to every Transformation
+	//note: 给每个 Transform 分配一个唯一 id
 	protected static Integer idCounter = 0;
 
 	public static int getNewNodeId() {
@@ -114,6 +116,7 @@ public abstract class Transformation<T> {
 	// This is used to handle MissingTypeInfo. As long as the outputType has not been queried
 	// it can still be changed using setOutputType(). Afterwards an exception is thrown when
 	// trying to change the output type.
+	//note: 只要 outputType 还没有被使用（getOutputType），我们就可以使用 setOutputType 改变输出类型，一旦被使用了再去改变类型就会抛出异常
 	protected boolean typeUsed;
 
 	private int parallelism;
@@ -127,12 +130,14 @@ public abstract class Transformation<T> {
 	/**
 	 *  The minimum resources for this stream transformation. It defines the lower limit for
 	 *  dynamic resources resize in future plan.
+	 *  note：这个 Stream Transformation 最小的资源要求，它决定了 plan 动态调整中的最低
 	 */
 	private ResourceSpec minResources = ResourceSpec.DEFAULT;
 
 	/**
 	 *  The preferred resources for this stream transformation. It defines the upper limit for
 	 *  dynamic resource resize in future plan.
+	 *  note：这个 Stream Transformation 推荐的资源限制，它决定了 plan 动态调整中的上限
 	 */
 	private ResourceSpec preferredResources = ResourceSpec.DEFAULT;
 
@@ -301,6 +306,7 @@ public abstract class Transformation<T> {
 	/**
 	 * Sets an ID for this {@link Transformation}. This is will later be hashed to a uidHash which is then used to
 	 * create the JobVertexID (that is shown in logs and the web ui).
+	 * note：给 Transformation 设置 id，这个 id 主要是用于在作业提交时分配同一个 Operator（例如：从 savepoint 启动）
 	 *
 	 * <p>The specified ID is used to assign the same operator ID across job
 	 * submissions (for example when starting a job from a savepoint).
@@ -325,6 +331,7 @@ public abstract class Transformation<T> {
 
 	/**
 	 * Returns the slot sharing group of this transformation.
+	 * note: 返回这个 Transform 的 slot sharing group
 	 *
 	 * @see #setSlotSharingGroup(String)
 	 */
@@ -336,6 +343,7 @@ public abstract class Transformation<T> {
 	 * Sets the slot sharing group of this transformation. Parallel instances of operations that
 	 * are in the same slot sharing group will be co-located in the same TaskManager slot, if
 	 * possible.
+	 * note：一个 operation 的多个并行实例，如果设置的是同一个 slot sharing group，如果有可能它们将会在同一个 TaskManager slot
 	 *
 	 * <p>Initially, an operation is in the default slot sharing group. This can be explicitly
 	 * set using {@code setSlotSharingGroup("default")}.

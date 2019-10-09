@@ -135,6 +135,8 @@ public class ConfigOption<T> {
 	 * the deprecated keys will be checked in the order provided to this method. The first key for which
 	 * a value is found will be used - that value will be returned.
 	 *
+	 * note: 主要是考虑到有些情况下，某些 key 会变化
+	 *
 	 * @param deprecatedKeys The deprecated keys, in the order in which they should be checked.
 	 * @return A new config options, with the given deprecated keys.
 	 */

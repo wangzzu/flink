@@ -72,6 +72,7 @@ public class BootstrapTools {
 
 	/**
 	 * Starts an ActorSystem with the given configuration listening at the address/ports.
+	 * note: 根据配置的 address/ports 启动一个 ActorSystem
 	 * @param configuration The Flink configuration
 	 * @param listeningAddress The address to listen at.
 	 * @param portRangeDefinition The port range to choose a port from.
@@ -111,7 +112,7 @@ public class BootstrapTools {
 			@Nonnull ActorSystemExecutorConfiguration actorSystemExecutorConfiguration) throws Exception {
 		return startActorSystem(
 			configuration,
-			AkkaUtils.getFlinkActorSystemName(),
+			AkkaUtils.getFlinkActorSystemName(), //note: actorSystemName 的名字，默认是 flink
 			listeningAddress,
 			portRangeDefinition,
 			logger,
@@ -147,7 +148,7 @@ public class BootstrapTools {
 		}
 
 		while (portsIterator.hasNext()) {
-			final int port = portsIterator.next();
+			final int port = portsIterator.next(); //note: 选择了第一个（如果第一个端口连接抛异常，会依次选择剩余的）
 
 			try {
 				return startActorSystem(
@@ -223,6 +224,7 @@ public class BootstrapTools {
 
 	/**
 	 * Starts an Actor System at a specific port.
+	 * note：对于指定的端口，启动一个 Actor System 服务
 	 * @param configuration The Flink configuration.
 	 * @param actorSystemName Name of the started {@link ActorSystem}
 	 * @param listeningAddress The address to listen at.
@@ -249,7 +251,8 @@ public class BootstrapTools {
 				new Some<>(new Tuple2<>(listeningAddress, listeningPort)),
 				actorSystemExecutorConfiguration.getAkkaConfig());
 
-			logger.debug("Using akka configuration\n {}", akkaConfig);
+			//note: 前后两个都是 info，这里没必要 debug 了
+			logger.info("Using akka configuration\n {}", akkaConfig);
 
 			ActorSystem actorSystem = AkkaUtils.createActorSystem(actorSystemName, akkaConfig);
 
@@ -597,6 +600,7 @@ public class BootstrapTools {
 			return AkkaUtils.getForkJoinExecutorConfig(this);
 		}
 
+		//note: 几个关于 AKKA executor 线程池大小的参数配置
 		public static ForkJoinExecutorConfiguration fromConfiguration(final Configuration configuration) {
 			final double parallelismFactor = configuration.getDouble(AkkaOptions.FORK_JOIN_EXECUTOR_PARALLELISM_FACTOR);
 			final int minParallelism = configuration.getInteger(AkkaOptions.FORK_JOIN_EXECUTOR_PARALLELISM_MIN);

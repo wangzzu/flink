@@ -36,6 +36,7 @@ import scala.concurrent.duration.Duration;
 /**
  * Restart strategy which tries to restart the given {@link ExecutionGraph} when failure rate exceeded
  * with a fixed time delay in between.
+ * note：通过重启时间间隔来控制的重启策略
  */
 public class FailureRateRestartStrategy implements RestartStrategy {
 

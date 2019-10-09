@@ -262,6 +262,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 		this.shuffleMaster = checkNotNull(shuffleMaster);
 
 		this.jobManagerJobMetricGroup = jobMetricGroupFactory.create(jobGraph);
+		//note: 创建作业调度器实例 {@link LegacyScheduler}
 		this.schedulerNG = createScheduler(jobManagerJobMetricGroup);
 		this.jobStatusListener = null;
 
@@ -296,14 +297,17 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 
 	/**
 	 * Start the rpc service and begin to run the job.
+	 * note: 启动一个 rpc 服务，并且开始 run 这个 job
 	 *
 	 * @param newJobMasterId The necessary fencing token to run the job
 	 * @return Future acknowledge if the job could be started. Otherwise the future contains an exception
 	 */
 	public CompletableFuture<Acknowledge> start(final JobMasterId newJobMasterId) throws Exception {
 		// make sure we receive RPC and async calls
+		//note: 启动 rpc server
 		start();
 
+		//note: run the job
 		return callAsyncWithoutFencing(() -> startJobExecution(newJobMasterId), RpcUtils.INF_TIMEOUT);
 	}
 
@@ -690,6 +694,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 
 	//-- job starting and stopping  -----------------------------------------------------------------
 
+	//note: 执行 job
 	private Acknowledge startJobExecution(JobMasterId newJobMasterId) throws Exception {
 
 		validateRunsInMainThread();
@@ -704,16 +709,19 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 
 		setNewFencingToken(newJobMasterId);
 
+		//note: start jobMaster service
 		startJobMasterServices();
 
 		log.info("Starting execution of job {} ({}) under job master id {}.", jobGraph.getName(), jobGraph.getJobID(), newJobMasterId);
 
+		//note: start scheduler
 		resetAndStartScheduler();
 
 		return Acknowledge.get();
 	}
 
 	private void startJobMasterServices() throws Exception {
+		//note: 启动心跳服务
 		startHeartbeatServices();
 
 		// start the slot pool make sure the slot pool now accepts messages for this leader
@@ -728,6 +736,9 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 		//   - activate leader retrieval for the resource manager
 		//   - on notification of the leader, the connection will be established and
 		//     the slot pool will start requesting slots
+		//note: 作业启动已经 ready，与 resource manager 建立连接
+		//note: 1. 触发 resource manager 的 leader listener
+		//note: 2. leader 收到 notify 信号之后，connection 将会建立，slot pool 将会开始请求 slot；
 		resourceManagerLeaderRetriever.start(new ResourceManagerLeaderListener());
 	}
 
@@ -1035,7 +1046,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 		@Override
 		public void notifyLeaderAddress(final String leaderAddress, final UUID leaderSessionID) {
 			runAsync(
-				() -> notifyOfNewResourceManagerLeader(
+				() -> notifyOfNewResourceManagerLeader( //note:
 					leaderAddress,
 					ResourceManagerId.fromUuidOrNull(leaderSessionID)));
 		}
@@ -1144,6 +1155,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 	private class TaskManagerHeartbeatListener implements HeartbeatListener<AccumulatorReport, AllocatedSlotReport> {
 
 		@Override
+		//note: 节点 timeout 了
 		public void notifyHeartbeatTimeout(ResourceID resourceID) {
 			validateRunsInMainThread();
 			disconnectTaskManager(
@@ -1166,6 +1178,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 		}
 	}
 
+	//note: ResourceManager 的心跳监听
 	private class ResourceManagerHeartbeatListener implements HeartbeatListener<Void, Void> {
 
 		@Override

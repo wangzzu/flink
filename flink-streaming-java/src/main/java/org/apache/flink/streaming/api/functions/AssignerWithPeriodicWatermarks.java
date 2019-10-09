@@ -28,6 +28,7 @@ import javax.annotation.Nullable;
  * and generates low watermarks that signal event time progress within the stream.
  * These timestamps and watermarks are used by functions and operators that operate
  * on event time, for example event time windows.
+ * note：在元素上应用 event timestamp，并且生成 Watermark
  *
  * <p>Use this class to generate watermarks in a periodical interval.
  * At most every {@code i} milliseconds (configured via

@@ -62,6 +62,7 @@ public enum DefaultJobManagerRunnerFactory implements JobManagerRunnerFactory {
 		final SchedulerNGFactory schedulerNGFactory = SchedulerNGFactoryFactory.createSchedulerNGFactory(configuration, jobManagerServices.getRestartStrategyFactory());
 		final ShuffleMaster<?> shuffleMaster = ShuffleServiceLoader.loadShuffleServiceFactory(configuration).createShuffleMaster(configuration);
 
+		//note: 默认的 DefaultJobMasterServiceFactory 方法
 		final JobMasterServiceFactory jobMasterFactory = new DefaultJobMasterServiceFactory(
 			jobMasterConfiguration,
 			slotPoolFactory,

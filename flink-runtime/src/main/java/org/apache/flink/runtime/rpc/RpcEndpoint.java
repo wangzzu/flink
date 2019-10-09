@@ -68,6 +68,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  *        Calling the {@link #start()} method triggers the start of the RPC endpoint and schedules overridable
  *        {@link #onStart()} method call to the main thread.
  *    </li>
+ *    note: 调用 start 方法后，会调用 onStart 方法调用主线程
  *    <li>
  *        When the start operation ends the RPC endpoint is moved to the running state
  *        and starts to serve and complete RPC requests.
@@ -167,6 +168,7 @@ public abstract class RpcEndpoint implements RpcGateway, AutoCloseableAsync {
 	 * Triggers start of the rpc endpoint. This tells the underlying rpc server that the rpc endpoint is ready
 	 * to process remote procedure calls.
 	 *
+	 * note: 触发 rpc endpoint 开始
 	 * @throws Exception indicating that something went wrong while starting the RPC endpoint
 	 */
 	public final void start() {

@@ -103,6 +103,7 @@ public class HeartbeatServices {
 	/**
 	 * Creates an HeartbeatServices instance from a {@link Configuration}.
 	 *
+	 * note：创建一个 HeartbeatServices 对象
 	 * @param configuration Configuration to be used for the HeartbeatServices creation
 	 * @return An HeartbeatServices instance created from the given configuration
 	 */

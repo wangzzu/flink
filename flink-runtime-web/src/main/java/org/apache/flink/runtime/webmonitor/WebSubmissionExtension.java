@@ -63,6 +63,7 @@ public class WebSubmissionExtension implements WebMonitorExtension {
 
 		webSubmissionHandlers = new ArrayList<>(5);
 
+		//note: 各种请求触发
 		final JarUploadHandler jarUploadHandler = new JarUploadHandler(
 			leaderRetriever,
 			timeout,

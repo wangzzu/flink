@@ -23,6 +23,7 @@ import org.apache.flink.annotation.Public;
 /**
  * Collects a record and forwards it. The collector is the "push" counterpart of the
  * {@link java.util.Iterator}, which "pulls" data in.
+ * note：收集一个 record，并发送出去
  */
 @Public
 public interface Collector<T> {

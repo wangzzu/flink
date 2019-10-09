@@ -31,6 +31,7 @@ import static org.apache.flink.util.Preconditions.checkState;
  * (e.g., a single JobManager or ResourceManager process) and that this process is
  * reachable under a constant address.
  *
+ * note：Standalone 模式下，LeaderRetrievalService 的实现
  * <p>As soon as this service is started, it immediately notifies the leader listener
  * of the leader contender with the pre-configured address.
  */

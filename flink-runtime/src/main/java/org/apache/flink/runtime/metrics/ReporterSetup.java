@@ -125,6 +125,7 @@ public final class ReporterSetup {
 				Matcher matcher = reporterClassPattern.matcher(key);
 				if (matcher.matches()) {
 					String reporterName = matcher.group(1);
+					// TODO: 2019-09-07 这里的判断是不是有问题？
 					if (includedReporters.isEmpty() || includedReporters.contains(reporterName)) {
 						if (namedReporters.contains(reporterName)) {
 							LOG.warn("Duplicate class configuration detected for reporter {}.", reporterName);

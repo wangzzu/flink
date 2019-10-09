@@ -598,6 +598,7 @@ public class MiniCluster implements JobExecutorService, AutoCloseableAsync {
 	/**
 	 * This method runs a job in blocking mode. The method returns only after the job
 	 * completed successfully, or after it failed terminally.
+	 * note：miniCluster 以阻塞模式运行一个 JobGraph
 	 *
 	 * @param job  The Flink job to execute
 	 * @return The result of the job execution
@@ -629,6 +630,10 @@ public class MiniCluster implements JobExecutorService, AutoCloseableAsync {
 		}
 	}
 
+	/**
+	 * note: 提交作业
+	 * note: 实现见 {@link org.apache.flink.runtime.dispatcher.Dispatcher#submitJob(JobGraph, Time)}
+	 */
 	public CompletableFuture<JobSubmissionResult> submitJob(JobGraph jobGraph) {
 		final CompletableFuture<DispatcherGateway> dispatcherGatewayFuture = getDispatcherGatewayFuture();
 
@@ -636,6 +641,7 @@ public class MiniCluster implements JobExecutorService, AutoCloseableAsync {
 		// from the ResourceManager
 		jobGraph.setAllowQueuedScheduling(true);
 
+		//note: create Blob Service
 		final CompletableFuture<InetSocketAddress> blobServerAddressFuture = createBlobServerAddress(dispatcherGatewayFuture);
 
 		final CompletableFuture<Void> jarUploadFuture = uploadAndSetJobFiles(blobServerAddressFuture, jobGraph);

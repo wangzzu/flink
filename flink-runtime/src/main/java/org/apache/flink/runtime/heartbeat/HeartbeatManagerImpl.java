@@ -36,6 +36,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * {@link HeartbeatListener} about it. A heartbeat times out iff no heartbeat signal has been
  * received within a given timeout interval.
  *
+ * note：对各个 TM 对心跳监控，Heartbeat manager 将会维护一个 heartbeat monitor 和 resource ID 的对应关系
+ * note：如果发现某个心跳超时，就会通知给 HeartbeatListener
  * @param <I> Type of the incoming heartbeat payload
  * @param <O> Type of the outgoing heartbeat payload
  */

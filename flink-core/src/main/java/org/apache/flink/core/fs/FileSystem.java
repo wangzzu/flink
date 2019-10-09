@@ -63,6 +63,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * and the set of available operations quite limited, to support the common denominator of a wide
  * range of file systems. For example, appending to or mutating existing files is not supported.
  *
+ * note: Flink 中使用的 file system 的最基本类
  * <p>Flink implements and supports some file system types directly (for example the default
  * machine-local file system). Other file system types are accessed by an implementation that bridges
  * to the suite of file systems supported by Hadoop (such as for example HDFS).
@@ -226,6 +227,7 @@ public abstract class FileSystem {
 	private static final HashMap<String, FileSystemFactory> FS_FACTORIES = new HashMap<>();
 
 	/** The default factory that is used when no scheme matches. */
+	//note: 默认会走 hadoop（前提是配置了 hadoop 环境）
 	private static final FileSystemFactory FALLBACK_FACTORY = loadHadoopFsFactory();
 
 	/** The default filesystem scheme to be used, configured during process-wide initialization.
@@ -265,6 +267,7 @@ public abstract class FileSystem {
 
 	/**
 	 * Initializes the shared file system settings.
+	 * note：初始化共享文件系统设置
 	 *
 	 * <p>The given configuration is passed to each file system factory to initialize the respective
 	 * file systems. Because the configuration of file systems may be different subsequent to the call
@@ -297,6 +300,7 @@ public abstract class FileSystem {
 				factorySuppliers.add(() -> pluginManager.load(FileSystemFactory.class));
 			}
 
+			//note: loadFileSystemFactories
 			final List<FileSystemFactory> fileSystemFactories = loadFileSystemFactories(factorySuppliers);
 
 			// configure all file system factories
@@ -994,6 +998,7 @@ public abstract class FileSystem {
 		final ArrayList<FileSystemFactory> list = new ArrayList<>();
 
 		// by default, we always have the local file system factory
+		//note: 默认就会支持 LocalFileSystemFactory
 		list.add(new LocalFileSystemFactory());
 
 		LOG.debug("Loading extension file systems via services");
@@ -1060,6 +1065,7 @@ public abstract class FileSystem {
 		}
 
 		// check (for eager and better exception messages) if the Hadoop classes are available here
+		//note: 这里检查 hadoop 环境是否可用
 		try {
 			Class.forName("org.apache.hadoop.conf.Configuration", false, cl);
 			Class.forName("org.apache.hadoop.fs.FileSystem", false, cl);

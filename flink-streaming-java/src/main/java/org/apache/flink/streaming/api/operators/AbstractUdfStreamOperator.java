@@ -41,6 +41,7 @@ import static java.util.Objects.requireNonNull;
  * function. This class handles the opening and closing of the user-defined functions,
  * as part of the operator life cycle.
  *
+ * note: 这个也是一类 operator 的基类，它会有一个 user-defined function（这个类处理 udf 的 open 和 close，并作为 operator 生命周期的一部分）
  * @param <OUT>
  *            The output type of the operator
  * @param <F>

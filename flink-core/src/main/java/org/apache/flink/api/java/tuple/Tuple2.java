@@ -27,6 +27,7 @@ import org.apache.flink.annotation.Public;
 import org.apache.flink.util.StringUtils;
 
 /**
+ * note: 这些 tuple 类的都类似，这里主要是看下别人是怎么实现代码的
  * A tuple with 2 fields. Tuples are strongly typed; each field may be of a separate type.
  * The fields of the tuple can be accessed directly as public fields (f0, f1, ...) or via their position
  * through the {@link #getField(int)} method. The tuple field positions start at zero.

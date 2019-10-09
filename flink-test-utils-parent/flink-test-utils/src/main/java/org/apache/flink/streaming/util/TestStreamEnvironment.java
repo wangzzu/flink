@@ -35,6 +35,7 @@ import java.util.Collections;
 
 /**
  * A {@link StreamExecutionEnvironment} that executes its jobs on {@link MiniCluster}.
+ * note: miniCluster 模式下，miniCluster 一般用于试运行情况
  */
 public class TestStreamEnvironment extends StreamExecutionEnvironment {
 

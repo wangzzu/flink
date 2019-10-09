@@ -151,6 +151,7 @@ public class TaskManagerOptions {
 
 	/**
 	 * The config parameter defining the number of task slots of a task manager.
+	 * note：决定一个 TaskManager 有多少个 task slot（一个 tm 可以执行多少个并行的 Operator 或 user function 实例）
 	 */
 	@Documentation.CommonOption(position = Documentation.CommonOption.POSITION_PARALLELISM_SLOTS)
 	public static final ConfigOption<Integer> NUM_TASK_SLOTS =

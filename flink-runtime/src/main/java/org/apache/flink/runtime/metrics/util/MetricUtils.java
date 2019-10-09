@@ -122,6 +122,7 @@ public class MetricUtils {
 		instantiateCPUMetrics(jvm.addGroup("CPU"));
 	}
 
+	//note: 创建一个 Flink 内部的 metrics rpc serveice
 	public static RpcService startMetricsRpcService(Configuration configuration, String hostname) throws Exception {
 		final String portRange = configuration.getString(MetricOptions.QUERY_SERVICE_PORT);
 		final int threadPriority = configuration.getInteger(MetricOptions.QUERY_SERVICE_THREAD_PRIORITY);

@@ -79,6 +79,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 /**
  * An operator that implements the logic for windowing based on a {@link WindowAssigner} and
  * {@link Trigger}.
+ * note: 在 window 上生效的逻辑处理（依赖于 assigner 和 trigger）
  *
  * <p>When an element arrives it gets assigned a key using a {@link KeySelector} and it gets
  * assigned to zero or more windows using a {@link WindowAssigner}. Based on this, the element

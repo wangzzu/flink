@@ -40,6 +40,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Component which starts a {@link Dispatcher}, {@link ResourceManager} and {@link WebMonitorEndpoint}
  * in the same process.
+ * note：启动 Dispatcher、ResourceManager 和 WebMonitorEndpoint
  */
 public class DispatcherResourceManagerComponent<T extends Dispatcher> implements AutoCloseableAsync {
 
@@ -86,6 +87,7 @@ public class DispatcherResourceManagerComponent<T extends Dispatcher> implements
 		registerShutDownFuture();
 	}
 
+	//note: 注册一个 ShutDownFuture
 	private void registerShutDownFuture() {
 		terminationFuture.whenComplete(
 			(aVoid, throwable) -> {

@@ -206,6 +206,7 @@ public class SlotManagerImpl implements SlotManager {
 	/**
 	 * Starts the slot manager with the given leader id and resource manager actions.
 	 *
+	 * note: 启动 SlotManager 服务
 	 * @param newResourceManagerId to use for communication with the task managers
 	 * @param newMainThreadExecutor to use to run code in the ResourceManager's main thread
 	 * @param newResourceActions to use for resource (de-)allocations

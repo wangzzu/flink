@@ -26,6 +26,7 @@ import org.apache.flink.streaming.api.operators.ChainingStrategy;
 /**
  * A {@link Transformation} that creates a physical operation. It enables setting {@link ChainingStrategy}.
  *
+ * note：它会实现 physical operation，它允许设置 {@link ChainingStrategy}
  * @param <T> The type of the elements that result from this {@code Transformation}
  * @see Transformation
  */

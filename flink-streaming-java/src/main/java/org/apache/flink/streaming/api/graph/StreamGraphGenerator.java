@@ -59,13 +59,14 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 /**
  * A generator that generates a {@link StreamGraph} from a graph of
  * {@link Transformation}s.
- *
+ * note: StreamingGraph 入口（从 Transform tree 的 sink 节点开始处理）
  * <p>This traverses the tree of {@code Transformations} starting from the sinks. At each
  * transformation we recursively transform the inputs, then create a node in the {@code StreamGraph}
  * and add edges from the input Nodes to our newly created node. The transformation methods
  * return the IDs of the nodes in the StreamGraph that represent the input transformation. Several
  * IDs can be returned to be able to deal with feedback transformations and unions.
  *
+ * note：Partitioning, split/select 和 union 不会创建实际的节点，我们会创建一个虚拟节点来处理这种情况
  * <p>Partitioning, split/select and union don't create actual nodes in the {@code StreamGraph}. For
  * these, we create a virtual node in the {@code StreamGraph} that holds the specific property, i.e.
  * partitioning, selector and so on. When an edge is created from a virtual node to a downstream
@@ -183,6 +184,7 @@ public class StreamGraphGenerator {
 		return this;
 	}
 
+	//note: 设置 job name
 	public StreamGraphGenerator setJobName(String jobName) {
 		this.jobName = jobName;
 		return this;
@@ -193,6 +195,7 @@ public class StreamGraphGenerator {
 		return this;
 	}
 
+	//note: 构建 stream graph
 	public StreamGraph generate() {
 		streamGraph = new StreamGraph(executionConfig, checkpointConfig);
 		streamGraph.setStateBackend(stateBackend);
@@ -205,6 +208,7 @@ public class StreamGraphGenerator {
 
 		alreadyTransformed = new HashMap<>();
 
+		//note: 自底向上(先遍历 input transformations)对转换树的每个 transformation 进行转换
 		for (Transformation<?> transformation: transformations) {
 			transform(transformation);
 		}
@@ -220,12 +224,15 @@ public class StreamGraphGenerator {
 
 	/**
 	 * Transforms one {@code Transformation}.
+	 * note：对具体的一个 transformation 进行转换，转换成 StreamGraph 中的 StreamNode 和 StreamEdge
+	 * note：返回值为该 transform 的 id 集合，通常大小为1个（除 FeedbackTransformation）
 	 *
 	 * <p>This checks whether we already transformed it and exits early in that case. If not it
 	 * delegates to one of the transformation specific methods.
 	 */
 	private Collection<Integer> transform(Transformation<?> transform) {
 
+		//note: 已经 Transform 的 Transformation 会放在这个集合中
 		if (alreadyTransformed.containsKey(transform)) {
 			return alreadyTransformed.get(transform);
 		}
@@ -236,6 +243,7 @@ public class StreamGraphGenerator {
 
 			// if the max parallelism hasn't been set, then first use the job wide max parallelism
 			// from the ExecutionConfig.
+			//note: 如果 MaxParallelism 没有设置，使用 job 的 MaxParallelism 设置
 			int globalMaxParallelismFromConfig = executionConfig.getMaxParallelism();
 			if (globalMaxParallelismFromConfig > 0) {
 				transform.setMaxParallelism(globalMaxParallelismFromConfig);
@@ -243,6 +251,7 @@ public class StreamGraphGenerator {
 		}
 
 		// call at least once to trigger exceptions about MissingTypeInfo
+		//note: 如果是 MissingTypeInfo 类型（类型不确定），将会触发异常
 		transform.getOutputType();
 
 		Collection<Integer> transformedIds;
@@ -278,6 +287,7 @@ public class StreamGraphGenerator {
 			alreadyTransformed.put(transform, transformedIds);
 		}
 
+		//note: 将这个 Transform 相关的信息记录到 StreamGraph 中
 		if (transform.getBufferTimeout() >= 0) {
 			streamGraph.setBufferTimeout(transform.getId(), transform.getBufferTimeout());
 		} else {
@@ -307,6 +317,7 @@ public class StreamGraphGenerator {
 
 	/**
 	 * Transforms a {@code UnionTransformation}.
+	 * note：Transform 所有的 inputs，并且返回所有的 id
 	 *
 	 * <p>This is easy, we only have to transform the inputs and return all the IDs in a list so
 	 * that downstream operations can connect to all upstream nodes.
@@ -334,6 +345,7 @@ public class StreamGraphGenerator {
 
 		Collection<Integer> transformedIds = transform(input);
 		for (Integer transformedId: transformedIds) {
+			//note: 创建一个虚拟节点
 			int virtualId = Transformation.getNewNodeId();
 			streamGraph.addVirtualPartitionNode(
 					transformedId, virtualId, partition.getPartitioner(), partition.getShuffleMode());
@@ -565,6 +577,7 @@ public class StreamGraphGenerator {
 
 	/**
 	 * Transforms a {@code SourceTransformation}.
+	 * note：对 SourceTransformation 做转换
 	 */
 	private <T> Collection<Integer> transformSource(SourceTransformation<T> source) {
 		String slotSharingGroup = determineSlotSharingGroup(source.getSlotSharingGroup(), Collections.emptyList());
@@ -637,6 +650,7 @@ public class StreamGraphGenerator {
 	 */
 	private <IN, OUT> Collection<Integer> transformOneInputTransform(OneInputTransformation<IN, OUT> transform) {
 
+		//note: 递归转换 inputs
 		Collection<Integer> inputIds = transform(transform.getInput());
 
 		// the recursive call might have already transformed this
@@ -733,6 +747,10 @@ public class StreamGraphGenerator {
 	/**
 	 * Determines the slot sharing group for an operation based on the slot sharing group set by
 	 * the user and the slot sharing groups of the inputs.
+	 * note: 根据这个 operation 设置的 slot sharing group 和 inputs 的 slot sharing group 来确定其 slot sharing group
+	 * note：1. 如果用户指定了 group name，直接使用这个 name；
+	 * note：2. 如果所有的 input 都是同一个 group name，使用这个即可；
+	 * note：3.否则使用 default group；
 	 *
 	 * <p>If the user specifies a group name, this is taken as is. If nothing is specified and
 	 * the input operations all have the same group name then this name is taken. Otherwise the

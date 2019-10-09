@@ -45,9 +45,11 @@ else
     echo "Starting cluster."
 
     # Start single JobManager on this machine
+    # 单机模式下，先启动 job manager
     "$FLINK_BIN_DIR"/jobmanager.sh start
 fi
 shopt -u nocasematch
 
 # Start TaskManager instance(s)
+# 启动 task Manger
 TMSlaves start

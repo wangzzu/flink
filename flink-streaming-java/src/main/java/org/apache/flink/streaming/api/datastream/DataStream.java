@@ -102,6 +102,7 @@ import java.util.List;
  * A DataStream represents a stream of elements of the same type. A DataStream
  * can be transformed into another DataStream by applying a transformation as
  * for example:
+ * note：一个 DataStream 代表一个 stream type，它可以通过 transformation 转换为另一个 DataStream
  * <ul>
  * <li>{@link DataStream#map}
  * <li>{@link DataStream#filter}
@@ -204,6 +205,7 @@ public class DataStream<T> {
 	 * the same type with each other. The DataStreams merged using this operator
 	 * will be transformed simultaneously.
 	 *
+	 * note：merge 另一批 DataStream，生成一个新的 DataStream，会校验类型是否一致
 	 * @param streams
 	 *            The DataStreams to union output with.
 	 * @return The {@link DataStream}.
@@ -345,6 +347,7 @@ public class DataStream<T> {
 	/**
 	 * Partitions a tuple DataStream on the specified key fields using a custom partitioner.
 	 * This method takes the key position to partition on, and a partitioner that accepts the key type.
+	 * note：自定义 Partition 方法
 	 *
 	 * <p>Note: This method works only on single field keys.
 	 *
@@ -407,7 +410,7 @@ public class DataStream<T> {
 	 * Sets the partitioning of the {@link DataStream} so that the output elements
 	 * are broadcasted to every parallel instance of the next operation.
 	 *
-	 * @return The DataStream with broadcast partitioning set.
+	 * @return The DataStream with broadcast partitioning set.（note：会选择所有的 output element）
 	 */
 	public DataStream<T> broadcast() {
 		return setConnectionType(new BroadcastPartitioner<T>());
@@ -433,6 +436,7 @@ public class DataStream<T> {
 	/**
 	 * Sets the partitioning of the {@link DataStream} so that the output elements
 	 * are shuffled uniformly randomly to the next operation.
+	 * note：设置 DataStream 的 partition 策略，输出数据会 shuffle 随机地发往下一个 operation
 	 *
 	 * @return The DataStream with shuffle partitioning set.
 	 */
@@ -444,6 +448,7 @@ public class DataStream<T> {
 	/**
 	 * Sets the partitioning of the {@link DataStream} so that the output elements
 	 * are forwarded to the local subtask of the next operation.
+	 * note：ForwardPartitioner，输出数据发送到第 0 个 task（todo：这个代表的是 local 么？）
 	 *
 	 * @return The DataStream with forward partitioning set.
 	 */
@@ -455,6 +460,7 @@ public class DataStream<T> {
 	 * Sets the partitioning of the {@link DataStream} so that the output elements
 	 * are distributed evenly to instances of the next operation in a round-robin
 	 * fashion.
+	 * note：RebalancePartitioner 以 round-robin 的模式发送
 	 *
 	 * @return The DataStream with rebalance partitioning set.
 	 */
@@ -466,6 +472,8 @@ public class DataStream<T> {
 	 * Sets the partitioning of the {@link DataStream} so that the output elements
 	 * are distributed evenly to a subset of instances of the next operation in a round-robin
 	 * fashion.
+	 * note：RescalePartitioner 跟 RebalancePartitioner 的区别是，这里会依赖上下游的并行度
+	 * note：如果上下游的并行度是有一定比例关系的，比如上游并发是 2，下游并发是 4，那么刚好是 1 对 2 发，这样可以一定程度上减少网络传输
 	 *
 	 * <p>The subset of downstream operations to which the upstream operation sends
 	 * elements depends on the degree of parallelism of both the upstream and downstream operation.
@@ -492,6 +500,8 @@ public class DataStream<T> {
 	 * all go to the first instance of the next processing operator. Use this
 	 * setting with care since it might cause a serious performance bottleneck
 	 * in the application.
+	 * note：GlobalPartitioner：输出数据都会输出到下一个处理 operation 的第一个实例
+	 * todo：跟 GlobalPartitioner 是不是没有区别？
 	 *
 	 * @return The DataStream with shuffle partitioning set.
 	 */
@@ -574,6 +584,7 @@ public class DataStream<T> {
 	 * MapFunction call returns exactly one element. The user can also extend
 	 * {@link RichMapFunction} to gain access to other features provided by the
 	 * {@link org.apache.flink.api.common.functions.RichFunction} interface.
+	 * note：在一个 DataStream 上应用 Map transformation，每个 MapFunction 的调用都会准确地返回一个元素
 	 *
 	 * @param mapper
 	 *            The MapFunction that is called for each element of the
@@ -584,9 +595,11 @@ public class DataStream<T> {
 	 */
 	public <R> SingleOutputStreamOperator<R> map(MapFunction<T, R> mapper) {
 
+		//note: 通过java reflection抽出mapper的返回值类型
 		TypeInformation<R> outType = TypeExtractor.getMapReturnTypes(clean(mapper), getType(),
 				Utils.getCallLocationName(), true);
 
+		//note: StreamMap 是对一个 StreamOperator 的封装，返回的是一个 DataStream，并且会记录这个 Transform
 		return transform("Map", outType, new StreamMap<>(clean(mapper)));
 	}
 
@@ -597,6 +610,7 @@ public class DataStream<T> {
 	 * including none. The user can also extend {@link RichFlatMapFunction} to
 	 * gain access to other features provided by the
 	 * {@link org.apache.flink.api.common.functions.RichFunction} interface.
+	 * note：在 DataStream 上应用一个 FlatMap transformation，这个 transformation 会调用 FlatMapFunction 处理 DataStream 中的每个元素
 	 *
 	 * @param flatMapper
 	 *            The FlatMapFunction that is called for each element of the
@@ -618,6 +632,7 @@ public class DataStream<T> {
 	/**
 	 * Applies the given {@link ProcessFunction} on the input stream, thereby
 	 * creating a transformed output stream.
+	 * note：应用指定的 ProcessFunction 在 input stream 上
 	 *
 	 * <p>The function will be called for every element in the input streams and can produce zero
 	 * or more output elements.
@@ -678,6 +693,7 @@ public class DataStream<T> {
 	 * user can also extend {@link RichFilterFunction} to gain access to other
 	 * features provided by the
 	 * {@link org.apache.flink.api.common.functions.RichFunction} interface.
+	 * note：filter function 使用
 	 *
 	 * @param filter
 	 *            The FilterFunction that is called for each element of the
@@ -1162,6 +1178,7 @@ public class DataStream<T> {
 	/**
 	 * Method for passing user defined operators along with the type
 	 * information that will transform the DataStream.
+	 * note：添加一个 operator
 	 *
 	 * @param operatorName
 	 *            name of the operator, for logging purposes
@@ -1179,8 +1196,9 @@ public class DataStream<T> {
 		// read the output type of the input Transform to coax out errors about MissingTypeInfo
 		transformation.getOutputType();
 
+		//note： 新的 transformation 会连接上当前 DataStream 中的 transformation，从而构建成一棵树
 		OneInputTransformation<T, R> resultTransform = new OneInputTransformation<>(
-				this.transformation,
+				this.transformation, //note: 记录这个 DataStream 的输入 DataStream
 				operatorName,
 				operator,
 				outTypeInfo,
@@ -1189,6 +1207,7 @@ public class DataStream<T> {
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		SingleOutputStreamOperator<R> returnStream = new SingleOutputStreamOperator(environment, resultTransform);
 
+		//note: 所有的 transformation 都会存到 env 中
 		getExecutionEnvironment().addOperator(resultTransform);
 
 		return returnStream;

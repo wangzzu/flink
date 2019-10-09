@@ -32,6 +32,7 @@ import java.util.concurrent.TimeUnit;
  * Interface for rpc services. An rpc service is used to start and connect to a {@link RpcEndpoint}.
  * Connecting to a rpc server will return a {@link RpcGateway} which can be used to call remote
  * procedures.
+ * note：rpc service 的接口，一个 rpc service 用于启动和链接 RpcEndpoint
  */
 public interface RpcService {
 
@@ -147,6 +148,8 @@ public interface RpcService {
 	/**
 	 * Gets a scheduled executor from the RPC service. This executor can be used to schedule
 	 * tasks to be executed in the future.
+	 *
+	 * note：从 rpc 服务中获取一个可调度的 executor，这个 executor 可以用户调度 task
 	 *
 	 * <p><b>IMPORTANT:</b> This executor does not isolate the method invocations against
 	 * any concurrent invocations and is therefore not suitable to run completion methods of futures

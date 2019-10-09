@@ -1074,6 +1074,7 @@ public class LimitedConnectionsFileSystem extends FileSystem {
 			checkLimit(limitOut, limitOutOption);
 
 			// create the settings only, if at least one limit is configured
+			//note: 这个三个参数默认值都是-1，如果没有配置的话，这里会直接返回 null
 			if (totalLimit <= 0 && limitIn <= 0 && limitOut <= 0) {
 				// no limit configured
 				return null;

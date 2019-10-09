@@ -95,6 +95,7 @@ import java.util.stream.Collectors;
  * for receiving job submissions, persisting them, spawning JobManagers to execute
  * the jobs and to recover them in case of a master failure. Furthermore, it knows
  * about the state of the Flink session cluster.
+ * note：最基本的调度类，负责接收 job 提交、持久化、生成 JobManager 来执行 job
  */
 public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> implements
 	DispatcherGateway, LeaderContender, SubmittedJobGraphStore.SubmittedJobGraphListener {
@@ -186,6 +187,7 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 	@Override
 	public void onStart() throws Exception {
 		try {
+			//note: 启动服务
 			startDispatcherServices();
 		} catch (Exception e) {
 			final DispatcherException exception = new DispatcherException(String.format("Could not start the Dispatcher %s", getAddress()), e);
@@ -259,6 +261,7 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 	// RPCs
 	//------------------------------------------------------
 
+	//note: 提交一个 JobGraph
 	@Override
 	public CompletableFuture<Acknowledge> submitJob(JobGraph jobGraph, Time timeout) {
 		log.info("Received JobGraph submission {} ({}).", jobGraph.getJobID(), jobGraph.getName());
@@ -317,6 +320,7 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 		return false;
 	}
 
+	//note: 提交一个作业
 	private CompletableFuture<Acknowledge> internalSubmitJob(JobGraph jobGraph) {
 		log.info("Submitting job {} ({}).", jobGraph.getJobID(), jobGraph.getName());
 
@@ -337,6 +341,7 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 		}, getRpcService().getExecutor());
 	}
 
+	//note: 持久化和这个 jobGraph 并运行这个作业
 	private CompletableFuture<Void> persistAndRunJob(JobGraph jobGraph) throws Exception {
 		submittedJobGraphStore.putJobGraph(new SubmittedJobGraph(jobGraph));
 
@@ -344,14 +349,18 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 
 		return runJobFuture.whenComplete(BiConsumerWithException.unchecked((Object ignored, Throwable throwable) -> {
 			if (throwable != null) {
+				//note: 如果抛出这个异常，这个会被清除
 				submittedJobGraphStore.removeJobGraph(jobGraph.getJobID());
 			}
 		}));
 	}
 
+
+	//note: 如果有作业提交的话，这里会执行 createJobManagerRunner
 	private CompletableFuture<Void> runJob(JobGraph jobGraph) {
 		Preconditions.checkState(!jobManagerRunnerFutures.containsKey(jobGraph.getJobID()));
 
+		//note: 创建 JobManager 的 future
 		final CompletableFuture<JobManagerRunner> jobManagerRunnerFuture = createJobManagerRunner(jobGraph);
 
 		jobManagerRunnerFutures.put(jobGraph.getJobID(), jobManagerRunnerFuture);
@@ -367,6 +376,7 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 				getMainThreadExecutor());
 	}
 
+	//note: 创建 createJobManagerRunner 对象
 	private CompletableFuture<JobManagerRunner> createJobManagerRunner(JobGraph jobGraph) {
 		final RpcService rpcService = getRpcService();
 
@@ -386,6 +396,7 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 		return jobManagerRunnerFuture.thenApply(FunctionUtils.uncheckedFunction(this::startJobManagerRunner));
 	}
 
+	//note: start jobManagerRunner
 	private JobManagerRunner startJobManagerRunner(JobManagerRunner jobManagerRunner) throws Exception {
 		final JobID jobId = jobManagerRunner.getJobGraph().getJobID();
 
@@ -415,6 +426,7 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 					return null;
 				}, getMainThreadExecutor()));
 
+		//note: 启动 jobManagerRunner
 		jobManagerRunner.start();
 
 		return jobManagerRunner;
@@ -876,6 +888,7 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 	/**
 	 * Callback method when current resourceManager is granted leadership.
 	 *
+	 * note: 如果当前的 dispatcher 是 leader 的情况下
 	 * @param newLeaderSessionID unique leadershipID
 	 */
 	@Override
@@ -920,6 +933,7 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 			});
 	}
 
+	//note: 如果当前的 resource manager 是 leader 的情况下
 	private CompletableFuture<Boolean> tryAcceptLeadershipAndRunJobs(UUID newLeaderSessionID, Collection<JobGraph> recoveredJobs) {
 		final DispatcherId dispatcherId = DispatcherId.fromUuid(newLeaderSessionID);
 
@@ -929,6 +943,7 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 
 			Collection<CompletableFuture<?>> runFutures = new ArrayList<>(recoveredJobs.size());
 
+			//note: 这里应该是 recover 时恢复
 			for (JobGraph recoveredJob : recoveredJobs) {
 				final CompletableFuture<?> runFuture = waitForTerminatingJobManager(recoveredJob.getJobID(), recoveredJob, this::runJob);
 				runFutures.add(runFuture);

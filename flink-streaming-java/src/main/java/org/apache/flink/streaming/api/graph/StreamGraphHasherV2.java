@@ -60,12 +60,14 @@ public class StreamGraphHasherV2 implements StreamGraphHasher {
 	 * Returns a map with a hash for each {@link StreamNode} of the {@link
 	 * StreamGraph}. The hash is used as the {@link JobVertexID} in order to
 	 * identify nodes across job submissions if they didn't change.
+	 * note: 为所有的 StreamNode 生成一个唯一的 hash id，这个 id 不会因多次提交而改变，这主要用于故障恢复。
+	 * note: 这里不能使用 StreamNode.id 来代替，因为这是一个从 1 开始的静态计数变量，同一个 Job 的多次提交可能会得到不一样的 id
 	 *
 	 * <p>The complete {@link StreamGraph} is traversed. The hash is either
 	 * computed from the transformation's user-specified id (see
 	 * {@link Transformation#getUid()}) or generated in a deterministic way.
 	 *
-	 * <p>The generated hash is deterministic with respect to:
+	 * <p>The generated hash is deterministic with respect to: note：结果的计算主要依赖下面三个元素
 	 * <ul>
 	 *   <li>node-local properties (node ID),
 	 *   <li>chained output nodes, and
@@ -80,6 +82,7 @@ public class StreamGraphHasherV2 implements StreamGraphHasher {
 		final HashFunction hashFunction = Hashing.murmur3_128(0);
 		final Map<Integer, byte[]> hashes = new HashMap<>();
 
+		//note: 已经遍历过的节点
 		Set<Integer> visited = new HashSet<>();
 		Queue<StreamNode> remaining = new ArrayDeque<>();
 
@@ -87,6 +90,7 @@ public class StreamGraphHasherV2 implements StreamGraphHasher {
 		// not returned in the same order, which means that submitting the same
 		// program twice might result in different traversal, which breaks the
 		// deterministic hash assignment.
+		//note: 需要确保这个 source 顺序是确定的，如果 source id 不是同一个顺序，可能导致同一个作业的提交会产生不同的结果
 		List<Integer> sources = new ArrayList<>();
 		for (Integer sourceNodeId : streamGraph.getSourceIDs()) {
 			sources.add(sourceNodeId);
@@ -105,6 +109,7 @@ public class StreamGraphHasherV2 implements StreamGraphHasher {
 		}
 
 		StreamNode currentNode;
+		//note: 当前的算法可以唯一确定各个节点的计算顺序
 		while ((currentNode = remaining.poll()) != null) {
 			// Generate the hash code. Because multiple path exist to each
 			// node, we might not have all required inputs available to
@@ -131,6 +136,8 @@ public class StreamGraphHasherV2 implements StreamGraphHasher {
 	/**
 	 * Generates a hash for the node and returns whether the operation was
 	 * successful.
+	 * note: 给这个 node 产生一个 hash 值，并且返回这个操作是否成功
+	 * note：产生失败一般是需要稍后再产生，需要等待所有的输入是可用的
 	 *
 	 * @param node         The node to generate the hash for
 	 * @param hashFunction The hash function to use
@@ -154,6 +161,7 @@ public class StreamGraphHasherV2 implements StreamGraphHasher {
 		if (userSpecifiedHash == null) {
 			// Check that all input nodes have their hashes computed
 			for (StreamEdge inEdge : node.getInEdges()) {
+				//note: 确保所有的输入节点的 hash 都已经计算过了
 				// If the input node has not been visited yet, the current
 				// node will be visited again at a later point when all input
 				// nodes have been visited and their hashes set.
@@ -173,6 +181,7 @@ public class StreamGraphHasherV2 implements StreamGraphHasher {
 
 			return true;
 		} else {
+			//note: 如果用户自己设置了 Transformation 的 uid，那么需要检查唯一性，是否出现碰撞
 			Hasher hasher = hashFunction.newHasher();
 			byte[] hash = generateUserSpecifiedHash(node, hasher);
 
@@ -207,6 +216,7 @@ public class StreamGraphHasherV2 implements StreamGraphHasher {
 	/**
 	 * Generates a deterministic hash from node-local properties and input and
 	 * output edges.
+	 * note：真正计算 hash id 的方法
 	 */
 	private byte[] generateDeterministicHash(
 			StreamNode node,
@@ -219,9 +229,11 @@ public class StreamGraphHasherV2 implements StreamGraphHasher {
 		// hashes as the ID. We cannot use the node's ID, because it is
 		// assigned from a static counter. This will result in two identical
 		// programs having different hashes.
+		//note: 使用的是 hashes.size() 代替 StreamNode id（保证每次计算同一个 StreamNode 得到的值都是一样的）
 		generateNodeLocalHash(hasher, hashes.size());
 
 		// Include chained nodes to hash
+		//note: 如果输出节点可以 chain 在一起，hash 值的计算也会依赖它
 		for (StreamEdge outEdge : node.getOutEdges()) {
 			if (isChainable(outEdge, isChainingEnabled, streamGraph)) {
 
@@ -235,6 +247,7 @@ public class StreamGraphHasherV2 implements StreamGraphHasher {
 
 		// Make sure that all input nodes have their hash set before entering
 		// this loop (calling this method).
+		//note: 确保该 node 的所有输入节点都已经计算了其 hash 值，并且最后结果的计算也会依赖它
 		for (StreamEdge inEdge : node.getInEdges()) {
 			byte[] otherHash = hashes.get(inEdge.getSourceId());
 
@@ -280,6 +293,7 @@ public class StreamGraphHasherV2 implements StreamGraphHasher {
 		hasher.putInt(id);
 	}
 
+	//note: 是否可以 chain 在一起
 	private boolean isChainable(StreamEdge edge, boolean isChainingEnabled, StreamGraph streamGraph) {
 		StreamNode upStreamVertex = streamGraph.getSourceVertex(edge);
 		StreamNode downStreamVertex = streamGraph.getTargetVertex(edge);

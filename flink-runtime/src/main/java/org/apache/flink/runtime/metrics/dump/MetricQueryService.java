@@ -44,6 +44,7 @@ import static org.apache.flink.runtime.metrics.dump.MetricDumpSerialization.Metr
 /**
  * The MetricQueryService creates a key-value representation of all metrics currently registered with Flink when queried.
  *
+ * note：当查询时，MetricQueryService 会为当前所有注册到 Flink 的 metrics 创建一个 KV 缓存下来
  * <p>It is realized as an actor and can be notified of
  * - an added metric by calling {@link #addMetric(String, Metric, AbstractMetricGroup)}
  * - a removed metric by calling {@link #removeMetric(Metric)}

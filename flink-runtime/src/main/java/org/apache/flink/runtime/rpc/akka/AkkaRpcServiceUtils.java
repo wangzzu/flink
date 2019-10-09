@@ -70,6 +70,7 @@ public class AkkaRpcServiceUtils {
 	/**
 	 * Utility method to create RPC service from configuration and hostname, port.
 	 *
+	 * note: 通过配置的 hostname 和 port 创建一个 RPC service 服务
 	 * @param hostname   The hostname/address that describes the TaskManager's data location.
 	 * @param portRangeDefinition   The port range to start TaskManager on.
 	 * @param configuration                 The configuration for the TaskManager.
@@ -162,6 +163,7 @@ public class AkkaRpcServiceUtils {
 
 		checkNotNull(config, "config is null");
 
+		//note: 是否运行 ssl，默认是开启的，会对请求加密
 		final boolean sslEnabled = config.getBoolean(AkkaOptions.SSL_ENABLED) &&
 				SSLUtils.isInternalSSLEnabled(config);
 
@@ -174,6 +176,7 @@ public class AkkaRpcServiceUtils {
 	}
 
 	/**
+	 * note：返回 rpc 的 url，比如：akka.tcp://flink@127.0.1:6123/user/jobmanager
 	 * @param hostname The hostname or address where the target RPC service is listening.
 	 * @param port The port where the target RPC service is listening.
 	 * @param endpointName The name of the RPC endpoint.

@@ -312,6 +312,7 @@ public class NetUtils {
 
 	/**
 	 * Returns an iterator over available ports defined by the range definition.
+	 * note：支持端口设置多个，以及手动设置端口范围（可以看下，对于这种功能，社区是怎么来实现的）
 	 *
 	 * @param rangeDefinition String describing a single port, a range of ports or multiple ranges.
 	 * @return Set of ports from the range definition

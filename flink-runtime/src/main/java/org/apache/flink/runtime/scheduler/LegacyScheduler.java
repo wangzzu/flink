@@ -93,6 +93,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
  * A scheduler that delegates to the scheduling logic in the {@link ExecutionGraph}.
+ * note: 用于调度 ExecutionGraph 逻辑的调度器
  *
  * @see ExecutionGraph#scheduleForExecution()
  */
@@ -164,6 +165,7 @@ public class LegacyScheduler implements SchedulerNG {
 				.deserializeValue(userCodeLoader)
 				.getRestartStrategy();
 
+		//note: 重启策略设置
 		this.restartStrategy = RestartStrategyResolving.resolve(restartStrategyConfiguration,
 			restartStrategyFactory,
 			jobGraph.isCheckpointingEnabled());
@@ -173,26 +175,31 @@ public class LegacyScheduler implements SchedulerNG {
 		this.blobWriter = checkNotNull(blobWriter);
 		this.slotRequestTimeout = checkNotNull(slotRequestTimeout);
 
+		//note: create ExecutionGraph 并且检查是否可以从 cp/savepoint 恢复（可以的话，就从最近一次的 savepoint 恢复状态）
 		this.executionGraph = createAndRestoreExecutionGraph(jobManagerJobMetricGroup, checkNotNull(shuffleMaster), checkNotNull(partitionTracker));
 	}
 
+	//note: 1. create ExecutionGraph； 2. 检查是否可以从 cp/savepoint 恢复（可以的话，就从最近一次的 savepoint 恢复状态）
 	private ExecutionGraph createAndRestoreExecutionGraph(
 			JobManagerJobMetricGroup currentJobManagerJobMetricGroup,
 			ShuffleMaster<?> shuffleMaster,
 			PartitionTracker partitionTracker) throws Exception {
 
+		//note: 生成 ExecutionGraph
 		ExecutionGraph newExecutionGraph = createExecutionGraph(currentJobManagerJobMetricGroup, shuffleMaster, partitionTracker);
 
 		final CheckpointCoordinator checkpointCoordinator = newExecutionGraph.getCheckpointCoordinator();
 
 		if (checkpointCoordinator != null) {
 			// check whether we find a valid checkpoint
+			//note: check 是否可以找到一个有效的 checkpoint
 			if (!checkpointCoordinator.restoreLatestCheckpointedState(
 				newExecutionGraph.getAllVertices(),
 				false,
 				false)) {
 
 				// check whether we can restore from a savepoint
+				//note: check 我们是否可以从 savepoint 恢复
 				tryRestoreExecutionGraphFromSavepoint(newExecutionGraph, jobGraph.getSavepointRestoreSettings());
 			}
 		}
@@ -200,6 +207,7 @@ public class LegacyScheduler implements SchedulerNG {
 		return newExecutionGraph;
 	}
 
+	//note: 根据已有的作业信息构建 ExecutionGraph 对象
 	private ExecutionGraph createExecutionGraph(
 			JobManagerJobMetricGroup currentJobManagerJobMetricGroup,
 			ShuffleMaster<?> shuffleMaster,

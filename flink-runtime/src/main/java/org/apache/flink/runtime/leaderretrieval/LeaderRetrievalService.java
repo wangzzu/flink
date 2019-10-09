@@ -33,6 +33,7 @@ public interface LeaderRetrievalService {
 	/**
 	 * Starts the leader retrieval service with the given listener to listen for new leaders. This
 	 * method can only be called once.
+	 * note：主要是在 HA 模式下使用，使用指定的 listener 来监听 new leaders
 	 *
 	 * @param listener The leader retrieval listener which will be notified about new leaders.
 	 * @throws Exception

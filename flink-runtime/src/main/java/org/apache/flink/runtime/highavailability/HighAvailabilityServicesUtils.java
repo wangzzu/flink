@@ -74,15 +74,18 @@ public class HighAvailabilityServicesUtils {
 		}
 	}
 
+	//note: JM 如果配置 HA 的话，这里会创建相应的 service
 	public static HighAvailabilityServices createHighAvailabilityServices(
 		Configuration configuration,
 		Executor executor,
 		AddressResolution addressResolution) throws Exception {
 
+		//note: HA 的模式，可以是 ZOOKEEPR，也可以是 FACTORY_CLASS，默认是 NONE
 		HighAvailabilityMode highAvailabilityMode = HighAvailabilityMode.fromConfig(configuration);
 
 		switch (highAvailabilityMode) {
 			case NONE:
+				//note: 不开启 HA 的情况下是 StandaloneHaServices
 				final Tuple2<String, Integer> hostnamePort = getJobManagerAddress(configuration);
 
 				final String jobManagerRpcUrl = AkkaRpcServiceUtils.getRpcUrl(
@@ -117,6 +120,7 @@ public class HighAvailabilityServicesUtils {
 					jobManagerRpcUrl,
 					String.format("%s%s:%s", protocol, address, port));
 			case ZOOKEEPER:
+				//note: 走的 ZOOKEEPER 的模式
 				BlobStoreService blobStoreService = BlobUtils.createBlobStoreFromConfig(configuration);
 
 				return new ZooKeeperHaServices(
@@ -183,6 +187,7 @@ public class HighAvailabilityServicesUtils {
 	/**
 	 * Enum specifying whether address resolution should be tried or not when creating the
 	 * {@link HighAvailabilityServices}.
+	 * note：在创建 HighAvailabilityServices 对象时，是否需要尝试进行 地址解析（address resolution）
 	 */
 	public enum AddressResolution {
 		TRY_ADDRESS_RESOLUTION,

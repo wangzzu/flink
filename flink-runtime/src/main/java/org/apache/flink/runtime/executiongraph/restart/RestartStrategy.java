@@ -30,6 +30,7 @@ public interface RestartStrategy {
 
 	/**
 	 * True if the restart strategy can be applied to restart the {@link ExecutionGraph}.
+	 * note：如果重启策略可以使用返回 true，可以用于控制重启的频率
 	 *
 	 * @return true if restart is possible, otherwise false
 	 */
@@ -42,7 +43,7 @@ public interface RestartStrategy {
 	 *
 	 * <p>The thread that calls this method is not supposed to block/sleep.
 	 *
-	 * @param restarter The hook to restart the ExecutionGraph
+	 * @param restarter The hook to restart the ExecutionGraph note：重启 ExecutionGraph 时设置的 hook
 	 * @param executor An scheduled executor to delay the restart
 	 * @return A {@link CompletableFuture} that will be completed when the restarting process is done.
 	 */

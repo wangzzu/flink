@@ -138,6 +138,7 @@ public abstract class RestServerEndpoint implements AutoCloseableAsync {
 			final Router router = new Router();
 			final CompletableFuture<String> restAddressFuture = new CompletableFuture<>();
 
+			//note: 初始化一些 handler，如果是 DispatcherRestEndpoint，这会初始化 JobSubmitHandler
 			handlers = initializeHandlers(restAddressFuture);
 
 			/* sort the handlers such that they are ordered the following:

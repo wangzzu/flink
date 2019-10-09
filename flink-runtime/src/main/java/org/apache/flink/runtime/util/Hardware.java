@@ -49,7 +49,8 @@ public class Hardware {
 	
 	/**
 	 * Gets the number of CPU cores (hardware contexts) that the JVM has access to.
-	 * 
+	 *
+	 * note: 当前 JVM 有多少 CPU core 可用
 	 * @return The number of CPU cores.
 	 */
 	public static int getNumberCPUCores() {

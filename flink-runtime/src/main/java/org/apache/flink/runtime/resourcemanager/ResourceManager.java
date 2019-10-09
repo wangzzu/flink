@@ -193,6 +193,7 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 	// ------------------------------------------------------------------------
 
 	@Override
+	//note: 启动服务
 	public void onStart() throws Exception {
 		try {
 			startResourceManagerServices();
@@ -203,15 +204,19 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 		}
 	}
 
+	//note: 启动 ResourceManager 服务
 	private void startResourceManagerServices() throws Exception {
 		try {
 			leaderElectionService = highAvailabilityServices.getResourceManagerLeaderElectionService();
 
 			initialize();
 
+			//note: 启动 leader 选举的服务
 			leaderElectionService.start(this);
+			//note: 启动 leader 关闭的服务
 			jobLeaderIdService.start(new JobLeaderIdActionsImpl());
 
+			//note: 相关 metrics 的注册
 			registerSlotAndTaskExecutorMetrics();
 		} catch (Exception e) {
 			handleStartResourceManagerServicesException(e);
@@ -890,6 +895,7 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 	/**
 	 * Callback method when current resourceManager is granted leadership.
 	 *
+	 * note：如果当前的 resourceManager 被选举为 leader 的话，就执行这个方法
 	 * @param newLeaderSessionID unique leadershipID
 	 */
 	@Override
@@ -921,12 +927,14 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 			log.info("ResourceManager {} was granted leadership with fencing token {}", getAddress(), newResourceManagerId);
 
 			// clear the state if we've been the leader before
+			//note: 清除之前的状态
 			if (getFencingToken() != null) {
 				clearStateInternal();
 			}
 
 			setFencingToken(newResourceManagerId);
 
+			//note: 本节点启动 leader 服务
 			startServicesOnLeadership();
 
 			return prepareLeadershipAsync().thenApply(ignored -> true);
@@ -936,8 +944,10 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 	}
 
 	protected void startServicesOnLeadership() {
+		//note: 启动心跳服务
 		startHeartbeatServices();
 
+		//note: 启动 slotManager
 		slotManager.start(getFencingToken(), getMainThreadExecutor(), new ResourceActionsImpl());
 	}
 
@@ -1003,6 +1013,7 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 
 	/**
 	 * Initializes the framework specific components.
+	 * note：对于 StandaloneResourceManager 而言，这里什么都没做
 	 *
 	 * @throws ResourceManagerException which occurs during initialization and causes the resource manager to fail.
 	 */

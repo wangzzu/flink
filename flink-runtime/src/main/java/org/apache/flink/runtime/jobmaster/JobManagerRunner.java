@@ -143,6 +143,7 @@ public class JobManagerRunner implements LeaderContender, OnCompletionActions, A
 			this.leaderGatewayFuture = new CompletableFuture<>();
 
 			// now start the JobManager
+			//note: 创建 JobManager
 			this.jobMasterService = jobMasterFactory.createJobMasterService(jobGraph, this, userCodeLoader);
 		}
 		catch (Throwable t) {
@@ -175,6 +176,7 @@ public class JobManagerRunner implements LeaderContender, OnCompletionActions, A
 
 	public void start() throws Exception {
 		try {
+			//note: 启动 leader elect 服务
 			leaderElectionService.start(this);
 		} catch (Exception e) {
 			log.error("Could not start the JobManager because the leader election service did not start.", e);
@@ -278,6 +280,7 @@ public class JobManagerRunner implements LeaderContender, OnCompletionActions, A
 	//----------------------------------------------------------------------------------------------
 
 	@Override
+	//note: 当前的 jobMaster 被选为 leader 的情况下
 	public void grantLeadership(final UUID leaderSessionID) {
 		synchronized (lock) {
 			if (shutdown) {
@@ -288,6 +291,7 @@ public class JobManagerRunner implements LeaderContender, OnCompletionActions, A
 			leadershipOperation = leadershipOperation.thenCompose(
 				(ignored) -> {
 					synchronized (lock) {
+						//note: 验证 JobSchedule，并启动 JobMaster
 						return verifyJobSchedulingStatusAndStartJobManager(leaderSessionID);
 					}
 				});
@@ -309,6 +313,7 @@ public class JobManagerRunner implements LeaderContender, OnCompletionActions, A
 			});
 	}
 
+	//note: 启动 JobMaster 服务
 	private CompletionStage<Void> startJobMaster(UUID leaderSessionId) {
 		log.info("JobManager runner for job {} ({}) was granted leadership with session id {} at {}.",
 			jobGraph.getName(), jobGraph.getJobID(), leaderSessionId, getAddress());
@@ -324,6 +329,7 @@ public class JobManagerRunner implements LeaderContender, OnCompletionActions, A
 
 		final CompletableFuture<Acknowledge> startFuture;
 		try {
+			//note: 启动 JobMaster
 			startFuture = jobMasterService.start(new JobMasterId(leaderSessionId));
 		} catch (Exception e) {
 			return FutureUtils.completedExceptionally(new FlinkException("Failed to start the JobMaster.", e));

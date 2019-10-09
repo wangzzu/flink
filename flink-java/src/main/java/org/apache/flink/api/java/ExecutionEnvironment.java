@@ -1066,7 +1066,7 @@ public abstract class ExecutionEnvironment {
 	public static ExecutionEnvironment getExecutionEnvironment() {
 		return Utils.resolveFactory(threadLocalContextEnvironmentFactory, contextEnvironmentFactory)
 			.map(ExecutionEnvironmentFactory::createExecutionEnvironment)
-			.orElseGet(ExecutionEnvironment::createLocalEnvironment);
+			.orElseGet(ExecutionEnvironment::createLocalEnvironment); //note: 默认是 local 环境
 	}
 
 	/**

@@ -20,9 +20,11 @@ package org.apache.flink.runtime.jobgraph;
 
 /**
  * The ScheduleMode decides how tasks of an execution graph are started.
+ * note：调度策略：决定 execution graph 的 task 怎么启动
  */
 public enum ScheduleMode {
 	/** Schedule tasks lazily from the sources. Downstream tasks are started once their input data are ready */
+	//note: 从 source 端开始调度，一旦输入数据 ready 下游 task 开始启动
 	LAZY_FROM_SOURCES(true),
 
 	/**
@@ -30,9 +32,11 @@ public enum ScheduleMode {
 	 * execution of jobs with fewer slots than requested. However, the user needs to make sure that the job
 	 * does not contain any pipelined shuffles (every pipelined region can be executed with a single slot).
 	 */
+	//note: 与 LAZY_FROM_SOURCES 不同的是，它使用 batch slot request，并且支持作业执行即使使用的 slot 比请求的要少
 	LAZY_FROM_SOURCES_WITH_BATCH_SLOT_REQUEST(true),
 
 	/** Schedules all tasks immediately. */
+	//note: Stream 模式的默认值，立即调度所有的 task
 	EAGER(false);
 
 	private final boolean allowLazyDeployment;

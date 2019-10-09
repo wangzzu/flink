@@ -36,6 +36,7 @@ final class SchedulerNGFactoryFactory {
 
 		final String schedulerName = configuration.getString(JobManagerOptions.SCHEDULER);
 		switch (schedulerName) {
+			//note: 默认值
 			case "legacy":
 				return new LegacySchedulerFactory(restartStrategyFactory);
 

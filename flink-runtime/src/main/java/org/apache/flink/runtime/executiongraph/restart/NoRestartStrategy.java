@@ -26,6 +26,7 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * Restart strategy which does not restart an {@link ExecutionGraph}.
+ * note: 不重启的策略
  */
 public class NoRestartStrategy implements RestartStrategy {
 

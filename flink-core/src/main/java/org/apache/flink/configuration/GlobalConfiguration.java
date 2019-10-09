@@ -160,6 +160,7 @@ public final class GlobalConfiguration {
 
 	/**
 	 * Loads a YAML-file of key-value pairs.
+	 * note: load yml 文件，如果以 # 开头，就认为是注释跳过
 	 *
 	 * <p>Colon and whitespace ": " separate key and value (one per line). The hash tag "#" starts a single-line comment.
 	 *

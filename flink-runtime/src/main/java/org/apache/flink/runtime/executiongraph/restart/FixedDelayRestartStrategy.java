@@ -33,12 +33,13 @@ import scala.concurrent.duration.Duration;
 /**
  * Restart strategy which tries to restart the given {@link ExecutionGraph} a fixed number of times
  * with a fixed time delay in between.
+ * note：限制最大重启次数的 ExecutionGraph 重启策略
  */
 public class FixedDelayRestartStrategy implements RestartStrategy {
 
-	private final int maxNumberRestartAttempts;
-	private final long delayBetweenRestartAttempts;
-	private int currentRestartAttempt;
+	private final int maxNumberRestartAttempts; //note: 最大的重试次数限制
+	private final long delayBetweenRestartAttempts; //note: 重启间隔时间限制
+	private int currentRestartAttempt; //note: 当期重启次数记录
 
 	public FixedDelayRestartStrategy(
 		int maxNumberRestartAttempts,

@@ -37,6 +37,7 @@ import java.util.List;
  * This Transformation represents the application of a
  * {@link TwoInputStreamOperator} to two input {@code Transformations}.
  * The result is again only one stream.
+ * note:
  *
  * @param <IN1> The type of the elements in the first input {@code Transformation}
  * @param <IN2> The type of the elements in the second input {@code Transformation}

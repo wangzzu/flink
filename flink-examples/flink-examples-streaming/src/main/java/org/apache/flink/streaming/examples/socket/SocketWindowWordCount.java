@@ -87,9 +87,12 @@ public class SocketWindowWordCount {
 				});
 
 		// print the results with a single thread, rather than in parallel
-		windowCounts.print().setParallelism(1);
+		windowCounts.print().setParallelism(8);
 
-		env.execute("Socket Window WordCount");
+		System.out.println("StreamGraph:\t" + env.getStreamGraph().getStreamingPlanAsJSON());
+		System.out.println("JobGraph:\t" + env.getStreamGraph().getJobGraph().toString());
+		System.out.println("ExecutionGraph:\t" + env.getExecutionPlan());
+		//env.execute("Socket Window WordCount");
 	}
 
 	// ------------------------------------------------------------------------

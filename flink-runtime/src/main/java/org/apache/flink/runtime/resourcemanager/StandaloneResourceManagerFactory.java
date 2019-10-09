@@ -38,6 +38,7 @@ import javax.annotation.Nullable;
 public enum StandaloneResourceManagerFactory implements ResourceManagerFactory<ResourceID> {
 	INSTANCE;
 
+	//note: Standalone 模式下，使用 StandaloneResourceManagerFactory 类
 	@Override
 	public ResourceManager<ResourceID> createResourceManager(
 			Configuration configuration,
@@ -51,6 +52,7 @@ public enum StandaloneResourceManagerFactory implements ResourceManagerFactory<R
 			@Nullable String webInterfaceUrl,
 			JobManagerMetricGroup jobManagerMetricGroup) throws Exception {
 		final ResourceManagerRuntimeServicesConfiguration resourceManagerRuntimeServicesConfiguration = ResourceManagerRuntimeServicesConfiguration.fromConfiguration(configuration);
+		//note: 这里会初始化本地的 TaskManager
 		final ResourceManagerRuntimeServices resourceManagerRuntimeServices = ResourceManagerRuntimeServices.fromConfiguration(
 			resourceManagerRuntimeServicesConfiguration,
 			highAvailabilityServices,

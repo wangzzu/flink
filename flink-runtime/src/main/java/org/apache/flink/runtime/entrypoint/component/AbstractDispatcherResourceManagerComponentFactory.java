@@ -95,6 +95,7 @@ public abstract class AbstractDispatcherResourceManagerComponentFactory<T extend
 		this.restEndpointFactory = restEndpointFactory;
 	}
 
+	//note: 创建 DispatcherResourceManagerComponent 对象
 	@Override
 	public DispatcherResourceManagerComponent<T> create(
 			Configuration configuration,
@@ -147,6 +148,7 @@ public abstract class AbstractDispatcherResourceManagerComponentFactory<T extend
 					dispatcherGatewayRetriever,
 					executor);
 
+			//note: stand alone 模式下，这里创建的是 DispatcherRestEndpoint 对象
 			webMonitorEndpoint = restEndpointFactory.createRestEndpoint(
 				configuration,
 				dispatcherGatewayRetriever,
@@ -157,7 +159,8 @@ public abstract class AbstractDispatcherResourceManagerComponentFactory<T extend
 				highAvailabilityServices.getWebMonitorLeaderElectionService(),
 				fatalErrorHandler);
 
-			log.debug("Starting Dispatcher REST endpoint.");
+			//note: 启动 DispatcherRestEndpoint
+			log.debug("Sarting Dispatcher REST endptoint.");
 			webMonitorEndpoint.start();
 
 			final String hostname = getHostname(rpcService);
@@ -167,6 +170,7 @@ public abstract class AbstractDispatcherResourceManagerComponentFactory<T extend
 				hostname,
 				ConfigurationUtils.getSystemResourceMetricsProbingInterval(configuration));
 
+			//note: 创建 ResourceManager 对象
 			resourceManager = resourceManagerFactory.createResourceManager(
 				configuration,
 				ResourceID.generate(),
@@ -181,6 +185,7 @@ public abstract class AbstractDispatcherResourceManagerComponentFactory<T extend
 
 			final HistoryServerArchivist historyServerArchivist = HistoryServerArchivist.createHistoryServerArchivist(configuration, webMonitorEndpoint);
 
+			//note: 创建 dispatcher 对象
 			dispatcher = dispatcherFactory.createDispatcher(
 				configuration,
 				rpcService,

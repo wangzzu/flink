@@ -37,6 +37,7 @@ import java.util.List;
  * This Transformation represents the application of a
  * {@link org.apache.flink.streaming.api.operators.OneInputStreamOperator} to one input
  * {@link Transformation}.
+ * note：只有一个输入的 Transformation 的具体实现
  *
  * @param <IN> The type of the elements in the input {@code Transformation}
  * @param <OUT> The type of the elements that result from this {@code OneInputTransformation}

@@ -47,6 +47,7 @@ import java.util.concurrent.ExecutorService;
 
 /**
  * REST endpoint for the {@link Dispatcher} component.
+ * note: REST endpoint
  */
 public class DispatcherRestEndpoint extends WebMonitorEndpoint<DispatcherGateway> {
 
@@ -87,6 +88,7 @@ public class DispatcherRestEndpoint extends WebMonitorEndpoint<DispatcherGateway
 
 		final Time timeout = restConfiguration.getTimeout();
 
+		//note: 创建 jobSubmitHandler 对象，用于提交 job
 		JobSubmitHandler jobSubmitHandler = new JobSubmitHandler(
 			leaderRetriever,
 			timeout,

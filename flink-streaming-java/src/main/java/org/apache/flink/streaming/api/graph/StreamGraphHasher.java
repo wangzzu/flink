@@ -31,6 +31,7 @@ public interface StreamGraphHasher {
 	 * Returns a map with a hash for each {@link StreamNode} of the {@link
 	 * StreamGraph}. The hash is used as the {@link JobVertexID} in order to
 	 * identify nodes across job submissions if they didn't change.
+	 * note：给每个 StreamNode 生成一个 hash id，这个 id 是作为 JobVertexID
 	 */
 	Map<Integer, byte[]> traverseStreamGraphAndGenerateHashes(StreamGraph streamGraph);
 }

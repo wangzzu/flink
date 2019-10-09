@@ -91,6 +91,7 @@ public class MetricRegistryImpl implements MetricRegistry {
 
 	/**
 	 * Creates a new MetricRegistry and starts the configured reporter.
+	 * note：metrics reporter
 	 */
 	public MetricRegistryImpl(MetricRegistryConfiguration config, Collection<ReporterSetup> reporterConfigurations) {
 		this.maximumFramesize = config.getQueryServiceMessageSizeLimit();

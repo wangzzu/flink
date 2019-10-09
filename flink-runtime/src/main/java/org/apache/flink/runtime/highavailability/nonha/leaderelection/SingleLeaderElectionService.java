@@ -42,6 +42,7 @@ import static org.apache.flink.util.Preconditions.checkState;
  * An implementation of the {@link LeaderElectionService} interface that handles a single
  * leader contender. When started, this service immediately grants the contender the leadership.
  *
+ * note: 当启动后，当前的节点会被立马选为 leader
  * <p>The implementation accepts a single static leader session ID and is hence compatible with
  * pre-configured single leader (no leader failover) setups.
  *
@@ -102,6 +103,7 @@ public class SingleLeaderElectionService implements LeaderElectionService {
 	//  leader election service
 	// ------------------------------------------------------------------------
 
+	//note: 启动
 	@Override
 	public void start(LeaderContender contender) throws Exception {
 		checkNotNull(contender, "contender");
@@ -112,6 +114,7 @@ public class SingleLeaderElectionService implements LeaderElectionService {
 
 			// directly grant leadership to the given contender
 			proposedLeader = contender;
+			//note: 调用
 			notificationExecutor.execute(new GrantLeadershipCall(contender, leaderId));
 		}
 	}
@@ -341,6 +344,7 @@ public class SingleLeaderElectionService implements LeaderElectionService {
 		@Override
 		public void run() {
 			try {
+				//note: 这里会调用
 				contender.grantLeadership(leaderSessionId);
 			}
 			catch (Throwable t) {

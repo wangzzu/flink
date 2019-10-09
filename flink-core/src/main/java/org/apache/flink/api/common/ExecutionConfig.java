@@ -189,6 +189,8 @@ public class ExecutionConfig implements Serializable, Archiveable<ArchivedExecut
 	 * that are not used. This will in most cases make closures or anonymous inner classes
 	 * serializable that where not serializable due to some Scala or Java implementation artifact.
 	 * User code must be serializable because it needs to be sent to worker nodes.
+	 * note：允许 ClosureCleaner，它会分析 user code function，并且把不使用的 field 设置为 null
+	 * note：大部分情况下，它会使得 closures 或者其他的匿名内部类可序列化
 	 */
 	public ExecutionConfig enableClosureCleaner() {
 		this.closureCleanerLevel = ClosureCleanerLevel.RECURSIVE;
@@ -1089,16 +1091,19 @@ public class ExecutionConfig implements Serializable, Archiveable<ArchivedExecut
 	public enum ClosureCleanerLevel {
 		/**
 		 * Disable the closure cleaner completely.
+		 * note：完全不允许关闭时清理
 		 */
 		NONE,
 
 		/**
 		 * Clean only the top-level class without recursing into fields.
+		 * note：只清理 top-level 的类，并且不会递归清理其他字段
 		 */
 		TOP_LEVEL,
 
 		/**
 		 * Clean all the fields recursively.
+		 * note: 递归地清理所有 field
 		 */
 		RECURSIVE
 	}

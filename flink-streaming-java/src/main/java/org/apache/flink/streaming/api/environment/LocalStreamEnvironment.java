@@ -78,11 +78,13 @@ public class LocalStreamEnvironment extends StreamExecutionEnvironment {
 	/**
 	 * Executes the JobGraph of the on a mini cluster of ClusterUtil with a user
 	 * specified name.
+	 * note: 在本地以 miniCluster 的模式执行这个 job
 	 *
 	 * @return The result of the job execution, containing elapsed time and accumulators.
 	 */
 	@Override
 	public JobExecutionResult execute(StreamGraph streamGraph) throws Exception {
+		//note: 先获取 jobGraph
 		JobGraph jobGraph = streamGraph.getJobGraph();
 		jobGraph.setAllowQueuedScheduling(true);
 
@@ -97,6 +99,7 @@ public class LocalStreamEnvironment extends StreamExecutionEnvironment {
 			configuration.setString(RestOptions.BIND_PORT, "0");
 		}
 
+		//note: miniCluster 的模式下才需要获取
 		int numSlotsPerTaskManager = configuration.getInteger(TaskManagerOptions.NUM_TASK_SLOTS, jobGraph.getMaximumParallelism());
 
 		MiniClusterConfiguration cfg = new MiniClusterConfiguration.Builder()

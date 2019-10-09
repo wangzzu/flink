@@ -33,6 +33,7 @@ import static org.apache.flink.util.Preconditions.checkArgument;
 
 /**
  * Describe the different resource factors of the operator with UDF.
+ * note：描述一个 Operator 不同资源的元素
  *
  * <p>The state backend provides the method to estimate memory usages based on state size in the resource.
  *
@@ -56,6 +57,7 @@ public final class ResourceSpec implements Serializable {
 
 	/**
 	 * A ResourceSpec that indicates an unknown set of resources.
+	 * note：默认值
 	 */
 	public static final ResourceSpec UNKNOWN = new ResourceSpec();
 
@@ -141,6 +143,7 @@ public final class ResourceSpec implements Serializable {
 	/**
 	 * Used by system internally to merge the other resources of chained operators
 	 * when generating the job graph or merge the resource consumed by state backend.
+	 * note：在 chain 的时候，把不同 Operator 的 ResourceSpec merge 在一起（CPU 取最大值，其他取和）
 	 *
 	 * @param other Reference to resource to merge in.
 	 * @return The new resource with merged values.

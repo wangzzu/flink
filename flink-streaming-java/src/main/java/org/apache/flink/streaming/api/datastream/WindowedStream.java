@@ -122,6 +122,7 @@ public class WindowedStream<T, K, W extends Window> {
  	 */
 	private OutputTag<T> lateDataOutputTag;
 
+	//note: 会有 input，标识其前置 stream 节点
 	@PublicEvolving
 	public WindowedStream(KeyedStream<T, K> input,
 			WindowAssigner<? super T, W> windowAssigner) {

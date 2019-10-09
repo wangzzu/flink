@@ -145,6 +145,7 @@ public final class WebMonitorUtils {
 	/**
 	 * Loads the {@link WebMonitorExtension} which enables web submission.
 	 *
+	 * note：加载 WebMonitorExtension
 	 * @param leaderRetriever to retrieve the leader
 	 * @param timeout for asynchronous requests
 	 * @param responseHeaders for the web submission handlers

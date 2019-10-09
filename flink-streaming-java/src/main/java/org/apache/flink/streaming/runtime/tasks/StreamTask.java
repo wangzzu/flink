@@ -86,6 +86,10 @@ import java.util.concurrent.atomic.AtomicReference;
  * the Task's operator chain. Operators that are chained together execute synchronously in the
  * same thread and hence on the same stream partition. A common case for these chains
  * are successive map/flatmap/filter tasks.
+ * note：所有 Stream task 的基本单元，一个 task 是逻辑处理（TaskManager 调度和执行）的基本单元
+ * note：每个 task 都执行 Task's operator chain 中的一个或多个 StreamOperator
+ * note：chain 在一起的 operators 是同步在同一个线程中执行（因此也在同一个 stream partition 中），比如：map/flatmap/filter task
+ * note：task chain 会包含 head operator 以及多个 chained operator
  *
  * <p>The task chain contains one "head" operator and multiple chained operators.
  * The StreamTask is specialized for the type of the head operator: one-input and two-input tasks,
@@ -96,6 +100,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * thus have multiple ends.
  *
  * <p>The life cycle of the task is set up as follows:
+ * note：task 的生命周期如下：
  * <pre>{@code
  *  -- setInitialState -> provides state of all operators in the chain
  *
@@ -113,6 +118,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *        +----> task specific cleanup()
  * }</pre>
  *
+ * note：注意线程安全
  * <p>The {@code StreamTask} has a lock object called {@code lock}. All calls to methods on a
  * {@code StreamOperator} must be synchronized on this lock object to ensure that no methods
  * are called concurrently.
