@@ -2,6 +2,7 @@ package org.apache.flink.streaming.examples.matt;
 
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
@@ -18,35 +19,31 @@ public class RandomWordCount {
 		// get the execution environment
 		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
+		//note 模拟两个数据源，它们会生成一行随机单词组（单词之间是空格分隔）
 		DataStream<String> inputStream = env.addSource(new RandomWordCount.RandomStringSource());
 		DataStream<String> inputStream2 = env.addSource(new RandomWordCount.RandomStringSource());
 
+		//note: 先对流做 union，然后做一个过滤后，做 word-count
 		inputStream.union(inputStream2)
-			.flatMap(new FlatMapFunction<String, RandomWordCount.WordWithCount>() {
+			.flatMap(new FlatMapFunction<String, Tuple2<String, Integer>>() {
 				@Override
-				public void flatMap(String value, Collector<RandomWordCount.WordWithCount> out) {
+				public void flatMap(String value, Collector<Tuple2<String, Integer>> out) {
 					for (String word : value.split("\\s")) {
-						out.collect(new RandomWordCount.WordWithCount(word, 1L));
+						out.collect(Tuple2.of(word, 1));
 					}
 				}
 			})
 			.shuffle()
-			.filter(new FilterFunction<RandomWordCount.WordWithCount>() {
+			.filter(new FilterFunction<Tuple2<String, Integer>>() {
 				@Override
-				public boolean filter(RandomWordCount.WordWithCount value) throws Exception {
-					if (value.word.contains("ha")) {
+				public boolean filter(Tuple2<String, Integer> value) throws Exception {
+					if (value.f0.startsWith("a")) {
 						return true;
 					} else {
 						return false;
 					}
 				}
-			}).shuffle()
-			.flatMap(new FlatMapFunction<RandomWordCount.WordWithCount, String>() {
-				@Override
-				public void flatMap(RandomWordCount.WordWithCount value, Collector<String> out) {
-					out.collect(value.word);
-				}
-			})
+			}).keyBy(0).sum(1)
 			.print()
 			.setParallelism(8);
 
@@ -74,7 +71,7 @@ public class RandomWordCount {
 			while (isRunning && counter < BOUND) {
 				int first = rnd.nextInt(BOUND / 2 - 1) + 1;
 				int second = rnd.nextInt(BOUND / 2 - 1) + 1;
-				counter ++;
+				counter++;
 
 				ctx.collect(generatorRandomWorldLine(first, second));
 				Thread.sleep(50L);
@@ -109,29 +106,6 @@ public class RandomWordCount {
 			}
 
 			return stringBuilder.toString();
-		}
-	}
-
-	// ------------------------------------------------------------------------
-
-	/**
-	 * Data type for words with count.
-	 */
-	public static class WordWithCount {
-
-		public String word;
-		public long count;
-
-		public WordWithCount() {}
-
-		public WordWithCount(String word, long count) {
-			this.word = word;
-			this.count = count;
-		}
-
-		@Override
-		public String toString() {
-			return word + " : " + count;
 		}
 	}
 }
