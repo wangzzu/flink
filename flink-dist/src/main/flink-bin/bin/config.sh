@@ -503,7 +503,7 @@ if [ -z "${ZK_HEAP}" ]; then
 fi
 
 # High availability
-if [ -z "${HIGH_AVAILABILITY}" ]; then
+if [ -z "${HIGH_AVAILABILITY}" ]; then #note -z：判断字符串是否为空
      HIGH_AVAILABILITY=$(readFromConfig ${KEY_HIGH_AVAILABILITY} "" "${YAML_CONF}")
      if [ -z "${HIGH_AVAILABILITY}" ]; then
         # Try deprecated value
@@ -660,12 +660,14 @@ TMSlaves() {
 
     if [ ${SLAVES_ALL_LOCALHOST} = true ] ; then
         # all-local setup
+        # note: 所有的 slave 都在本地启动的情况下
         for slave in ${SLAVES[@]}; do
             "${FLINK_BIN_DIR}"/taskmanager.sh "${CMD}"
         done
     else
         # non-local setup
         # Stop TaskManager instance(s) using pdsh (Parallel Distributed Shell) when available
+        # note: 使用 Pdsh 启动远程的 TM
         command -v pdsh >/dev/null 2>&1
         if [[ $? -ne 0 ]]; then
             for slave in ${SLAVES[@]}; do

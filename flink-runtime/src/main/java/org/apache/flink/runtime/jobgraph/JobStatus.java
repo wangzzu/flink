@@ -20,6 +20,7 @@ package org.apache.flink.runtime.jobgraph;
 
 /**
  * Possible states of a job once it has been accepted by the job manager.
+ * note：一个 job 可能的状态（以及与 TerminalState 的对应关系）
  */
 public enum JobStatus {
 
@@ -74,6 +75,7 @@ public enum JobStatus {
 	 * Checks whether this state is <i>globally terminal</i>. A globally terminal job
 	 * is complete and cannot fail any more and will not be restarted or recovered by another
 	 * standby master node.
+	 * note: 检查状态是不是 globally terminal
 	 *
 	 * <p>When a globally terminal state has been reached, all recovery data for the job is
 	 * dropped from the high-availability services.

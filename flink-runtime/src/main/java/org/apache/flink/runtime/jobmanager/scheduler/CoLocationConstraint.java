@@ -39,6 +39,7 @@ import static org.apache.flink.util.Preconditions.checkState;
  * (Execution Vertices). In co-location groups, the different subtasks of
  * different JobVertices need to be executed on the same {@link Instance}.
  * This is realized by creating a special shared slot that holds these tasks.
+ * note: CoLocationConstraint 管理着一个 task 集合，它们需要在同一个实例中执行，创建一个特殊的 shared slot 来 hold 这些 task
  * 
  * <p>This class tracks the location and the shared slot for this set of tasks.
  */
@@ -174,6 +175,7 @@ public class CoLocationConstraint {
 	/**
 	 * Locks the location of this slot. The location can be locked only once
 	 * and only after a shared slot has been assigned.
+	 * note: 这个只能被 lock 一次，指定了对应的 TaskManagerLocation
 	 *
 	 * <p>Note: This method exists for compatibility reasons with the new {@link SlotPool}.
 	 *

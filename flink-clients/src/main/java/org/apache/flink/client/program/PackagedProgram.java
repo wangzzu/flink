@@ -512,6 +512,7 @@ public class PackagedProgram {
 
 	/**
 	 * Deletes all temporary files created for contained packaged libraries.
+	 * note: 删除这个作业所有的临时文件
 	 */
 	public void deleteExtractedLibraries() {
 		deleteExtractedLibraries(this.extractedTempLibraries);

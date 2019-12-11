@@ -184,6 +184,7 @@ public class JobManagerRunner implements LeaderContender, OnCompletionActions, A
 		}
 	}
 
+	//note: 异步关闭 JobManager
 	@Override
 	public CompletableFuture<Void> closeAsync() {
 		synchronized (lock) {
@@ -229,6 +230,7 @@ public class JobManagerRunner implements LeaderContender, OnCompletionActions, A
 
 	/**
 	 * Job completion notification triggered by JobManager.
+	 * note: job 完成之后通知
 	 */
 	@Override
 	public void jobReachedGloballyTerminalState(ArchivedExecutionGraph executionGraph) {
@@ -301,13 +303,16 @@ public class JobManagerRunner implements LeaderContender, OnCompletionActions, A
 	}
 
 	private CompletableFuture<Void> verifyJobSchedulingStatusAndStartJobManager(UUID leaderSessionId) {
+		//note: 拿到作业的调度状态
 		final CompletableFuture<JobSchedulingStatus> jobSchedulingStatusFuture = getJobSchedulingStatus();
 
 		return jobSchedulingStatusFuture.thenCompose(
 			jobSchedulingStatus -> {
 				if (jobSchedulingStatus == JobSchedulingStatus.DONE) {
+					//note: 如果调度完成的话，会走到这里
 					return jobAlreadyDone();
 				} else {
+					//note: 启动 JobMaster
 					return startJobMaster(leaderSessionId);
 				}
 			});
@@ -319,6 +324,7 @@ public class JobManagerRunner implements LeaderContender, OnCompletionActions, A
 			jobGraph.getName(), jobGraph.getJobID(), leaderSessionId, getAddress());
 
 		try {
+			//note: 更新作业的状态
 			runningJobsRegistry.setJobRunning(jobGraph.getJobID());
 		} catch (IOException e) {
 			return FutureUtils.completedExceptionally(

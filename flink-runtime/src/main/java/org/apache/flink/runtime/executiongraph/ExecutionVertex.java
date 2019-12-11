@@ -80,6 +80,7 @@ public class ExecutionVertex implements AccessExecutionVertex, Archiveable<Archi
 
 	private final Map<IntermediateResultPartitionID, IntermediateResultPartition> resultPartitions;
 
+	//note: 当前 ExecutionVertex 上每一个 input 所包含的 ExecutionEdge 列表
 	private final ExecutionEdge[][] inputEdges;
 
 	private final int subTaskIndex;
@@ -124,6 +125,7 @@ public class ExecutionVertex implements AccessExecutionVertex, Archiveable<Archi
 
 	/**
 	 * Creates an ExecutionVertex.
+	 * note: 创建一个 ExecutionVertex 对象
 	 *
 	 * @param timeout
 	 *            The RPC timeout to use for deploy / cancel calls
@@ -334,6 +336,7 @@ public class ExecutionVertex implements AccessExecutionVertex, Archiveable<Archi
 	/**
 	 * Gets the location where the latest completed/canceled/failed execution of the vertex's
 	 * task happened.
+	 * note: 获取这个 execution 最近一次 execution 发生的 location
 	 *
 	 * @return The latest prior execution location, or null, if there is none, yet.
 	 */
@@ -369,6 +372,7 @@ public class ExecutionVertex implements AccessExecutionVertex, Archiveable<Archi
 	//  Graph building
 	// --------------------------------------------------------------------------------------------
 
+	//note:
 	public void connectSource(int inputNumber, IntermediateResult source, JobEdge edge, int consumerNumber) {
 
 		final DistributionPattern pattern = edge.getDistributionPattern();
@@ -376,6 +380,7 @@ public class ExecutionVertex implements AccessExecutionVertex, Archiveable<Archi
 
 		ExecutionEdge[] edges;
 
+		//note: 只有 forward 的方式的情况下，pattern 才是 POINTWISE 的，否则均为 ALL_TO_ALL
 		switch (pattern) {
 			case POINTWISE:
 				edges = connectPointwise(sourcePartitions, inputNumber);
@@ -395,6 +400,7 @@ public class ExecutionVertex implements AccessExecutionVertex, Archiveable<Archi
 		// add the consumers to the source
 		// for now (until the receiver initiated handshake is in place), we need to register the
 		// edges as the execution graph
+		//note: 之前已经为 IntermediateResult 添加了 consumer，这里为 IntermediateResultPartition 添加 consumer，即关联到 ExecutionEdge 上
 		for (ExecutionEdge ee : edges) {
 			ee.getSource().addConsumer(ee, consumerNumber);
 		}
@@ -478,9 +484,14 @@ public class ExecutionVertex implements AccessExecutionVertex, Archiveable<Archi
 	 *     <li>If the task execution has no state or no previous location, then the location preference
 	 *         is based on the task's inputs.
 	 * </ol>
+	 * note: 如果这个 task Execution 是从 checkpoint 加载的状态，那么这个 location preference 就是之前执行的状态；
+	 * note: 如果这个 task Execution 没有状态信息或之前的 location 记录，这个 location preference 依赖于 task 的输入；
 	 *
 	 * <p>These rules should result in the following behavior:
 	 *
+	 * note: 1. 无状态 task 总是基于与输入共享的方式调度；
+	 * note: 2. 有状态 task 基于与输入共享的方式来初始化他们最开始的调度；
+	 * note: 3. 有状态 task 的重复执行会尽量与他们的 state 共享执行；
 	 * <ul>
 	 *     <li>Stateless tasks are always scheduled based on co-location with inputs.
 	 *     <li>Stateful tasks are on their initial attempt executed based on co-location with inputs.
@@ -500,6 +511,7 @@ public class ExecutionVertex implements AccessExecutionVertex, Archiveable<Archi
 	/**
 	 * Gets the preferred location to execute the current task execution attempt, based on the state
 	 * that the execution attempt will resume.
+	 * note: 根据这个 Execution 试图恢复的状态来获取当前 task execution 的首选位置
 	 *
 	 * @return A size-one collection with the location preference, or null, if there is no
 	 *         location preference based on the state.
@@ -519,6 +531,7 @@ public class ExecutionVertex implements AccessExecutionVertex, Archiveable<Archi
 	 * of the predecessors from which it receives input data.
 	 * If there are more than MAX_DISTINCT_LOCATIONS_TO_CONSIDER different locations of source data, this
 	 * method returns {@code null} to indicate no location preference.
+	 * note: 基于这个 task 接收数据的上游节点的位置来分配当前这个 task Execution 的位置（如果上游数据的位置超过了 MAX_DISTINCT_LOCATIONS_TO_CONSIDER 默认是 8，那么就返回 null）
 	 *
 	 * @return The preferred locations based in input streams, or an empty iterable,
 	 *         if there is no input-based preference.
@@ -529,6 +542,7 @@ public class ExecutionVertex implements AccessExecutionVertex, Archiveable<Archi
 			return Collections.emptySet();
 		}
 		else {
+			//note: 初始化两个集合，集合初始大小是这个算子的并发
 			Set<CompletableFuture<TaskManagerLocation>> locations = new HashSet<>(getTotalNumberOfParallelSubtasks());
 			Set<CompletableFuture<TaskManagerLocation>> inputLocations = new HashSet<>(getTotalNumberOfParallelSubtasks());
 
@@ -554,6 +568,7 @@ public class ExecutionVertex implements AccessExecutionVertex, Archiveable<Archi
 				if (locations.isEmpty() || // nothing assigned yet
 						(!inputLocations.isEmpty() && inputLocations.size() < locations.size())) {
 					// current input has fewer preferred locations
+					//note: 直接使用的是 input 的 TM 位置
 					locations.clear();
 					locations.addAll(inputLocations);
 				}
@@ -569,6 +584,7 @@ public class ExecutionVertex implements AccessExecutionVertex, Archiveable<Archi
 
 	/**
 	 * Archives the current Execution and creates a new Execution for this vertex.
+	 * note: 将当前的 execution 存档，并给这个 vertex 创建一个新的 execution
 	 *
 	 * <p>This method atomically checks if the ExecutionGraph is still of an expected
 	 * global mod. version and replaces the execution if that is the case. If the ExecutionGraph
@@ -620,6 +636,7 @@ public class ExecutionVertex implements AccessExecutionVertex, Archiveable<Archi
 					timestamp,
 					timeout);
 
+				//note: 给这个 ExecutionVertex 新创建一个 Execution，它代表了执行的一次新尝试
 				currentExecution = newExecution;
 
 				synchronized (inputSplits) {
@@ -659,6 +676,7 @@ public class ExecutionVertex implements AccessExecutionVertex, Archiveable<Archi
 
 	/**
 	 * Schedules the current execution of this ExecutionVertex.
+	 * note: 调度这个 ExecutionVertex 的当前 execution
 	 *
 	 * @param slotProviderStrategy to allocate the slots from
 	 * @param locationPreferenceConstraint constraint for the location preferences

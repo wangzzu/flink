@@ -23,6 +23,7 @@ import org.apache.flink.annotation.Public;
 /**
  * The execution mode specifies how a batch program is executed in terms
  * of data exchange: pipelining or batched.
+ * note: 描述了一个作业数据交换的模式：pipelining/batched
  */
 @Public
 public enum ExecutionMode {

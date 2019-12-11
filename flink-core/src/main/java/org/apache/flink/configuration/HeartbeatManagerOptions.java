@@ -35,6 +35,7 @@ public class HeartbeatManagerOptions {
 			.withDescription("Time interval for requesting heartbeat from sender side.");
 
 	/** Timeout for requesting and receiving heartbeat for both sender and receiver sides. */
+	//note: 心跳默认超时时间是 50s
 	public static final ConfigOption<Long> HEARTBEAT_TIMEOUT =
 			key("heartbeat.timeout")
 			.defaultValue(50000L)

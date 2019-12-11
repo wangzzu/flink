@@ -267,7 +267,7 @@ public abstract class FileSystem {
 
 	/**
 	 * Initializes the shared file system settings.
-	 * note：初始化共享文件系统设置
+	 * note：初始文件系统的共同设置
 	 *
 	 * <p>The given configuration is passed to each file system factory to initialize the respective
 	 * file systems. Because the configuration of file systems may be different subsequent to the call
@@ -304,6 +304,7 @@ public abstract class FileSystem {
 			final List<FileSystemFactory> fileSystemFactories = loadFileSystemFactories(factorySuppliers);
 
 			// configure all file system factories
+			//note: 配置相应的文件系统
 			for (FileSystemFactory factory : fileSystemFactories) {
 				factory.configure(config);
 				String scheme = factory.getScheme();

@@ -220,6 +220,7 @@ class RocksDBListState<K, N, V>
 				throw new FlinkRuntimeException("Error while updating data to RocksDB", e);
 			}
 		} else {
+			//note: 如果写入的 values 是 empty 的话，这里会将该 key 对应的 value list 清除掉
 			clear();
 		}
 	}

@@ -40,6 +40,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 /**
  * Configuration for the task manager services such as the memory manager,
  * the io manager and the metric registry.
+ * note: TM 服务的一些配置，比如：内存管理、IO 管理和 metrics 注册
  */
 public class TaskManagerServicesConfiguration {
 
@@ -259,12 +260,15 @@ public class TaskManagerServicesConfiguration {
 			localStateRootDir = tmpDirs;
 		}
 
+		//note: localRecoveryMode 默认是不允许的
 		boolean localRecoveryMode = configuration.getBoolean(CheckpointingOptions.LOCAL_RECOVERY);
 
+		//note: queryableStateConfig 相关的配置
 		final QueryableStateConfiguration queryableStateConfig = QueryableStateConfiguration.fromConfiguration(configuration);
 
 		boolean preAllocateMemory = configuration.getBoolean(TaskManagerOptions.MANAGED_MEMORY_PRE_ALLOCATE);
 
+		//note: AKKA 超时设置
 		long timerServiceShutdownTimeout = AkkaUtils.getTimeout(configuration).toMillis();
 
 		final RetryingRegistrationConfiguration retryingRegistrationConfiguration = RetryingRegistrationConfiguration.fromConfiguration(configuration);

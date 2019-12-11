@@ -30,12 +30,14 @@ import java.util.Optional;
 
 /**
  * Interface for slot selection strategies to be used in the {@link Scheduler}.
+ * note：对于调度器，选择 slot 的策略
  */
 public interface SlotSelectionStrategy {
 
 	/**
 	 * Selects the best {@link SlotInfo} w.r.t. a certain selection criterion from the provided list of available slots
 	 * and considering the given {@link SlotProfile} that describes the requirements.
+	 * note: 根据 SlotProfile 从可用的 slot 列表中选择最佳的 slot
 	 *
 	 * @param availableSlots a list of the available slots together with their remaining resources to select from.
 	 * @param slotProfile a slot profile, describing requirements for the slot selection.

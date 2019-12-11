@@ -44,6 +44,7 @@ import static org.apache.flink.util.Preconditions.checkState;
 /**
  * This class contains scheduling logic for EAGER and LAZY_FROM_SOURCES.
  * It is used for normal scheduling and legacy failover strategy re-scheduling.
+ * note：这里主要是调度的逻辑
  */
 public class SchedulingUtils {
 
@@ -67,6 +68,7 @@ public class SchedulingUtils {
 
 	/**
 	 * Schedule vertices lazy. That means only vertices satisfying its input constraint will be scheduled.
+	 * note: 从 source 端开始调度
 	 *
 	 * @param vertices Topologically sorted vertices to schedule.
 	 * @param executionGraph The graph the given vertices belong to.
@@ -77,16 +79,20 @@ public class SchedulingUtils {
 
 		executionGraph.assertRunningInJobMasterMainThread();
 
+		//note: slot 的调度策略
 		final SlotProviderStrategy slotProviderStrategy = executionGraph.getSlotProviderStrategy();
+		//note: 之前分配的 AllocationID 列表
 		final Set<AllocationID> previousAllocations = computePriorAllocationIdsIfRequiredByScheduling(
 			vertices, slotProviderStrategy.asSlotProvider());
 
 		final ArrayList<CompletableFuture<Void>> schedulingFutures = new ArrayList<>();
 		for (ExecutionVertex executionVertex : vertices) {
 			// only schedule vertex when its input constraint is satisfied
+			//note: 仅仅调度那些的输入约束被满足的 vertex（是 source 节点或者上游节点数据已经可以消费了）
 			if (executionVertex.getJobVertex().getJobVertex().isInputVertex() ||
 				executionVertex.checkInputDependencyConstraints()) {
 
+				//note: 调度这个 vertex
 				final CompletableFuture<Void> schedulingVertexFuture = executionVertex.scheduleForExecution(
 					slotProviderStrategy,
 					LocationPreferenceConstraint.ANY,
@@ -101,6 +107,7 @@ public class SchedulingUtils {
 
 	/**
 	 * Schedule vertices eagerly. That means all vertices will be scheduled at once.
+	 * note: 所有的节点会被同时调度
 	 *
 	 * @param vertices Topologically sorted vertices to schedule.
 	 * @param executionGraph The graph the given vertices belong to.
@@ -144,6 +151,7 @@ public class SchedulingUtils {
 			(Collection<Execution> executionsToDeploy) -> {
 				for (Execution execution : executionsToDeploy) {
 					try {
+						//note: 部署每个 Execution
 						execution.deploy();
 					} catch (Throwable t) {
 						throw new CompletionException(
@@ -204,6 +212,7 @@ public class SchedulingUtils {
 	 * Returns the result of {@link #computePriorAllocationIds(Iterable)},
 	 * but only if the scheduling really requires it.
 	 * Otherwise this method simply returns an empty set.
+	 * note: 如果需要之前的调度分配的情况，这里就会返回相应的结果，否则的话，返回的是一个空集合
 	 */
 	private static Set<AllocationID> computePriorAllocationIdsIfRequiredByScheduling(
 			final Iterable<ExecutionVertex> vertices,
@@ -221,6 +230,7 @@ public class SchedulingUtils {
 
 	/**
 	 * Computes and returns a set with the prior allocation ids for given execution vertices.
+	 * note: 对于指定的 vertices，返回之前的 AllocationID 列表
 	 */
 	private static Set<AllocationID> computePriorAllocationIds(final Iterable<ExecutionVertex> vertices) {
 		HashSet<AllocationID> allPreviousAllocationIds = new HashSet<>();

@@ -33,6 +33,7 @@ import java.util.function.LongPredicate;
  * is stored remotely in a stable store DFS. For now, this storage is only complementary to the stable storage and local
  * state is typically lost in case of machine failures. In such cases (and others), client code of this class must fall
  * back to using the slower but highly available store.
+ * note： 对于本地 cp state，TM 级别的 local storage
  */
 @Internal
 public interface TaskLocalStateStore {

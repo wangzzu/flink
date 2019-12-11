@@ -68,6 +68,7 @@ public class NettyShuffleServiceFactory implements ShuffleServiceFactory<NettySh
 			shuffleEnvironmentContext.getParentMetricGroup());
 	}
 
+	//note: 创建 NettyShuffleEnvironment 对象
 	@VisibleForTesting
 	static NettyShuffleEnvironment createNettyShuffleEnvironment(
 			NettyShuffleEnvironmentConfiguration config,

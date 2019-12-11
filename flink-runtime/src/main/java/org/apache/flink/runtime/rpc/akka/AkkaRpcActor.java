@@ -164,6 +164,7 @@ class AkkaRpcActor<T extends RpcEndpoint & RpcGateway> extends AbstractActor {
 	}
 
 	private void handleControlMessage(ControlMessages controlMessage) {
+		//note: 根据控制消息类型及当前服务的状态做相应的处理
 		switch (controlMessage) {
 			case START:
 				state = state.start(this);

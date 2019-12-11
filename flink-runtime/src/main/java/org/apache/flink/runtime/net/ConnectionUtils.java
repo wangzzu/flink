@@ -44,6 +44,7 @@ import scala.concurrent.duration.FiniteDuration;
 /**
  * Utilities to determine the network interface and address that should be used to bind the
  * TaskManager communication to.
+ * note：TM 通信时使用的 端口 和 地址
  *
  * <p>Implementation note: This class uses {@code System.nanoTime()} to measure elapsed time, because
  * that is not susceptible to clock changes.

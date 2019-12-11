@@ -39,6 +39,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * for example registering the TaskExecutor at the ResourceManager.
  * This {@code RetryingRegistration} implements both the initial address resolution
  * and the retries-with-backoff strategy.
+ * note: 在另一个组件注册一个组件的通用类，比如：在 ResourceManager 注册一个 TaskExecutor 对象
  *
  * <p>The registration gives access to a future that is completed upon successful registration.
  * The registration can be canceled, for example when the target where it tries to register
@@ -140,6 +141,7 @@ public abstract class RetryingRegistration<F extends Serializable, G extends Rpc
 			// trigger resolution of the target address to a callable gateway
 			final CompletableFuture<G> rpcGatewayFuture;
 
+			//note: 建立 rpcGateway 连接
 			if (FencedRpcGateway.class.isAssignableFrom(targetType)) {
 				rpcGatewayFuture = (CompletableFuture<G>) rpcService.connect(
 					targetAddress,

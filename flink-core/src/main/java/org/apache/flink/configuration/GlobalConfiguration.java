@@ -97,6 +97,7 @@ public final class GlobalConfiguration {
 	/**
 	 * Loads the configuration files from the specified directory. If the dynamic properties
 	 * configuration is not null, then it is added to the loaded configuration.
+	 * note：从指定的配置文件加载相应的 configuration 配置
 	 *
 	 * @param configDir directory to load the configuration from
 	 * @param dynamicProperties configuration file containing the dynamic properties. Null if none.

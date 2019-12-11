@@ -38,6 +38,7 @@ import static org.apache.flink.util.Preconditions.checkArgument;
  * checked whether it can match another profile's requirement, and furthermore we may calculate a matching
  * score to decide which profile we should choose when we have lots of candidate slots.
  * It should be generated from {@link ResourceSpec} with the input and output memory calculated in JobMaster.
+ * note：描述一个 slot 的资源情况，主要用于申请 slot 时计算应该怎么分配 slot（一个 task 资源需求在 ResourceSpec 中记录）
  *
  * <p>Resource Profiles have a total ordering, defined by comparing these fields in sequence:
  * <ol>
@@ -81,6 +82,7 @@ public class ResourceProfile implements Serializable, Comparable<ResourceProfile
 	private final int managedMemoryInMB;
 
 	/** A extensible field for user specified resources from {@link ResourceSpec}. */
+	//note: 资源描述的扩展类型，比如：GPU
 	private final Map<String, Resource> extendedResources = new HashMap<>(1);
 
 	// ------------------------------------------------------------------------
@@ -241,6 +243,7 @@ public class ResourceProfile implements Serializable, Comparable<ResourceProfile
 
 	/**
 	 * Check whether required resource profile can be matched.
+	 * note: 检查资源是否符合 task 的要求
 	 *
 	 * @param required the required resource profile
 	 * @return true if the requirement is matched, otherwise false

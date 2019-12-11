@@ -22,6 +22,7 @@ package org.apache.flink.runtime.jobgraph;
  * This class represent edges (communication channels) in a job graph.
  * The edges always go from an intermediate result partition to a job vertex.
  * An edge is parametrized with its {@link DistributionPattern}.
+ * note: 它实际上连接的 intermediate result partition 和 JobVertex
  */
 public class JobEdge implements java.io.Serializable {
 
@@ -32,6 +33,7 @@ public class JobEdge implements java.io.Serializable {
 	private final JobVertex target;
 
 	/** The distribution pattern that should be used for this job edge. */
+	//note: 这个 job edge 的分配模式
 	private final DistributionPattern distributionPattern;
 	
 	/** The data set at the source of the edge, may be null if the edge is not yet connected*/

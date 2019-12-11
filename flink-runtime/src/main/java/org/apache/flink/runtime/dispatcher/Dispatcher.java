@@ -115,6 +115,7 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 
 	private final FatalErrorHandler fatalErrorHandler;
 
+	//note: 缓存相应的 JobManagerRunner
 	private final Map<JobID, CompletableFuture<JobManagerRunner>> jobManagerRunnerFutures;
 
 	private final LeaderElectionService leaderElectionService;
@@ -271,10 +272,12 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 				return FutureUtils.completedExceptionally(
 					new JobSubmissionException(jobGraph.getJobID(), "Job has already been submitted."));
 			} else if (isPartialResourceConfigured(jobGraph)) {
+				//note: 如果只有部分 vertice 的资源配置了，当前的版本暂时不支持
 				return FutureUtils.completedExceptionally(
 					new JobSubmissionException(jobGraph.getJobID(), "Currently jobs is not supported if parts of the vertices have " +
 							"resources configured. The limitation will be removed in future versions."));
 			} else {
+				//note: 提交作业
 				return internalSubmitJob(jobGraph);
 			}
 		} catch (FlinkException e) {
@@ -324,6 +327,7 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 	private CompletableFuture<Acknowledge> internalSubmitJob(JobGraph jobGraph) {
 		log.info("Submitting job {} ({}).", jobGraph.getJobID(), jobGraph.getName());
 
+		//note: 提交作业
 		final CompletableFuture<Acknowledge> persistAndRunFuture = waitForTerminatingJobManager(jobGraph.getJobID(), jobGraph, this::persistAndRunJob)
 			.thenApply(ignored -> Acknowledge.get());
 
@@ -365,6 +369,7 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 
 		jobManagerRunnerFutures.put(jobGraph.getJobID(), jobManagerRunnerFuture);
 
+		//note: 如果抛出异常的话，这里会从缓存异常
 		return jobManagerRunnerFuture
 			.thenApply(FunctionUtils.nullFn())
 			.whenCompleteAsync(
@@ -400,6 +405,7 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 	private JobManagerRunner startJobManagerRunner(JobManagerRunner jobManagerRunner) throws Exception {
 		final JobID jobId = jobManagerRunner.getJobGraph().getJobID();
 
+		//note: 如果 jobManagerRunner 的 ResultFuture 完成的话，会这里的逻辑
 		FutureUtils.assertNoException(
 			jobManagerRunner.getResultFuture().handleAsync(
 				(ArchivedExecutionGraph archivedExecutionGraph, Throwable throwable) -> {
@@ -409,13 +415,17 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 					//noinspection ObjectEquality
 					if (jobManagerRunner == currentJobManagerRunner) {
 						if (archivedExecutionGraph != null) {
+							//note: 如果 job 是终止的情况，GLOBALLY(FAILED/CANCELED/FINISHED)
 							jobReachedGloballyTerminalState(archivedExecutionGraph);
 						} else {
 							final Throwable strippedThrowable = ExceptionUtils.stripCompletionException(throwable);
 
+							//note: 作业没有终止，有异常的情况
 							if (strippedThrowable instanceof JobNotFinishedException) {
+								//note: 异步关闭相应的作业
 								jobNotFinished(jobId);
 							} else {
+								//note: 直接将作业 failed
 								jobMasterFailed(jobId, strippedThrowable);
 							}
 						}
@@ -629,6 +639,7 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 	/**
 	 * Cleans up the job related data from the dispatcher. If cleanupHA is true, then
 	 * the data will also be removed from HA.
+	 * note: 从 dispatcher 清除这个作业的相关缓存
 	 *
 	 * @param jobId JobID identifying the job to clean up
 	 * @param cleanupHA True iff HA data shall also be cleaned up
@@ -672,6 +683,7 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 			getRpcService().getExecutor());
 	}
 
+	//note: 清除作业相关的数据
 	private void cleanUpJobData(JobID jobId, boolean cleanupHA) {
 		jobManagerMetricGroup.removeJob(jobId);
 
@@ -793,6 +805,7 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 		removeJobAndRegisterTerminationFuture(jobId, true);
 	}
 
+	//note: 这里将 graph 存储起来
 	private void archiveExecutionGraph(ArchivedExecutionGraph archivedExecutionGraph) {
 		try {
 			archivedExecutionGraphStore.put(archivedExecutionGraph);

@@ -29,6 +29,7 @@ import java.util.Objects;
  * Configuration settings for the {@link CheckpointCoordinator}. This includes the checkpoint
  * interval, the checkpoint timeout, the pause between checkpoints, the maximum number of
  * concurrent checkpoints and settings for externalized checkpoints.
+ * note：CheckpointCoordinator 相关的设置
  */
 public class CheckpointCoordinatorConfiguration implements Serializable {
 

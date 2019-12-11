@@ -16,13 +16,14 @@
 #  See the License for the specific language governing permissions and
 # limitations under the License.
 ################################################################################
-
+# note: 对于 standalone 模式来说，在 JobManager 节点启动，它之后会根据配置远程启动 TM 作业
 bin=`dirname "$0"`
 bin=`cd "$bin"; pwd`
 
 . "$bin"/config.sh
 
 # Start the JobManager instance(s)
+# note 不考虑匹配过程中的大小写
 shopt -s nocasematch
 if [[ $HIGH_AVAILABILITY == "zookeeper" ]]; then
     # HA Mode
@@ -45,11 +46,12 @@ else
     echo "Starting cluster."
 
     # Start single JobManager on this machine
-    # 单机模式下，先启动 job manager
+    #note 单机模式下，先启动 job manager
     "$FLINK_BIN_DIR"/jobmanager.sh start
 fi
 shopt -u nocasematch
 
 # Start TaskManager instance(s)
-# 启动 task Manger
+# note: 这里会根据 slaves 文件配置的机器，将其全部启动（pdsh 能启动远程服务的前提下）
+#note 启动 task Manger
 TMSlaves start

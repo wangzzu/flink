@@ -404,6 +404,7 @@ public class Optimizer {
 	 * which strategy to use (such as hash join versus sort-merge join), what data exchange method to use
 	 * (local pipe forward, shuffle, broadcast), what exchange mode to use (pipelined, batch),
 	 * where to cache intermediate results, etc,
+	 * note: 将指定的作业转移成 OptimizedPlan，它会描述每个 operator 使用的策略、数据交换的方法、交换的模式等
 	 *
 	 * The optimization happens in multiple phases:
 	 * <ol>
@@ -433,6 +434,7 @@ public class Optimizer {
 			LOG.debug("Beginning compilation of program '" + program.getJobName() + '\'');
 		}
 
+		//note: 获得 ExecutionMode
 		final ExecutionMode defaultDataExchangeMode = program.getExecutionConfig().getExecutionMode();
 
 		final int defaultParallelism = program.getDefaultParallelism() > 0 ?
@@ -450,6 +452,11 @@ public class Optimizer {
 		// sets the types and strategies accordingly
 		// 4) It makes estimates about the data volume of the data sources and
 		// propagates those estimates through the plan
+		//note: 第一步首先是创建一个优化后的 plan
+		//note: 1. 它给每个 operator 创建 optimizer plan node；
+		//note: 2. 通过 Channel 连接它们；
+		//note: 3. 它查找本地策略和 Channel 类型，并设置相应地对它们设置；
+		//note: 4. 它会估算数据源的数据量，并且通过 plan 传播这个估算量；
 
 		GraphCreatingVisitor graphCreator = new GraphCreatingVisitor(defaultParallelism, defaultDataExchangeMode);
 		program.accept(graphCreator);

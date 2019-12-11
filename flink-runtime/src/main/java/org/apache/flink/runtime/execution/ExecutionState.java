@@ -19,6 +19,7 @@
 package org.apache.flink.runtime.execution;
 
 /**
+ * note：task 的状态，下面有个状态转移图
  * An enumeration of all states that a task can be in during its execution.
  * Tasks usually start in the state {@code CREATED} and switch states according to
  * this diagram:
@@ -74,6 +75,7 @@ public enum ExecutionState {
 
 	RECONCILING;
 
+	//note: 这三种状态代表终止
 	public boolean isTerminal() {
 		return this == FINISHED || this == CANCELED || this == FAILED;
 	}

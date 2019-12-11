@@ -35,6 +35,7 @@ public class JobManagerOptions {
 	/**
 	 * The config parameter defining the network address to connect to
 	 * for communication with the job manager.
+	 * note：配置的 job manager 的地址
 	 *
 	 * <p>This value is only interpreted in setups where a single JobManager with static
 	 * name or address exists (simple standalone setups, or container setups with dynamic
@@ -97,6 +98,7 @@ public class JobManagerOptions {
 
 	/**
 	 * The maximum number of prior execution attempts kept in history.
+	 * note：之前执行记录最大的历史保留数
 	 */
 	public static final ConfigOption<Integer> MAX_ATTEMPTS_HISTORY_SIZE =
 		key("jobmanager.execution.attempts-history-size")
@@ -166,6 +168,7 @@ public class JobManagerOptions {
 
 	/**
 	 * The timeout in milliseconds for a idle slot in Slot Pool.
+	 * note: slot poll 中空闲 slot 的超时时间，超过之后，会释放掉空闲的资源
 	 */
 	public static final ConfigOption<Long> SLOT_IDLE_TIMEOUT =
 		key("slot.idle.timeout")

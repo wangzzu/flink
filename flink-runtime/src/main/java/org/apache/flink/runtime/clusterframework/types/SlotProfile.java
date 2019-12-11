@@ -32,6 +32,7 @@ import java.util.Set;
  * attributes such as resource or locality constraints, some of which may be hard or soft. A matcher can be generated
  * to filter out candidate slots by matching their {@link SlotContext} against the slot profile and, potentially,
  * further requirements.
+ * note: 描述一个 slot 的 profile，它表示一个 task 想要调度的 TM 位置（它包含一些特性：比如资源或者局部约束，可能是软件也可能是硬件的）
  */
 public class SlotProfile {
 
@@ -100,6 +101,7 @@ public class SlotProfile {
 
 	/**
 	 * Returns a set of all previous allocation ids from the execution graph.
+	 * note: 从这个 Execution graph 中返回之前分配的 id 集合
 	 *
 	 * This is optional and can be empty if unused.
 	 */

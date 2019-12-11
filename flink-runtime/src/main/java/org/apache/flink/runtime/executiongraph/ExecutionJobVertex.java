@@ -71,6 +71,7 @@ import java.util.stream.Collectors;
 /**
  * An {@code ExecutionJobVertex} is part of the {@link ExecutionGraph}, and the peer
  * to the {@link JobVertex}.
+ * note：它等同于 JobVertex，它是 ExecutionGraph 的一部分，代表了一个并行的 Operator
  *
  * <p>The {@code ExecutionJobVertex} corresponds to a parallelized operation. It
  * contains an {@link ExecutionVertex} for each parallel instance of that operation.
@@ -96,6 +97,7 @@ public class ExecutionJobVertex implements AccessExecutionJobVertex, Archiveable
 	 *   \    \
 	 *    C    E
 	 * This is the same order that operators are stored in the {@code StreamTask}.
+	 * note：深度优先遍历
 	 */
 	private final List<OperatorID> operatorIDs;
 
@@ -223,6 +225,8 @@ public class ExecutionJobVertex implements AccessExecutionJobVertex, Archiveable
 		}
 
 		// create all task vertices
+		//note: task vertices 创建
+		//note: 一个 JobVertex/ExecutionJobVertex 代表的是一个operator，而具体的 ExecutionVertex 则代表了每一个 Task
 		for (int i = 0; i < numTaskVertices; i++) {
 			ExecutionVertex vertex = new ExecutionVertex(
 					this,
@@ -244,6 +248,7 @@ public class ExecutionJobVertex implements AccessExecutionJobVertex, Archiveable
 		}
 
 		// set up the input splits, if the vertex has any
+		//note: 获取的分配列表
 		try {
 			@SuppressWarnings("unchecked")
 			InputSplitSource<InputSplit> splitSource = (InputSplitSource<InputSplit>) jobVertex.getInputSplitSource();
@@ -382,6 +387,7 @@ public class ExecutionJobVertex implements AccessExecutionJobVertex, Archiveable
 		return getJobVertex().getInputDependencyConstraint();
 	}
 
+	//note: TaskInformation
 	public Either<SerializedValue<TaskInformation>, PermanentBlobKey> getTaskInformationOrBlobKey() throws IOException {
 		// only one thread should offload the task information, so let's also let only one thread
 		// serialize the task information!
@@ -466,6 +472,7 @@ public class ExecutionJobVertex implements AccessExecutionJobVertex, Archiveable
 
 			for (int i = 0; i < parallelism; i++) {
 				ExecutionVertex ev = taskVertices[i];
+				//note: task vertices connect to source
 				ev.connectSource(num, ires, edge, consumerIndex);
 			}
 		}

@@ -52,6 +52,7 @@ public enum NettyShuffleMaster implements ShuffleMaster<NettyShuffleDescriptor> 
 	public void releasePartitionExternally(ShuffleDescriptor shuffleDescriptor) {
 	}
 
+	//note: 返回一个 netty 相关的 ConnectionInfo
 	private static PartitionConnectionInfo createConnectionInfo(
 			ProducerDescriptor producerDescriptor,
 			int connectionIndex) {

@@ -403,6 +403,7 @@ public class JobGraph implements Serializable {
 	//  Topological Graph Access
 	// --------------------------------------------------------------------------------------------
 
+	//note：实际上
 	public List<JobVertex> getVerticesSortedTopologicallyFromSources() throws InvalidProgramException {
 		// early out on empty lists
 		if (this.taskVertices.isEmpty()) {
@@ -414,6 +415,7 @@ public class JobGraph implements Serializable {
 
 		// start by finding the vertices with no input edges
 		// and the ones with disconnected inputs (that refer to some standalone data set)
+		//note: 先找到 source 的 JobVertex
 		{
 			Iterator<JobVertex> iter = remaining.iterator();
 			while (iter.hasNext()) {
@@ -433,6 +435,7 @@ public class JobGraph implements Serializable {
 
 			// first check if we have more candidates to start traversing from. if not, then the
 			// graph is cyclic, which is not permitted
+			//note: 如果遇到环的话，startNodePos 会超过 sorted 集合 size
 			if (startNodePos >= sorted.size()) {
 				throw new InvalidProgramException("The job graph is cyclic.");
 			}

@@ -361,6 +361,7 @@ public abstract class Transformation<T> {
 	 * <p>Sets the key that identifies the co-location group.
 	 * Operators with the same co-location key will have their corresponding subtasks
 	 * placed into the same slot by the scheduler.
+	 * note: 给 co-location group 设置相应的 key，如果一个 Operator 有同一个 co-location group，将会被调度到同一个 slot 上
 	 *
 	 * <p>Setting this to null means there is no co-location constraint.
 	 */

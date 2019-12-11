@@ -42,6 +42,7 @@ import java.util.List;
  * {@link Function Functions}. This is similar to
  * {@link org.apache.flink.api.common.functions.util.FunctionUtils} but has additional methods
  * for invoking interfaces that only exist in the streaming API.
+ * note: 与 FunctionUtils 类似，但是这里的是 Streaming 特有的 API
  */
 @Internal
 public final class StreamingFunctionUtils {
@@ -102,6 +103,7 @@ public final class StreamingFunctionUtils {
 
 			// inspect if the user function is wrapped, then unwrap and try again if we can snapshot the inner function
 			if (userFunction instanceof WrappingFunction) {
+				//note: WrappingFunction 是对 Function 做了一层封装，这里会先拿到原始的 Function
 				userFunction = ((WrappingFunction<?>) userFunction).getWrappedFunction();
 			} else {
 				break;
@@ -109,6 +111,7 @@ public final class StreamingFunctionUtils {
 		}
 	}
 
+	//note: Function 做相应的 Snapshot
 	private static boolean trySnapshotFunctionState(
 			StateSnapshotContext context,
 			OperatorStateBackend backend,

@@ -26,6 +26,7 @@ import static org.apache.flink.runtime.shuffle.ShuffleServiceOptions.SHUFFLE_SER
 
 /**
  * Utility to load the pluggable {@link ShuffleServiceFactory} implementations.
+ * note：默认是 {@link org.apache.flink.runtime.io.network.NettyShuffleServiceFactory}
  */
 public enum ShuffleServiceLoader {
 	;

@@ -31,6 +31,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
  * This transformation represents a change of partitioning of the input elements.
+ * note: 改变输入元素的 partition 分区，这里应该指的是 shuffle 实现
  *
  * <p>This does not create a physical operation, it only affects how upstream operations are
  * connected to downstream operations.

@@ -29,6 +29,7 @@ import java.io.Serializable;
 
 /**
  * This class represents an update about a task's execution state.
+ * note: 主要是用于更新一个 task 的执行状态
  *
  * <b>NOTE:</b> The exception that may be attached to the state update is
  * not necessarily a Flink or core Java exception, but may be an exception

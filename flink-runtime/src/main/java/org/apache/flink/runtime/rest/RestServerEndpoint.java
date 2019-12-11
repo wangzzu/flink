@@ -153,6 +153,7 @@ public abstract class RestServerEndpoint implements AutoCloseableAsync {
 				RestHandlerUrlComparator.INSTANCE);
 
 			handlers.forEach(handler -> {
+				//note: 注册这些 handler（这些其实都涉及到了 netty 的使用）
 				registerHandler(router, handler, log);
 			});
 

@@ -32,6 +32,7 @@ public interface ResultTypeQueryable<T> {
 
 	/**
 	 * Gets the data type (as a {@link TypeInformation}) produced by this function or input format.
+	 * note: 返回这个 function 或 input format 的 data type
 	 * 
 	 * @return The data type produced by this function or input format.
 	 */

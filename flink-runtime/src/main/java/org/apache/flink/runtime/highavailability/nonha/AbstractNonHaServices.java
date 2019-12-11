@@ -44,6 +44,7 @@ public abstract class AbstractNonHaServices implements HighAvailabilityServices 
 
 	private final RunningJobsRegistry runningJobsRegistry;
 
+	//note: 默认这里是一个空 Blob 服务，它什么都不会做
 	private final VoidBlobStore voidBlobStore;
 
 	private boolean shutdown;

@@ -33,6 +33,7 @@ import java.util.Set;
 /**
  * This class implements a {@link SlotSelectionStrategy} that is based on previous allocations and
  * falls back to using location preference hints if there is no previous allocation.
+ * note：
  */
 public enum PreviousAllocationSlotSelectionStrategy implements SlotSelectionStrategy {
 
@@ -46,6 +47,7 @@ public enum PreviousAllocationSlotSelectionStrategy implements SlotSelectionStra
 		Collection<AllocationID> priorAllocations = slotProfile.getPreferredAllocations();
 
 		// First, if there was a prior allocation try to schedule to the same/old slot
+		//note: 如果有同一个 slot，则返回这个 slot
 		if (!priorAllocations.isEmpty()) {
 			for (SlotInfoAndResources availableSlot : availableSlots) {
 				if (priorAllocations.contains(availableSlot.getSlotInfo().getAllocationId())) {
@@ -56,11 +58,14 @@ public enum PreviousAllocationSlotSelectionStrategy implements SlotSelectionStra
 		}
 
 		// Second, select based on location preference, excluding blacklisted allocations
+		//note: 这里除去之前分配的 AllocationID 列表
 		Set<AllocationID> blackListedAllocations = slotProfile.getPreviousExecutionGraphAllocations();
+		//note: 计算得到可用的和允许使用的 slot 列表
 		Collection<SlotInfoAndResources> availableAndAllowedSlots = computeWithoutBlacklistedSlots(availableSlots, blackListedAllocations);
 		return LocationPreferenceSlotSelectionStrategy.INSTANCE.selectBestSlotForProfile(availableAndAllowedSlots, slotProfile);
 	}
 
+	//note: 返回 availableSlots 除去 blacklistedAllocations 的 slot 列表
 	@Nonnull
 	private Collection<SlotInfoAndResources> computeWithoutBlacklistedSlots(
 		@Nonnull Collection<SlotInfoAndResources> availableSlots,

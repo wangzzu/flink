@@ -26,6 +26,7 @@ import org.apache.flink.util.AbstractID;
  * This ID identifies the request for a logical slot from the Execution to the {@link SlotPool}
  * oe {@link SlotProvider}. The logical slot may be a physical slot or a sub-slot thereof, in
  * the case of slot sharing.
+ * note: 请求 logical slot 的唯一标识
  *
  * <p>This ID serves a different purpose than the
  * {@link org.apache.flink.runtime.clusterframework.types.AllocationID AllocationID}, which identifies

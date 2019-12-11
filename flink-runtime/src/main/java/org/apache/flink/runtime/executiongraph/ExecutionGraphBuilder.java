@@ -74,6 +74,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
  * Utility class to encapsulate the logic of building an {@link ExecutionGraph} from a {@link JobGraph}.
+ * note：它的作用是根据 JobGraph 封装一个 ExecutionGraph 对象
  */
 public class ExecutionGraphBuilder {
 
@@ -150,6 +151,7 @@ public class ExecutionGraphBuilder {
 		final String jobName = jobGraph.getName();
 		final JobID jobId = jobGraph.getJobID();
 
+		//note: build jobInformation
 		final JobInformation jobInformation = new JobInformation(
 			jobId,
 			jobName,
@@ -158,13 +160,16 @@ public class ExecutionGraphBuilder {
 			jobGraph.getUserJarBlobKeys(),
 			jobGraph.getClasspaths());
 
+		//note: 历史 Execution 保留的最大数
 		final int maxPriorAttemptsHistoryLength =
 				jobManagerConfig.getInteger(JobManagerOptions.MAX_ATTEMPTS_HISTORY_SIZE);
 
+		//note: 决定什么时候释放 IntermediateResultPartitions 的策略
 		final PartitionReleaseStrategy.Factory partitionReleaseStrategyFactory =
 			PartitionReleaseStrategyFactoryLoader.loadPartitionReleaseStrategyFactory(jobManagerConfig);
 
 		// create a new execution graph, if none exists so far
+		//note: 如果 executionGraph 还不存在，就创建一个新的对象
 		final ExecutionGraph executionGraph;
 		try {
 			executionGraph = (prior != null) ? prior :
@@ -192,6 +197,7 @@ public class ExecutionGraphBuilder {
 		// set the basic properties
 
 		try {
+			//note: 以 json 的形式记录 JobGraph
 			executionGraph.setJsonPlan(JsonPlanGenerator.generatePlan(jobGraph));
 		}
 		catch (Throwable t) {
@@ -214,6 +220,7 @@ public class ExecutionGraphBuilder {
 			}
 
 			try {
+				//note: 对于 InputOutputFormatVertex 类型的对象，会在 master 节点做一些额外的初始化操作
 				vertex.initializeOnMaster(classLoader);
 			}
 			catch (Throwable t) {
@@ -230,12 +237,14 @@ public class ExecutionGraphBuilder {
 		if (log.isDebugEnabled()) {
 			log.debug("Adding {} vertices from job graph {} ({}).", sortedTopology.size(), jobName, jobId);
 		}
+		//note: 处理的重点：生成具体的 Execution Plan
 		executionGraph.attachJobGraph(sortedTopology);
 
 		if (log.isDebugEnabled()) {
 			log.debug("Successfully created execution graph from job graph {} ({}).", jobName, jobId);
 		}
 
+		//note: cp 相关的配置
 		// configure the state checkpointing
 		JobCheckpointingSettings snapshotSettings = jobGraph.getCheckpointingSettings();
 		if (snapshotSettings != null) {
@@ -297,6 +306,7 @@ public class ExecutionGraphBuilder {
 				}
 			}
 
+			//note: state backend
 			final StateBackend rootBackend;
 			try {
 				rootBackend = StateBackendLoader.fromApplicationOrConfigOrDefault(
@@ -307,7 +317,7 @@ public class ExecutionGraphBuilder {
 			}
 
 			// instantiate the user-defined checkpoint hooks
-
+			//note: 实例话用户自定义的 cp hook
 			final SerializedValue<MasterTriggerRestoreHook.Factory[]> serializedHooks = snapshotSettings.getMasterHooks();
 			final List<MasterTriggerRestoreHook<?>> hooks;
 
@@ -340,6 +350,7 @@ public class ExecutionGraphBuilder {
 
 			final CheckpointCoordinatorConfiguration chkConfig = snapshotSettings.getCheckpointCoordinatorConfiguration();
 
+			//note: 创建 CheckpointCoordinator 对象
 			executionGraph.enableCheckpointing(
 				chkConfig,
 				triggerVertices,
@@ -364,6 +375,7 @@ public class ExecutionGraphBuilder {
 		return executionGraph;
 	}
 
+	//note: 根据 JobVertexID 获取 ExecutionJobVertex
 	private static List<ExecutionJobVertex> idToVertex(
 			List<JobVertexID> jobVertices, ExecutionGraph executionGraph) throws IllegalArgumentException {
 

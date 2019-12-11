@@ -27,6 +27,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
  * Information about an allocated slot which is owned by a JobMaster.
+ * note：JobMaster 申请到的 slot 的信息
  */
 public class AllocatedSlotInfo implements Serializable {
 

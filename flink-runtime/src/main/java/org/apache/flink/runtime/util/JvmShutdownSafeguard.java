@@ -83,6 +83,7 @@ public class JvmShutdownSafeguard extends Thread {
 				// catch all, including thread death, etc
 			}
 
+			//note: 强制终止当前的进程
 			Runtime.getRuntime().halt(EXIT_CODE);
 		}
 	} 
@@ -94,6 +95,7 @@ public class JvmShutdownSafeguard extends Thread {
 	/**
 	 * Installs the safeguard shutdown hook. The maximum time that the JVM is allowed to spend
 	 * on shutdown before being killed is five seconds.
+	 * note：注册一个关闭的钩子，如果超过 5s 还没 shutdown，就直接 kill
 	 * 
 	 * @param logger The logger to log errors to.
 	 */

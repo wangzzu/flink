@@ -29,6 +29,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
  * Local context used to create {@link ShuffleEnvironment}.
+ * note： ShuffleEnvironment 使用的相关配置
  */
 public class ShuffleEnvironmentContext {
 	private final Configuration configuration;

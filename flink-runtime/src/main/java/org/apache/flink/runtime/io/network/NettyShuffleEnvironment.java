@@ -69,6 +69,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * The implementation of {@link ShuffleEnvironment} based on netty network communication, local memory and disk files.
  * The network environment contains the data structures that keep track of all intermediate results
  * and shuffle data exchanges.
+ * note：依赖于 netty 网络通信、本地内存和磁盘文件的一个 ShuffleEnvironment 实现，它包含一个可以追踪所有中间结果和 shuffle 数据交换的数据结构
  */
 public class NettyShuffleEnvironment implements ShuffleEnvironment<ResultPartition, SingleInputGate> {
 
@@ -270,7 +271,7 @@ public class NettyShuffleEnvironment implements ShuffleEnvironment<ResultPartiti
 		return true;
 	}
 
-	/*
+	/**
 	 * Starts the internal related components for network connection and communication.
 	 *
 	 * @return a port to connect to the task executor for shuffle data exchange, -1 if only local connection is possible.

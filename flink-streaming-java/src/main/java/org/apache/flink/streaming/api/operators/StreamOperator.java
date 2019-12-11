@@ -36,6 +36,7 @@ import java.io.Serializable;
  *
  * <p>The class {@link org.apache.flink.streaming.api.operators.AbstractStreamOperator}
  * offers default implementation for the lifecycle and properties methods.
+ * note: AbstractStreamOperator 默认的一些实现
  *
  * <p>Methods of {@code StreamOperator} are guaranteed not to be called concurrently. Also, if using
  * the timer service, timer callbacks are also guaranteed not to be called concurrently with

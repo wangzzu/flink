@@ -234,6 +234,7 @@ public class RestClusterClient<T> extends ClusterClient<T> implements NewCluster
 	public JobSubmissionResult submitJob(JobGraph jobGraph, ClassLoader classLoader) throws ProgramInvocationException {
 		log.info("Submitting job {} (detached: {}).", jobGraph.getJobID(), isDetached());
 
+		//note: 提交作业
 		final CompletableFuture<JobSubmissionResult> jobSubmissionFuture = submitJob(jobGraph);
 
 		if (isDetached()) {
@@ -316,10 +317,12 @@ public class RestClusterClient<T> extends ClusterClient<T> implements NewCluster
 	@Override
 	public CompletableFuture<JobSubmissionResult> submitJob(@Nonnull JobGraph jobGraph) {
 		// we have to enable queued scheduling because slot will be allocated lazily
+		//note: 这里会运行调度时对请求做排队，如果当前没有足够资源的话
 		jobGraph.setAllowQueuedScheduling(true);
 
 		CompletableFuture<java.nio.file.Path> jobGraphFileFuture = CompletableFuture.supplyAsync(() -> {
 			try {
+				//note: 将 jobGraph 序列化到一个临时文件中
 				final java.nio.file.Path jobGraphFile = Files.createTempFile("flink-jobgraph", ".bin");
 				try (ObjectOutputStream objectOut = new ObjectOutputStream(Files.newOutputStream(jobGraphFile))) {
 					objectOut.writeObject(jobGraph);
@@ -335,8 +338,10 @@ public class RestClusterClient<T> extends ClusterClient<T> implements NewCluster
 			List<JobSubmitRequestBody.DistributedCacheFile> artifactFileNames = new ArrayList<>(8);
 			Collection<FileUpload> filesToUpload = new ArrayList<>(8);
 
+			//note: 将写有 jobGraph 的文件上传
 			filesToUpload.add(new FileUpload(jobGraphFile, RestConstants.CONTENT_TYPE_BINARY));
 
+			//note: 将依赖的相关包也上传
 			for (Path jar : jobGraph.getUserJars()) {
 				jarFileNames.add(jar.getName());
 				filesToUpload.add(new FileUpload(Paths.get(jar.toUri()), RestConstants.CONTENT_TYPE_JAR));
@@ -347,6 +352,7 @@ public class RestClusterClient<T> extends ClusterClient<T> implements NewCluster
 				filesToUpload.add(new FileUpload(Paths.get(artifacts.getValue().filePath), RestConstants.CONTENT_TYPE_BINARY));
 			}
 
+			//note: 这里会记录所有要上传的包路径，然后构造一个 JobSubmitRequestBody 对象
 			final JobSubmitRequestBody requestBody = new JobSubmitRequestBody(
 				jobGraphFile.getFileName().toString(),
 				jarFileNames,
@@ -355,6 +361,7 @@ public class RestClusterClient<T> extends ClusterClient<T> implements NewCluster
 			return Tuple2.of(requestBody, Collections.unmodifiableCollection(filesToUpload));
 		});
 
+		//note: 发送相应的情况
 		final CompletableFuture<JobSubmitResponseBody> submissionFuture = requestFuture.thenCompose(
 			requestAndFileUploads -> sendRetriableRequest(
 				JobSubmitHeaders.getInstance(),
@@ -374,6 +381,7 @@ public class RestClusterClient<T> extends ClusterClient<T> implements NewCluster
 			}
 		});
 
+		//note: 返回结果
 		return submissionFuture
 			.thenApply(
 				(JobSubmitResponseBody jobSubmitResponseBody) -> new JobSubmissionResult(jobGraph.getJobID()))

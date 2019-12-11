@@ -55,6 +55,7 @@ import java.util.stream.Collectors;
 /**
  * Scheduler that assigns tasks to slots. This class is currently work in progress, comments will be updated as we
  * move forward.
+ * note：用于向 task 分配 slot 的调度器
  */
 public class SchedulerImpl implements Scheduler {
 
@@ -63,6 +64,7 @@ public class SchedulerImpl implements Scheduler {
 	private static final int DEFAULT_SLOT_SHARING_MANAGERS_MAP_SIZE = 128;
 
 	/** Strategy that selects the best slot for a given slot allocation request. */
+	//note: 对于一个 slot 分配请求，如何选择最佳的 slot
 	@Nonnull
 	private final SlotSelectionStrategy slotSelectionStrategy;
 
@@ -156,6 +158,7 @@ public class SchedulerImpl implements Scheduler {
 		return allocationResultFuture;
 	}
 
+	//note: 分配 slot
 	private void internalAllocateSlot(
 			CompletableFuture<LogicalSlot> allocationResultFuture,
 			SlotRequestId slotRequestId,
@@ -163,11 +166,15 @@ public class SchedulerImpl implements Scheduler {
 			SlotProfile slotProfile,
 			boolean allowQueuedScheduling,
 			Time allocationTimeout) {
+		//note: 分配的操作是在这里进行的
 		CompletableFuture<LogicalSlot> allocationFuture = scheduledUnit.getSlotSharingGroupId() == null ?
+			//note: 分配单个的 slot
 			allocateSingleSlot(slotRequestId, slotProfile, allowQueuedScheduling, allocationTimeout) :
+			//note: 分配 shared slot
 			allocateSharedSlot(slotRequestId, scheduledUnit, slotProfile, allowQueuedScheduling, allocationTimeout);
 
 		allocationFuture.whenComplete((LogicalSlot slot, Throwable failure) -> {
+			//note: 如果分配过程中异常的话
 			if (failure != null) {
 				Optional<SharedSlotOversubscribedException> sharedSlotOverAllocatedException =
 						ExceptionUtils.findThrowable(failure, SharedSlotOversubscribedException.class);
@@ -226,10 +233,12 @@ public class SchedulerImpl implements Scheduler {
 			boolean allowQueuedScheduling,
 			@Nullable Time allocationTimeout) {
 
+		//note: 分配一个单独的 slot
 		Optional<SlotAndLocality> slotAndLocality = tryAllocateFromAvailable(slotRequestId, slotProfile);
 
 		if (slotAndLocality.isPresent()) {
 			// already successful from available
+			//note: 已经成功分配了 slot
 			try {
 				return CompletableFuture.completedFuture(
 					completeAllocationByAssigningPayload(slotRequestId, slotAndLocality.get()));
@@ -293,16 +302,19 @@ public class SchedulerImpl implements Scheduler {
 		@Nonnull SlotRequestId slotRequestId,
 		@Nonnull SlotProfile slotProfile) {
 
+		//note: 先返回 slot pool 可用的 slot 列表
 		Collection<SlotSelectionStrategy.SlotInfoAndResources> slotInfoList =
 				slotPool.getAvailableSlotsInformation()
 						.stream()
 						.map(SlotSelectionStrategy.SlotInfoAndResources::new)
 						.collect(Collectors.toList());
 
+		//note: 返回最佳的 slot
 		Optional<SlotSelectionStrategy.SlotInfoAndLocality> selectedAvailableSlot =
 			slotSelectionStrategy.selectBestSlotForProfile(slotInfoList, slotProfile);
 
 		return selectedAvailableSlot.flatMap(slotInfoAndLocality -> {
+			//note: 在 slot pool 中将这个 slot 分配给指定的 SlotRequestId
 			Optional<PhysicalSlot> optionalAllocatedSlot = slotPool.allocateAvailableSlot(
 				slotRequestId,
 				slotInfoAndLocality.getSlotInfo().getAllocationId());
@@ -314,6 +326,7 @@ public class SchedulerImpl implements Scheduler {
 
 	// ------------------------------- slot sharing code
 
+	//note: allocate shared slot
 	private CompletableFuture<LogicalSlot> allocateSharedSlot(
 		SlotRequestId slotRequestId,
 		ScheduledUnit scheduledUnit,
@@ -321,6 +334,7 @@ public class SchedulerImpl implements Scheduler {
 		boolean allowQueuedScheduling,
 		@Nullable Time allocationTimeout) {
 		// allocate slot with slot sharing
+		//note: 取这个 SlotSharingGroupId 对应的 SlotManager
 		final SlotSharingManager multiTaskSlotManager = slotSharingManagers.computeIfAbsent(
 			scheduledUnit.getSlotSharingGroupId(),
 			id -> new SlotSharingManager(
@@ -328,6 +342,7 @@ public class SchedulerImpl implements Scheduler {
 				slotPool,
 				this));
 
+		//note: 这里就拿到在 shared 模式下的 MultiTaskSlot
 		final SlotSharingManager.MultiTaskSlotLocality multiTaskSlotLocality;
 		try {
 			if (scheduledUnit.getCoLocationConstraint() != null) {
@@ -406,7 +421,7 @@ public class SchedulerImpl implements Scheduler {
 			// refine the preferred locations of the slot profile
 			slotProfile = new SlotProfile(
 				slotProfile.getResourceProfile(),
-				Collections.singleton(coLocationConstraint.getLocation()),
+				Collections.singleton(coLocationConstraint.getLocation()), //note: 期望的 TaskManagerLocation
 				slotProfile.getPreferredAllocations());
 		}
 
@@ -465,6 +480,7 @@ public class SchedulerImpl implements Scheduler {
 	/**
 	 * Allocates a {@link SlotSharingManager.MultiTaskSlot} for the given groupId which is in the
 	 * slot sharing group for which the given {@link SlotSharingManager} is responsible.
+	 * note: 对于指定的 groupId（AbstractID）分配一个 MultiTaskSlot
 	 *
 	 * <p>If allowQueuedScheduling is true, then the method can return an uncompleted {@link SlotSharingManager.MultiTaskSlot}.
 	 *
@@ -483,12 +499,15 @@ public class SchedulerImpl implements Scheduler {
 			boolean allowQueuedScheduling,
 			@Nullable Time allocationTimeout) throws NoResourceAvailableException {
 
+		//note: 从已经完成的 node 列表中过滤出与这个 groupId 相关的 slot（如果之前还没有这个 groupId 相关的 slot，这里会返回空集合）
 		Collection<SlotSelectionStrategy.SlotInfoAndResources> resolvedRootSlotsInfo =
 				slotSharingManager.listResolvedRootSlotInfo(groupId);
 
+		//note: 如果上面得到的集合非空，这里会返回最佳的 slot，否则得到也是 empty
 		SlotSelectionStrategy.SlotInfoAndLocality bestResolvedRootSlotWithLocality =
 			slotSelectionStrategy.selectBestSlotForProfile(resolvedRootSlotsInfo, slotProfile).orElse(null);
 
+		//note: 根据分配算法拿到的最佳 MultiTaskSlotLocality
 		final SlotSharingManager.MultiTaskSlotLocality multiTaskSlotLocality = bestResolvedRootSlotWithLocality != null ?
 			new SlotSharingManager.MultiTaskSlotLocality(
 				slotSharingManager.getResolvedRootSlot(bestResolvedRootSlotWithLocality.getSlotInfo()),
@@ -496,27 +515,33 @@ public class SchedulerImpl implements Scheduler {
 			null;
 
 		if (multiTaskSlotLocality != null && multiTaskSlotLocality.getLocality() == Locality.LOCAL) {
+			//note: 如果前面拿到了最佳的分配 slot，并且还是分配到指定请求的 TM 上，这里就直接返回结果了
 			return multiTaskSlotLocality;
 		}
 
 		final SlotRequestId allocatedSlotRequestId = new SlotRequestId();
 		final SlotRequestId multiTaskSlotRequestId = new SlotRequestId();
 
+		//note: 根据 slotProfile 获取最佳的 slot
 		Optional<SlotAndLocality> optionalPoolSlotAndLocality = tryAllocateFromAvailable(allocatedSlotRequestId, slotProfile);
 
 		if (optionalPoolSlotAndLocality.isPresent()) {
 			SlotAndLocality poolSlotAndLocality = optionalPoolSlotAndLocality.get();
 			if (poolSlotAndLocality.getLocality() == Locality.LOCAL || bestResolvedRootSlotWithLocality == null) {
 
+				//note: 如果这里拿到的 slot 与要分配的 slot 是在同一个 TM 上并且之前在 SlotSharingManager 中没有获取到合适的 slot
 				final PhysicalSlot allocatedSlot = poolSlotAndLocality.getSlot();
+				//note: 新创建一个 MultiTaskSlot 对象
 				final SlotSharingManager.MultiTaskSlot multiTaskSlot = slotSharingManager.createRootSlot(
 					multiTaskSlotRequestId,
 					CompletableFuture.completedFuture(poolSlotAndLocality.getSlot()),
 					allocatedSlotRequestId);
 
+				//note: 将这个 multiTaskSlot 绑定到这个 slot 上
 				if (allocatedSlot.tryAssignPayload(multiTaskSlot)) {
 					return SlotSharingManager.MultiTaskSlotLocality.of(multiTaskSlot, poolSlotAndLocality.getLocality());
 				} else {
+					//note: 如果不能绑定（之前已经有其他的 task slot 绑定过了）
 					multiTaskSlot.release(new FlinkException("Could not assign payload to allocated slot " +
 						allocatedSlot.getAllocationId() + '.'));
 				}
@@ -526,24 +551,29 @@ public class SchedulerImpl implements Scheduler {
 		if (multiTaskSlotLocality != null) {
 			// prefer slot sharing group slots over unused slots
 			if (optionalPoolSlotAndLocality.isPresent()) {
+				//note: 如果在 SlotSharingManager 申请到了，但是不满足最优的 Locality 条件，这里会释放掉 tryAllocateFromAvailable 申请的
 				slotPool.releaseSlot(
 					allocatedSlotRequestId,
 					new FlinkException("Locality constraint is not better fulfilled by allocated slot."));
 			}
+			//note: 返回 SlotSharingManager 中申请到的 slot
 			return multiTaskSlotLocality;
 		}
 
 		if (allowQueuedScheduling) {
 			// there is no slot immediately available --> check first for uncompleted slots at the slot sharing group
+			//note: 返回 UnresolvedR slot 列表中不包含指定 groupId 的第一个 MultiTaskSlot
 			SlotSharingManager.MultiTaskSlot multiTaskSlot = slotSharingManager.getUnresolvedRootSlot(groupId);
 
-			if (multiTaskSlot == null) {
+			if (multiTaskSlot == null) { //note: 如果还没有的情况下
 				// it seems as if we have to request a new slot from the resource manager, this is always the last resort!!!
+				//note: 这里向 resource manager 请求新的 slot
 				final CompletableFuture<PhysicalSlot> slotAllocationFuture = requestNewAllocatedSlot(
 					allocatedSlotRequestId,
 					slotProfile,
 					allocationTimeout);
 
+				//note: 创建一个新的 multiTaskSlot 对象
 				multiTaskSlot = slotSharingManager.createRootSlot(
 					multiTaskSlotRequestId,
 					slotAllocationFuture,

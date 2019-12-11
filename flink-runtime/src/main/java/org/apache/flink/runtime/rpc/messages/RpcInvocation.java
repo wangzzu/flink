@@ -23,6 +23,7 @@ import java.io.IOException;
 /**
  * Interface for rpc invocation messages. The interface allows to request all necessary information
  * to lookup a method and call it with the corresponding arguments.
+ * note：用 rpc 触发msg 的接口
  */
 public interface RpcInvocation {
 

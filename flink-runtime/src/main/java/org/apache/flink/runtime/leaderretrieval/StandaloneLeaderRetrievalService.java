@@ -83,6 +83,7 @@ public class StandaloneLeaderRetrievalService implements LeaderRetrievalService 
 			started = true;
 
 			// directly notify the listener, because we already know the leading JobManager's address
+			//note: 在 standAlone 模式下，leader 是确定的，直接通知 JobMaster 即可
 			listener.notifyLeaderAddress(leaderAddress, leaderId);
 		}
 	}

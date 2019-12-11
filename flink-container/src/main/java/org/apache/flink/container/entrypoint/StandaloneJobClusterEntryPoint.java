@@ -43,6 +43,7 @@ import static java.util.Objects.requireNonNull;
 /**
  * {@link JobClusterEntrypoint} which is started with a job in a predefined
  * location.
+ *
  */
 public final class StandaloneJobClusterEntryPoint extends JobClusterEntrypoint {
 
@@ -82,10 +83,12 @@ public final class StandaloneJobClusterEntryPoint extends JobClusterEntrypoint {
 
 	public static void main(String[] args) {
 		// startup checks and logging
+		//note: 开始检查跟打印相关启动日志
 		EnvironmentInformation.logEnvironmentInfo(LOG, StandaloneJobClusterEntryPoint.class.getSimpleName(), args);
 		SignalHandler.register(LOG);
 		JvmShutdownSafeguard.installAsShutdownHook(LOG);
 
+		//note: 根据参数初始化 StandaloneJobClusterConfiguration 对象
 		final CommandLineParser<StandaloneJobClusterConfiguration> commandLineParser = new CommandLineParser<>(new StandaloneJobClusterConfigurationParserFactory());
 		StandaloneJobClusterConfiguration clusterConfiguration = null;
 
@@ -97,9 +100,11 @@ public final class StandaloneJobClusterEntryPoint extends JobClusterEntrypoint {
 			System.exit(1);
 		}
 
+		//note: Configuration 构建
 		Configuration configuration = loadConfiguration(clusterConfiguration);
 		setDefaultExecutionModeIfNotConfigured(configuration);
 
+		//note: 新建 StandaloneJobClusterEntryPoint，并启动
 		StandaloneJobClusterEntryPoint entrypoint = new StandaloneJobClusterEntryPoint(
 			configuration,
 			resolveJobIdForCluster(Optional.ofNullable(clusterConfiguration.getJobId()), configuration),

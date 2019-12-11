@@ -39,6 +39,7 @@ import java.util.Collection;
 
 /**
  * A task deployment descriptor contains all the information necessary to deploy a task on a task manager.
+ * note： TM 部署 task 时，一个包含所有相关信息的 task 描述器
  */
 public final class TaskDeploymentDescriptor implements Serializable {
 
@@ -125,6 +126,7 @@ public final class TaskDeploymentDescriptor implements Serializable {
 	private final ExecutionAttemptID executionId;
 
 	/** The allocation ID of the slot in which the task shall be run. */
+	//note: task 将要运行的 slot 的 allocationId
 	private final AllocationID allocationId;
 
 	/** The task's index in the subtask group. */

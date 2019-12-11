@@ -37,6 +37,7 @@ public class ConfigurationParserUtils {
 
 	/**
 	 * Parses the configuration to get the managed memory size and validates the value.
+	 * note：解析配置，获得 managed memory size
 	 *
 	 * @param configuration configuration object
 	 * @return managed memory size (in megabytes)

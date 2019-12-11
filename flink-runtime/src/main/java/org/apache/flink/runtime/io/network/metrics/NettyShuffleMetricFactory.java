@@ -191,6 +191,7 @@ public class NettyShuffleMetricFactory {
 			buffersGroup.gauge(METRIC_INPUT_FLOATING_BUFFERS_USAGE, floatingBuffersUsageGauge);
 			buffersGroup.gauge(METRIC_INPUT_POOL_USAGE, creditBasedInputBuffersUsageGauge);
 		} else {
+			//note: 统计 inPoolUsage 使用，也就是 UI 中 in queue 的统计
 			buffersGroup.gauge(METRIC_INPUT_POOL_USAGE, new InputBufferPoolUsageGauge(inputGates));
 		}
 	}

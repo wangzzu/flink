@@ -39,6 +39,7 @@ public class ArchivedExecution implements AccessExecution, Serializable {
 
 	private final String failureCause;          // once assigned, never changes
 
+	//note: 执行这个 Execution 的 TM location
 	private final TaskManagerLocation assignedResourceLocation; // for the archived execution
 
 	private final AllocationID assignedAllocationID;

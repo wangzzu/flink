@@ -24,6 +24,7 @@ import org.apache.flink.util.AbstractID;
  * Unique identifier for a physical slot allocated by a JobManager via the ResourceManager
  * from a TaskManager. The ID is assigned once the JobManager (or its SlotPool) first
  * requests the slot and is constant across retries.
+ * note：分配给 JobManager 的 slot 的唯一标识符（这个 id 是 JM 第一次请求 slot 时确定的，由 ResourceManger 负责）
  *
  * <p>This ID is used by the TaskManager and ResourceManager to track and synchronize which
  * slots are allocated to which JobManager and which are free.

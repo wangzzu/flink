@@ -97,6 +97,7 @@ public class StreamSource<OUT, SRC extends SourceFunction<OUT>> extends Abstract
 			-1);
 
 		try {
+			//note: 执行 function 的 run 方法
 			userFunction.run(ctx);
 
 			// if we get here, then the user function either exited after being done (finite source)

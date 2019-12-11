@@ -61,6 +61,7 @@ import static org.apache.flink.configuration.MemorySize.MemoryUnit.MEGA_BYTES;
  * Container for {@link TaskExecutor} services such as the {@link MemoryManager}, {@link IOManager},
  * {@link ShuffleEnvironment}. All services are exclusive to a single {@link TaskExecutor}.
  * Consequently, the respective {@link TaskExecutor} is responsible for closing them.
+ * note: TaskExecutor 相关的服务在这里，比如：内存管理、IO 管理、ShuffleEnvironment
  */
 public class TaskManagerServices {
 	private static final Logger LOG = LoggerFactory.getLogger(TaskManagerServices.class);
@@ -69,16 +70,27 @@ public class TaskManagerServices {
 	public static final String LOCAL_STATE_SUB_DIRECTORY_ROOT = "localState";
 
 	/** TaskManager services. */
+	//note: TM 通信的信息
 	private final TaskManagerLocation taskManagerLocation;
+	//note: 内存管理器
 	private final MemoryManager memoryManager;
+	//note: IO 管理器
 	private final IOManager ioManager;
+	//note: ShuffleEnvironment，主要是用于网络 shuffle
 	private final ShuffleEnvironment<?, ?> shuffleEnvironment;
+	//note: 每个 TM 上的 KvState 服务
 	private final KvStateService kvStateService;
+	//note: 用于处理广播变量的管理器
 	private final BroadcastVariableManager broadcastVariableManager;
+	//note: 维护 task slot 列表
 	private final TaskSlotTable taskSlotTable;
+	//note: 维护 jobId 与 JobManagerConnection 之间的关系
 	private final JobManagerTable jobManagerTable;
+	//note: 监控注册作业（这里应该是本 task 上的作业）的 leader 信息，并负责建立相应的连接
 	private final JobLeaderService jobLeaderService;
+	//note: task 上本地状态存储的管理器
 	private final TaskExecutorLocalStateStoresManager taskManagerStateStore;
+	//note: task event dispatcher
 	private final TaskEventDispatcher taskEventDispatcher;
 
 	TaskManagerServices(
@@ -221,6 +233,7 @@ public class TaskManagerServices {
 
 	/**
 	 * Creates and returns the task manager services.
+	 * note：根据创建 TM 服务
 	 *
 	 * @param taskManagerServicesConfiguration task manager configuration
 	 * @param taskManagerMetricGroup metric group of the task manager
@@ -236,43 +249,55 @@ public class TaskManagerServices {
 		// pre-start checks
 		checkTempDirs(taskManagerServicesConfiguration.getTmpDirPaths());
 
+		//note: 创建 taskEventDispatcher
 		final TaskEventDispatcher taskEventDispatcher = new TaskEventDispatcher();
 
 		// start the I/O manager, it will create some temp directories.
+		//note: 创建 IO 管理器
 		final IOManager ioManager = new IOManagerAsync(taskManagerServicesConfiguration.getTmpDirPaths());
 
+		//note: 创建 ShuffleEnvironment 对象(默认是 NettyShuffleEnvironment)
 		final ShuffleEnvironment<?, ?> shuffleEnvironment = createShuffleEnvironment(
 			taskManagerServicesConfiguration,
 			taskEventDispatcher,
 			taskManagerMetricGroup);
 		final int dataPort = shuffleEnvironment.start();
 
+		//note: 创建 KvStateService 实例并启动
 		final KvStateService kvStateService = KvStateService.fromConfiguration(taskManagerServicesConfiguration);
 		kvStateService.start();
 
+		//note: 初始化 taskManagerLocation，记录 connection 信息
 		final TaskManagerLocation taskManagerLocation = new TaskManagerLocation(
 			taskManagerServicesConfiguration.getResourceID(),
 			taskManagerServicesConfiguration.getTaskManagerAddress(),
 			dataPort);
 
 		// this call has to happen strictly after the network stack has been initialized
+		//note: 初始化 MemoryManager
 		final MemoryManager memoryManager = createMemoryManager(taskManagerServicesConfiguration);
 		final long managedMemorySize = memoryManager.getMemorySize();
 
+		//note: 初始化 BroadcastVariableManager 对象
 		final BroadcastVariableManager broadcastVariableManager = new BroadcastVariableManager();
 
+		//note: 当前 TM 拥有的 slot 及每个 slot 的资源信息
 		final int numOfSlots = taskManagerServicesConfiguration.getNumberOfSlots();
 		final List<ResourceProfile> resourceProfiles =
 			Collections.nCopies(numOfSlots, computeSlotResourceProfile(numOfSlots, managedMemorySize));
 
+		//note: 注册一个超时（AKKA 超时设置）服务（在 TaskSlotTable 用于监控 slot 分配是否超时）
 		final TimerService<AllocationID> timerService = new TimerService<>(
 			new ScheduledThreadPoolExecutor(1),
 			taskManagerServicesConfiguration.getTimerServiceShutdownTimeout());
 
+		//note: 这里会维护 slot 相关列表
 		final TaskSlotTable taskSlotTable = new TaskSlotTable(resourceProfiles, timerService);
 
+		//note: 维护 jobId 与 JobManager connection 之间的关系
 		final JobManagerTable jobManagerTable = new JobManagerTable();
 
+		//note: 监控注册的 job 的 JobManger leader 信息
 		final JobLeaderService jobLeaderService = new JobLeaderService(taskManagerLocation, taskManagerServicesConfiguration.getRetryingRegistrationConfiguration());
 
 		final String[] stateRootDirectoryStrings = taskManagerServicesConfiguration.getLocalRecoveryStateRootDirectories();
@@ -283,6 +308,7 @@ public class TaskManagerServices {
 			stateRootDirectoryFiles[i] = new File(stateRootDirectoryStrings[i], LOCAL_STATE_SUB_DIRECTORY_ROOT);
 		}
 
+		//note: 创建 TaskExecutorLocalStateStoresManager 对象：维护状态信息
 		final TaskExecutorLocalStateStoresManager taskStateManager = new TaskExecutorLocalStateStoresManager(
 			taskManagerServicesConfiguration.isLocalRecoveryEnabled(),
 			stateRootDirectoryFiles,
@@ -302,6 +328,7 @@ public class TaskManagerServices {
 			taskEventDispatcher);
 	}
 
+	//note: 创建一个 ShuffleEnvironment 实例对象，默认是 NettyShuffleEnvironment
 	private static ShuffleEnvironment<?, ?> createShuffleEnvironment(
 			TaskManagerServicesConfiguration taskManagerServicesConfiguration,
 			TaskEventDispatcher taskEventDispatcher,
@@ -343,6 +370,7 @@ public class TaskManagerServices {
 		boolean preAllocateMemory = taskManagerServicesConfiguration.isPreAllocateMemory();
 
 		if (configuredMemory > 0) {
+			//note: 如果配置了 configuredMemory，以这个为准
 			if (preAllocateMemory) {
 				LOG.info("Using {} MB for managed memory." , configuredMemory);
 			} else {
@@ -350,6 +378,7 @@ public class TaskManagerServices {
 			}
 			memorySize = configuredMemory << 20; // megabytes to bytes
 		} else {
+			//note: 没有配置 configuredMemory 的话，根据 memoryFraction 的比例来计算
 			// similar to #calculateNetworkBufferMemory(TaskManagerServicesConfiguration tmConfig)
 			float memoryFraction = taskManagerServicesConfiguration.getMemoryFraction();
 
@@ -490,6 +519,7 @@ public class TaskManagerServices {
 	/**
 	 * Validates that all the directories denoted by the strings do actually exist or can be created, are proper
 	 * directories (not files), and are writable.
+	 * note: 验证临时目录（是目录、存在、可创建、可写等）
 	 *
 	 * @param tmpDirs The array of directory paths to check.
 	 * @throws IOException Thrown if any of the directories does not exist and cannot be created or is not writable
@@ -526,6 +556,7 @@ public class TaskManagerServices {
 	}
 
 	public static ResourceProfile computeSlotResourceProfile(int numOfSlots, long managedMemorySize) {
+		//note: 每个 slot 的内存
 		int managedMemoryPerSlotMB = (int) bytesToMegabytes(managedMemorySize / numOfSlots);
 		return new ResourceProfile(
 			Double.MAX_VALUE,

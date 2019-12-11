@@ -49,7 +49,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 /**
  * An implementation of the {@link HighAvailabilityServices} using Apache ZooKeeper.
  * The services store data in ZooKeeper's nodes as illustrated by the following tree structure:
- *
+ * note：使用 ZK 做 HA 时的 HighAvailabilityServices
  * <pre>
  * /flink
  *      +/cluster_id_1/resource_manager_lock

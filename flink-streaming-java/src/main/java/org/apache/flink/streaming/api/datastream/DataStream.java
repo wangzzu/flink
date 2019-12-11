@@ -120,6 +120,7 @@ public class DataStream<T> {
 	/**
 	 * Create a new {@link DataStream} in the given execution environment with
 	 * partitioning set to forward by default.
+	 * note: 创建这个 DataStream 时，这里会记录 environment 和相应的 transformation（经过这个 transformation 转化得到的当前对象）
 	 *
 	 * @param environment The StreamExecutionEnvironment
 	 */
@@ -1198,7 +1199,7 @@ public class DataStream<T> {
 
 		//note： 新的 transformation 会连接上当前 DataStream 中的 transformation，从而构建成一棵树
 		OneInputTransformation<T, R> resultTransform = new OneInputTransformation<>(
-				this.transformation, //note: 记录这个 DataStream 的输入 DataStream
+				this.transformation, //note: 记录这个 transformation 的输入  transformation
 				operatorName,
 				operator,
 				outTypeInfo,
@@ -1228,6 +1229,7 @@ public class DataStream<T> {
 	 * Adds the given sink to this DataStream. Only streams with sinks added
 	 * will be executed once the {@link StreamExecutionEnvironment#execute()}
 	 * method is called.
+	 * note: 添加 sink 节点
 	 *
 	 * @param sinkFunction
 	 *            The object containing the sink's invoke function.
@@ -1243,8 +1245,10 @@ public class DataStream<T> {
 			((InputTypeConfigurable) sinkFunction).setInputType(getType(), getExecutionConfig());
 		}
 
+		//note: sink Operator
 		StreamSink<T> sinkOperator = new StreamSink<>(clean(sinkFunction));
 
+		//note: 创建 DataStreamSink
 		DataStreamSink<T> sink = new DataStreamSink<>(this, sinkOperator);
 
 		getExecutionEnvironment().addOperator(sink.getTransformation());

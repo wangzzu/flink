@@ -45,7 +45,7 @@ public class RandomWordCount {
 				}
 			}).keyBy(0).sum(1)
 			.print()
-			.setParallelism(8);
+			.setParallelism(2);
 
 		System.out.println("StreamGraph:\t" + env.getStreamGraph().getStreamingPlanAsJSON());
 		System.out.println("JobGraph:\t" + env.getStreamGraph().getJobGraph().toString());
@@ -74,7 +74,7 @@ public class RandomWordCount {
 				counter++;
 
 				ctx.collect(generatorRandomWorldLine(first, second));
-				Thread.sleep(50L);
+				Thread.sleep(5000L);
 			}
 		}
 

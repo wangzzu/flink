@@ -45,6 +45,7 @@ public class StandaloneHaServices extends AbstractNonHaServices {
 	/** The constant name of the ResourceManager RPC endpoint */
 	private static final String RESOURCE_MANAGER_RPC_ENDPOINT_NAME = "resource_manager";
 
+	//note: 相应的变量都是对应 flink akka 模型下通信地址
 	/** The fix address of the ResourceManager */
 	private final String resourceManagerAddress;
 

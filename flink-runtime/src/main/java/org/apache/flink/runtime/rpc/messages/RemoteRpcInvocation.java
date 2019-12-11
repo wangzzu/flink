@@ -29,6 +29,7 @@ import java.io.Serializable;
 /**
  * Remote rpc invocation message which is used when the actor communication is remote and, thus, the
  * message has to be serialized.
+ * note：远程 rpc 调用，内部的变量等会被序列化
  * <p>
  * In order to fail fast and report an appropriate error message to the user, the method name, the
  * parameter types and the arguments are eagerly serialized. In case the invocation call

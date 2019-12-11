@@ -101,6 +101,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * A single execution of a vertex. While an {@link ExecutionVertex} can be executed multiple times
  * (for recovery, re-computation, re-configuration), this class tracks the state of a single execution
  * of that vertex and the resources.
+ * note: 一个 ExecutionVertex 的一个 execution，它可以被执行多次（recovery、重新计算、重新配置）
  *
  * <h2>Lock free state transitions</h2>
  *
@@ -141,6 +142,7 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 	private final ExecutionVertex vertex;
 
 	/** The unique ID marking the specific execution instant of the task. */
+	//note: 唯一标识
 	private final ExecutionAttemptID attemptId;
 
 	/** Gets the global modification version of the execution graph when this execution was created.
@@ -164,6 +166,7 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 
 	private final CompletableFuture<TaskManagerLocation> taskManagerLocationFuture;
 
+	//note: 最开始的状态是 CREATED
 	private volatile ExecutionState state = CREATED;
 
 	private volatile LogicalSlot assignedResource;
@@ -172,6 +175,7 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 
 	/** Information to restore the task on recovery, such as checkpoint id and task state snapshot. */
 	@Nullable
+	//note: recovery 时恢复 task 的信息，比如：checkpoint id 和 task state snapshot
 	private volatile JobManagerTaskRestore taskRestore;
 
 	/** This field holds the allocation id once it was assigned successfully. */
@@ -423,8 +427,9 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 	 *       to be scheduled immediately and no resource is available. If the task is accepted by the schedule, any
 	 *       error sets the vertex state to failed and triggers the recovery logic.
 	 *
+	 * note: 调度一个 ExecutionVertex(如果是在一个不合法的状态去调度、没有资源的情况下但需要立即调度、vertex state 有错误或者触发 recovery 时会抛出异常)
 	 * @param slotProviderStrategy The slot provider strategy to use to allocate slot for this execution attempt.
-	 * @param locationPreferenceConstraint constraint for the location preferences
+	 * @param locationPreferenceConstraint constraint for the location preferences note: 输入 location 的约束
 	 * @param allPreviousExecutionGraphAllocationIds set with all previous allocation ids in the job graph.
 	 *                                                 Can be empty if the allocation ids are not required for scheduling.
 	 * @return Future which is completed once the Execution has been deployed
@@ -436,6 +441,7 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 
 		assertRunningInJobMasterMainThread();
 		try {
+			//note: 给这个 Execution 申请和分配资源
 			final CompletableFuture<Execution> allocationFuture = allocateResourcesForExecution(
 				slotProviderStrategy,
 				locationPreferenceConstraint,
@@ -444,6 +450,7 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 			final CompletableFuture<Void> deploymentFuture;
 
 			if (allocationFuture.isDone() || slotProviderStrategy.isQueuedSchedulingAllowed()) {
+				//note: 部署这个 task
 				deploymentFuture = allocationFuture.thenRun(ThrowingRunnable.unchecked(this::deploy));
 			} else {
 				deploymentFuture = FutureUtils.completedExceptionally(
@@ -481,6 +488,7 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 	 *  <li>slot obtained from the slot provider</li>
 	 *  <li>registers produced partitions with the {@link org.apache.flink.runtime.shuffle.ShuffleMaster}</li>
 	 * </ol>
+	 * note: 给这个 execution 分配资源：1. 从 slot provider 中获得 slot；2. 向 ShuffleMaster 注册 produced partition；
 	 *
 	 * @param slotProviderStrategy to obtain a new slot from
 	 * @param locationPreferenceConstraint constraint for the location preferences
@@ -519,25 +527,30 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 
 		assertRunningInJobMasterMainThread();
 
+		//note: 获取这个 vertex 的相关信息
 		final SlotSharingGroup sharingGroup = vertex.getJobVertex().getSlotSharingGroup();
 		final CoLocationConstraint locationConstraint = vertex.getLocationConstraint();
 
 		// sanity check
+		//note: 做相应的检查
 		if (locationConstraint != null && sharingGroup == null) {
 			throw new IllegalStateException(
 					"Trying to schedule with co-location constraint but without slot sharing allowed.");
 		}
 
 		// this method only works if the execution is in the state 'CREATED'
+		//note: 这个只会在 CREATED 下工作
 		if (transitionState(CREATED, SCHEDULED)) {
 
 			final SlotSharingGroupId slotSharingGroupId = sharingGroup != null ? sharingGroup.getSlotSharingGroupId() : null;
 
+			//note: 创建一个 ScheduledUnit 对象（跟 sharingGroup/locationConstraint 都有关系）
 			ScheduledUnit toSchedule = locationConstraint == null ?
 					new ScheduledUnit(this, slotSharingGroupId) :
 					new ScheduledUnit(this, slotSharingGroupId, locationConstraint);
 
 			// try to extract previous allocation ids, if applicable, so that we can reschedule to the same slot
+			//note: 如果能找到之前调度的 AllocationID，会尽量先重新调度在同一个 slot 上
 			ExecutionVertex executionVertex = getVertex();
 			AllocationID lastAllocation = executionVertex.getLatestPriorAllocation();
 
@@ -545,11 +558,13 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 				lastAllocation != null ? Collections.singletonList(lastAllocation) : Collections.emptyList();
 
 			// calculate the preferred locations
+			//note: 这里先根据 state 和上游数据的输入节点获取这个 Task Execution 的最佳 TM location
 			final CompletableFuture<Collection<TaskManagerLocation>> preferredLocationsFuture =
 				calculatePreferredLocations(locationPreferenceConstraint);
 
 			final SlotRequestId slotRequestId = new SlotRequestId();
 
+			//note: 根据指定的需求分配这个 slot
 			final CompletableFuture<LogicalSlot> logicalSlotFuture =
 				preferredLocationsFuture.thenCompose(
 					(Collection<TaskManagerLocation> preferredLocations) ->
@@ -574,6 +589,7 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 				});
 
 			// This forces calls to the slot pool back into the main thread, for normal and exceptional completion
+			//note: 返回 LogicalSlot
 			return logicalSlotFuture.handle(
 				(LogicalSlot logicalSlot, Throwable failure) -> {
 
@@ -597,6 +613,7 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 		}
 	}
 
+	//note: 向 ShuffleMaster 注册 produced partition
 	@VisibleForTesting
 	CompletableFuture<Execution> registerProducedPartitions(TaskManagerLocation location) {
 		assertRunningInJobMasterMainThread();
@@ -604,6 +621,7 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 		return FutureUtils.thenApplyAsyncIfNotDone(
 			registerProducedPartitions(vertex, location, attemptId),
 			vertex.getExecutionGraph().getJobMasterMainThreadExecutor(),
+			//note: 这个 function 就是更新一下本地缓存，然后将 producedPartitionsCache.values() 添加到对应的 PartitionTracker 中
 			producedPartitionsCache -> {
 				producedPartitions = producedPartitionsCache;
 				startTrackingPartitions(location.getResourceID(), producedPartitionsCache.values());
@@ -611,16 +629,20 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 			});
 	}
 
+	//note: 给这个 Execution 注册对应的 ProducedPartition
 	@VisibleForTesting
 	static CompletableFuture<Map<IntermediateResultPartitionID, ResultPartitionDeploymentDescriptor>> registerProducedPartitions(
 			ExecutionVertex vertex,
 			TaskManagerLocation location,
 			ExecutionAttemptID attemptId) {
+		//note: 创建一个 ProducerDescriptor 对象
 		ProducerDescriptor producerDescriptor = ProducerDescriptor.create(location, attemptId);
 
+		//note: task 启动的模式
 		boolean lazyScheduling = vertex.getExecutionGraph().getScheduleMode().allowLazyDeployment();
 
 		Collection<IntermediateResultPartition> partitions = vertex.getProducedPartitions().values();
+		//note: ProducedPartition 注册的结果
 		Collection<CompletableFuture<ResultPartitionDeploymentDescriptor>> partitionRegistrations =
 			new ArrayList<>(partitions.size());
 
@@ -630,7 +652,7 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 			CompletableFuture<? extends ShuffleDescriptor> shuffleDescriptorFuture = vertex
 				.getExecutionGraph()
 				.getShuffleMaster()
-				.registerPartitionWithProducer(partitionDescriptor, producerDescriptor);
+				.registerPartitionWithProducer(partitionDescriptor, producerDescriptor); //note: 这里会记录一个 netty 的 connectionInfo
 
 			CompletableFuture<ResultPartitionDeploymentDescriptor> partitionRegistration = shuffleDescriptorFuture
 				.thenApply(shuffleDescriptor -> new ResultPartitionDeploymentDescriptor(
@@ -663,6 +685,7 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 
 	/**
 	 * Deploys the execution to the previously assigned resource.
+	 * note：部署这个 Execution 到分配的资源上
 	 *
 	 * @throws JobException if the execution cannot be deployed to the assigned resource
 	 */
@@ -682,6 +705,7 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 
 		// make sure exactly one deployment call happens from the correct state
 		// note: the transition from CREATED to DEPLOYING is for testing purposes only
+		//note: 状态变为 DEPLOYING
 		ExecutionState previous = this.state;
 		if (previous == SCHEDULED || previous == CREATED) {
 			if (!transitionState(previous, DEPLOYING)) {
@@ -713,6 +737,7 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 						attemptNumber, getAssignedResourceLocation()));
 			}
 
+			//note: 创建一个 TaskDeploymentDescriptor 对象，它包含换一个 task 在物理上部署所需要的全部信息
 			final TaskDeploymentDescriptor deployment = TaskDeploymentDescriptorFactory
 				.fromExecutionVertex(vertex, attemptNumber)
 				.createDeploymentDescriptor(
@@ -731,6 +756,7 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 
 			// We run the submission in the future executor so that the serialization of large TDDs does not block
 			// the main thread and sync back to the main thread once submission is completed.
+			//note: 提交 task
 			CompletableFuture.supplyAsync(() -> taskManagerGateway.submitTask(deployment, rpcTimeout), executor)
 				.thenCompose(Function.identity())
 				.whenCompleteAsync(
@@ -1315,6 +1341,7 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 		}
 	}
 
+	//note: 将这个 partitions 放到对应的 partitionTracker 中
 	private void startTrackingPartitions(final ResourceID taskExecutorId, final Collection<ResultPartitionDeploymentDescriptor> partitions) {
 		PartitionTracker partitionTracker = vertex.getExecutionGraph().getPartitionTracker();
 		for (ResultPartitionDeploymentDescriptor partition : partitions) {
@@ -1436,6 +1463,7 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 
 	/**
 	 * Calculates the preferred locations based on the location preference constraint.
+	 * note: 根据 LocationPreferenceConstraint 策略计算前置输入节点的 TaskManagerLocation（如果有输入节点还没有资源分配，那么这个可能还不会完成）
 	 *
 	 * @param locationPreferenceConstraint constraint for the location preference
 	 * @return Future containing the collection of preferred locations. This might not be completed if not all inputs
@@ -1443,6 +1471,7 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 	 */
 	@VisibleForTesting
 	public CompletableFuture<Collection<TaskManagerLocation>> calculatePreferredLocations(LocationPreferenceConstraint locationPreferenceConstraint) {
+		//note: 获取一个最佳分配的 TM location 集合
 		final Collection<CompletableFuture<TaskManagerLocation>> preferredLocationFutures = getVertex().getPreferredLocations();
 		final CompletableFuture<Collection<TaskManagerLocation>> preferredLocationsFuture;
 
@@ -1451,10 +1480,12 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 				preferredLocationsFuture = FutureUtils.combineAll(preferredLocationFutures);
 				break;
 			case ANY:
+				//note: 遍历所有 input，先获取已经完成的 input 列表
 				final ArrayList<TaskManagerLocation> completedTaskManagerLocations = new ArrayList<>(preferredLocationFutures.size());
 
 				for (CompletableFuture<TaskManagerLocation> preferredLocationFuture : preferredLocationFutures) {
 					if (preferredLocationFuture.isDone() && !preferredLocationFuture.isCompletedExceptionally()) {
+						//note: 在这个 future 完成（没有异常的情况下），这里会理解先得到这个 taskManagerLocation 对象
 						final TaskManagerLocation taskManagerLocation = preferredLocationFuture.getNow(null);
 
 						if (taskManagerLocation == null) {

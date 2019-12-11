@@ -32,6 +32,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 /**
  * The {@code AllocatedSlot} represents a slot that the JobMaster allocated from a TaskExecutor.
  * It represents a slice of allocated resources from the TaskExecutor.
+ * note: 代表了一个 JobMaster 从 TaskManager 分配到的一个 slot
  * 
  * <p>To allocate an {@code AllocatedSlot}, the requests a slot from the ResourceManager. The
  * ResourceManager picks (or starts) a TaskExecutor that will then allocate the slot to the

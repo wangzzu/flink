@@ -24,13 +24,15 @@ import org.apache.flink.runtime.clusterframework.types.ResourceID;
  * Interface for the interaction with the {@link HeartbeatManager}. The heartbeat listener is used
  * for the following things:
  *
+ * note：HeartbeatManager 的接口，用于：
+ * note：1. 通知心跳超时；2.如果心跳带有负载信息的 callback 处理；3. 查询下次心跳信息的负载值；
  * <ul>
  *     <li>Notifications about heartbeat timeouts</li>
  *     <li>Payload reports of incoming heartbeats</li>
  *     <li>Retrieval of payloads for outgoing heartbeats</li>
  * </ul>
- * @param <I> Type of the incoming payload
- * @param <O> Type of the outgoing payload
+ * @param <I> Type of the incoming payload note：要输入的负载类型
+ * @param <O> Type of the outgoing payload note：要输出的负载类型
  */
 public interface HeartbeatListener<I, O> {
 

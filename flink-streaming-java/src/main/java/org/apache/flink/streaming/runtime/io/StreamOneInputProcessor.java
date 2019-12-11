@@ -156,21 +156,25 @@ public final class StreamOneInputProcessor<IN> implements StreamInputProcessor {
 
 	private void processElement(StreamElement recordOrMark, int channel) throws Exception {
 		if (recordOrMark.isRecord()) {
+			//note: 作业 function 的逻辑
 			// now we can do the actual processing
 			StreamRecord<IN> record = recordOrMark.asRecord();
 			synchronized (lock) {
 				numRecordsIn.inc();
 				streamOperator.setKeyContextElement1(record);
+				//note: 作业真正逻辑处理的地方
 				streamOperator.processElement(record);
 			}
 		}
 		else if (recordOrMark.isWatermark()) {
+			//note: watermark 的处理
 			// handle watermark
 			statusWatermarkValve.inputWatermark(recordOrMark.asWatermark(), channel);
 		} else if (recordOrMark.isStreamStatus()) {
 			// handle stream status
 			statusWatermarkValve.inputStreamStatus(recordOrMark.asStreamStatus(), channel);
 		} else if (recordOrMark.isLatencyMarker()) {
+			//note: 处理 latency mark，也是由框架处理
 			// handle latency marker
 			synchronized (lock) {
 				streamOperator.processLatencyMarker(recordOrMark.asLatencyMarker());

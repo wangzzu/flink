@@ -123,23 +123,23 @@ import static org.apache.flink.util.Preconditions.checkState;
  * The execution graph is the central data structure that coordinates the distributed
  * execution of a data flow. It keeps representations of each parallel task, each
  * intermediate stream, and the communication between them.
- * note：execution graph 是调度分布式 dataflow 任务执行的核心数据结构，它会维护每个并行 taks、中间的 stream 以及它们之间的联系
+ * note：execution graph 是调度分布式 dataFlow 任务执行的核心数据结构，它会维护每个并行 taks、中间的 stream 以及它们之间的联系
  *
  * <p>The execution graph consists of the following constructs:
  * <ul>
  *     <li>The {@link ExecutionJobVertex} represents one vertex from the JobGraph (usually one operation like
  *         "map" or "join") during execution. It holds the aggregated state of all parallel subtasks.
  *         The ExecutionJobVertex is identified inside the graph by the {@link JobVertexID}, which it takes
- *         from the JobGraph's corresponding JobVertex.</li>
+ *         from the JobGraph's corresponding JobVertex.</li> note：表示 JobGraph 中的一个 JobVertex
  *     <li>The {@link ExecutionVertex} represents one parallel subtask. For each ExecutionJobVertex, there are
  *         as many ExecutionVertices as the parallelism. The ExecutionVertex is identified by
- *         the ExecutionJobVertex and the index of the parallel subtask</li>
+ *         the ExecutionJobVertex and the index of the parallel subtask</li> note：代表每个子 task
  *     <li>The {@link Execution} is one attempt to execute a ExecutionVertex. There may be multiple Executions
  *         for the ExecutionVertex, in case of a failure, or in the case where some data needs to be recomputed
  *         because it is no longer available when requested by later operations. An Execution is always
  *         identified by an {@link ExecutionAttemptID}. All messages between the JobManager and the TaskManager
  *         about deployment of tasks and updates in the task status always use the ExecutionAttemptID to
- *         address the message receiver.</li>
+ *         address the message receiver.</li> note：一个 ExecutionVertex 的尝试执行，每个 ExecutionVertex 可能有多个，因为会有重试
  * </ul>
  *
  * <h2>Global and local failover</h2>
@@ -150,11 +150,14 @@ import static org.apache.flink.util.Preconditions.checkState;
  * data flow graph from the last completed checkpoint. Global failover is considered the
  * "fallback strategy" that is used when a local failover is unsuccessful, or when a issue is
  * found in the state of the ExecutionGraph that could mark it as inconsistent (caused by a bug).
+ * note：global failover，会取消这个 all vertices 的 task 的 executions，从上次 cp 重启整个 DataFlow；
+ * note：global failover 被认为是一种'fallback 策略'，它通常用于本来 failover 失败的情况，也可能是 bug 导致的数据状态不一致
  *
  * <p>A <b>local failover</b> is triggered when an individual vertex execution (a task) fails.
  * The local failover is coordinated by the {@link FailoverStrategy}. A local failover typically
  * attempts to restart as little as possible, but as much as necessary.
  *
+ * note：local failover 可以被一个独立的 vertex Execution 触发
  * <p>Between local- and global failover, the global failover always takes precedence, because it
  * is the core mechanism that the ExecutionGraph relies on to bring back consistency. The
  * guard that, the ExecutionGraph maintains a <i>global modification version</i>, which is incremented
@@ -162,7 +165,7 @@ import static org.apache.flink.util.Preconditions.checkState;
  * failure). Local failover is always scoped by the modification version that the execution graph
  * had when the failover was triggered. If a new global modification version is reached during
  * local failover (meaning there is a concurrent global failover), the failover strategy has to
- * yield before the global failover.
+ * yield before the global failover. note：如果 local failover 发生的比较多，也会触发一个 global failover
  */
 public class ExecutionGraph implements AccessExecutionGraph {
 
@@ -452,6 +455,7 @@ public class ExecutionGraph implements AccessExecutionGraph {
 
 		checkNotNull(futureExecutor);
 
+		//note: 初始化相应的变量
 		this.jobInformation = Preconditions.checkNotNull(jobInformation);
 
 		this.blobWriter = Preconditions.checkNotNull(blobWriter);
@@ -591,6 +595,7 @@ public class ExecutionGraph implements AccessExecutionGraph {
 		);
 
 		// create the coordinator that triggers and commits checkpoints and holds the state
+		//note: 创建 checkpointCoordinator 对象
 		checkpointCoordinator = new CheckpointCoordinator(
 			jobInformation.getJobId(),
 			chkConfig,
@@ -905,6 +910,7 @@ public class ExecutionGraph implements AccessExecutionGraph {
 			}
 
 			// create the execution job vertex and attach it to the graph
+			//note: 创建一个 ExecutionJobVertex 对象（同步 JobGraph 中配置信息，及创建 task vertices）
 			ExecutionJobVertex ejv = new ExecutionJobVertex(
 					this,
 					jobVertex,
@@ -914,8 +920,10 @@ public class ExecutionGraph implements AccessExecutionGraph {
 					globalModVersion,
 					createTimestamp);
 
+			//note: 将创建的 ExecutionJobVertex 与前置的 IntermediateResult 连接起来
 			ejv.connectToPredecessors(this.intermediateResults);
 
+			//note:
 			ExecutionJobVertex previousTask = this.tasks.putIfAbsent(jobVertex.getID(), ejv);
 			if (previousTask != null) {
 				throw new JobException(String.format("Encountered two job vertices with ID %s : previous=[%s] / new=[%s]",
@@ -943,14 +951,17 @@ public class ExecutionGraph implements AccessExecutionGraph {
 			new DefaultFailoverTopology(this));
 	}
 
+	//note: 把 CREATED 状态转换为 RUNNING 状态，并做相应的调度，如果有异常这里会抛出
 	public void scheduleForExecution() throws JobException {
 
 		assertRunningInJobMasterMainThread();
 
 		final long currentGlobalModVersion = globalModVersion;
 
+		//note: 先将状态转移为 RUNNING
 		if (transitionState(JobStatus.CREATED, JobStatus.RUNNING)) {
 
+			//note: 这里会真正调度相应的 Execution Graph
 			final CompletableFuture<Void> newSchedulingFuture = SchedulingUtils.schedule(
 				scheduleMode,
 				getAllExecutionVertices(),
@@ -958,6 +969,7 @@ public class ExecutionGraph implements AccessExecutionGraph {
 
 			if (state == JobStatus.RUNNING && currentGlobalModVersion == globalModVersion) {
 				schedulingFuture = newSchedulingFuture;
+				//note: 前面调度完成后，如果最后的结果有异常，这里会做相应的处理
 				newSchedulingFuture.whenComplete(
 					(Void ignored, Throwable throwable) -> {
 						if (throwable != null) {
@@ -1634,6 +1646,7 @@ public class ExecutionGraph implements AccessExecutionGraph {
 
 	/**
 	 * Schedule or updates consumers of the given result partition.
+	 * note：调度和更新指定的 result partition
 	 *
 	 * @param partitionId specifying the result partition whose consumer shall be scheduled or updated
 	 * @throws ExecutionGraphException if the schedule or update consumers operation could not be executed
@@ -1709,6 +1722,7 @@ public class ExecutionGraph implements AccessExecutionGraph {
 		}
 	}
 
+	//note: 如果作业状态改变的话，这里会通知
 	private void notifyJobStatusChange(JobStatus newState, Throwable error) {
 		if (jobStatusListeners.size() > 0) {
 			final long timestamp = System.currentTimeMillis();

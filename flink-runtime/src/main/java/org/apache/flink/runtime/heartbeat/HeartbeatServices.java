@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 /**
  * HeartbeatServices gives access to all services needed for heartbeating. This includes the
  * creation of heartbeat receivers and heartbeat senders.
+ * note：心跳服务模块，包括心跳的 receiver 和 sender
  */
 public class HeartbeatServices {
 
@@ -48,6 +49,7 @@ public class HeartbeatServices {
 
 	/**
 	 * Creates a heartbeat manager which does not actively send heartbeats.
+	 * note：创建一个 HeartbeatManager 对象，它并不会发送心跳因为没有定时调度这个任务
 	 *
 	 * @param resourceId Resource Id which identifies the owner of the heartbeat manager
 	 * @param heartbeatListener Listener which will be notified upon heartbeat timeouts for registered
@@ -74,6 +76,7 @@ public class HeartbeatServices {
 
 	/**
 	 * Creates a heartbeat manager which actively sends heartbeats to monitoring targets.
+	 * note：创建一个 HeartbeatManager 对象，这个在创建的时候是会定时调度发送心跳的服务
 	 *
 	 * @param resourceId Resource Id which identifies the owner of the heartbeat manager
 	 * @param heartbeatListener Listener which will be notified upon heartbeat timeouts for registered

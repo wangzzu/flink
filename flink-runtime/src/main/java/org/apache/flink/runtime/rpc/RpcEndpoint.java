@@ -60,6 +60,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * <h1>Lifecycle</h1>
  *
  * <p>The RPC endpoint has the following stages:
+ * note：RPC 服务的处理流程
  * <ul>
  *    <li>
  *        The RPC endpoint is created in a non-running state and does not serve any RPC requests.
@@ -68,7 +69,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  *        Calling the {@link #start()} method triggers the start of the RPC endpoint and schedules overridable
  *        {@link #onStart()} method call to the main thread.
  *    </li>
- *    note: 调用 start 方法后，会调用 onStart 方法调用主线程
+ *    note: 调用 start 方法后，会调用 onStart 方法调用主线程，只有在 start 方法触发后，RPC 才会开始处理服务请求
  *    <li>
  *        When the start operation ends the RPC endpoint is moved to the running state
  *        and starts to serve and complete RPC requests.
@@ -177,6 +178,7 @@ public abstract class RpcEndpoint implements RpcGateway, AutoCloseableAsync {
 
 	/**
 	 * Internal method which is called by the RpcService implementation to start the RpcEndpoint.
+	 * note：当 RpcService 启动时，将会调用这个方法
 	 *
 	 * @throws Exception indicating that the rpc endpoint could not be started. If an exception occurs,
 	 * then the rpc endpoint will automatically terminate.

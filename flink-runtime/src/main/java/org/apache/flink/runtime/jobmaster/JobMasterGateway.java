@@ -52,6 +52,7 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * {@link JobMaster} rpc gateway interface.
+ * note： JobMaster rpc gateway 接口
  */
 public interface JobMasterGateway extends
 	CheckpointCoordinatorGateway,
@@ -153,6 +154,7 @@ public interface JobMasterGateway extends
 
 	/**
 	 * Fails the slot with the given allocation id and cause.
+	 * note：slot fail
 	 *
 	 * @param taskManagerId identifying the task manager
 	 * @param allocationId  identifying the slot to fail

@@ -43,11 +43,15 @@ import java.util.Set;
  * The memory manager governs the memory that Flink uses for sorting, hashing, and caching. Memory
  * is represented in segments of equal size. Operators allocate the memory by requesting a number
  * of memory segments.
+ * note: Flink 使用的内存管理，用于 sort、hash 和 cache
  *
  * <p>The memory may be represented as on-heap byte arrays or as off-heap memory regions
  * (both via {@link HybridMemorySegment}). Which kind of memory the MemoryManager serves can
  * be passed as an argument to the initialization.
  *
+ * note：内存管理既可以预分配所有的内存也可以根据请求分配内存
+ * note：1. 预分配的话：启动时，内存就会被占用，它意味着在请求分配内存时不会有 OOM 错误，内存释放的话该内存就会被重新放回 pool 中；
+ * note：2. 按请求分配的话：内存管理器只会追踪当前有多少内存 segment 被分配，释放内存不会将其放回 pool 中，但会让其可被 GC 回收；
  * <p>The memory manager can either pre-allocate all memory, or allocate the memory on demand. In the
  * former version, memory will be occupied and reserved from start on, which means that no OutOfMemoryError
  * can come while requesting memory. Released memory will also return to the MemoryManager's pool.

@@ -20,6 +20,7 @@ package org.apache.flink.runtime.taskexecutor.slot;
 
 /**
  * Internal task slot state
+ * note：task slot 的状态
  */
 enum TaskSlotState {
 	ACTIVE, // Slot is in active use by a job manager responsible for a job

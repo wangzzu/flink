@@ -29,6 +29,8 @@ import java.util.concurrent.Executor;
  * The interface for hooks that can be called by the checkpoint coordinator when triggering or
  * restoring a checkpoint. Such a hook is useful for example when preparing external systems for
  * taking or restoring checkpoints.
+ * note：cp hook 的接口，在触发或恢复一个 cp 时会被 checkpoint coordinator 调用
+ * note：它是非常有用的，比如：你可以使用一个外部系统用于 存储和恢复 cp
  * 
  * <p>The {@link #triggerCheckpoint(long, long, Executor)} method (called when triggering a checkpoint)
  * can return a result (via a future) that will be stored as part of the checkpoint metadata.
@@ -40,6 +42,7 @@ import java.util.concurrent.Executor;
  * <p>It is possible that a job fails (and is subsequently restarted) before any checkpoints were successful.
  * In that situation, the checkpoint coordination calls {@link #reset()} to give the hook an
  * opportunity to, for example, reset an external system to initial conditions.
+ * note：之前还没有 cp 成功，job 就 fail 或突然重启也是有可能的，这种情况下 the checkpoint coordination 会调用 reset 初始化 hook 的状态
  *
  * <p>The MasterTriggerRestoreHook is defined when creating the streaming dataflow graph. It is attached
  * to the job graph, which gets sent to the cluster for execution. To avoid having to make the hook

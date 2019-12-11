@@ -76,9 +76,11 @@ public final class JobSubmitHandler extends AbstractRestHandler<DispatcherGatewa
 		this.configuration = configuration;
 	}
 
+	//note: 处理 client 端发送的作业提交请求
 	@Override
 	protected CompletableFuture<JobSubmitResponseBody> handleRequest(@Nonnull HandlerRequest<JobSubmitRequestBody, EmptyMessageParameters> request, @Nonnull DispatcherGateway gateway) throws RestHandlerException {
 		final Collection<File> uploadedFiles = request.getUploadedFiles();
+		//note: 拿到相关的依赖包文件
 		final Map<String, Path> nameToFile = uploadedFiles.stream().collect(Collectors.toMap(
 			File::getName,
 			Path::fromLocalFile
@@ -103,6 +105,7 @@ public final class JobSubmitHandler extends AbstractRestHandler<DispatcherGatewa
 				HttpResponseStatus.BAD_REQUEST);
 		}
 
+		//note: 异步加载 JobGraph
 		CompletableFuture<JobGraph> jobGraphFuture = loadJobGraph(requestBody, nameToFile);
 
 		Collection<Path> jarFiles = getJarFilesToUpload(requestBody.jarFileNames, nameToFile);
@@ -118,6 +121,7 @@ public final class JobSubmitHandler extends AbstractRestHandler<DispatcherGatewa
 			(ack, jobGraph) -> new JobSubmitResponseBody("/jobs/" + jobGraph.getJobID()));
 	}
 
+	//note: 异步加载 JobGraph
 	private CompletableFuture<JobGraph> loadJobGraph(JobSubmitRequestBody requestBody, Map<String, Path> nameToFile) throws MissingFileException {
 		final Path jobGraphFile = getPathAndAssertUpload(requestBody.jobGraphFileName, FILE_TYPE_JOB_GRAPH, nameToFile);
 

@@ -23,6 +23,7 @@ import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
 
 /**
  * Partitioner that forwards elements only to the locally running downstream operation.
+ * note: 只将元素转发到本地下游正在运行的 Operator 上
  *
  * @param <T> Type of the elements in the Stream
  */

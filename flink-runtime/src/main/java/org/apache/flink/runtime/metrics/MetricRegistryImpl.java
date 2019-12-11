@@ -91,7 +91,7 @@ public class MetricRegistryImpl implements MetricRegistry {
 
 	/**
 	 * Creates a new MetricRegistry and starts the configured reporter.
-	 * note：metrics reporter
+	 * note：创建 metrics reporter 对象，并启动这个 reporter
 	 */
 	public MetricRegistryImpl(MetricRegistryConfiguration config, Collection<ReporterSetup> reporterConfigurations) {
 		this.maximumFramesize = config.getQueryServiceMessageSizeLimit();

@@ -1439,6 +1439,7 @@ public abstract class StreamExecutionEnvironment {
 	 * {@link DataStream}. Only in very special cases does the user need to
 	 * support type information. Otherwise use
 	 * {@link #addSource(org.apache.flink.streaming.api.functions.source.SourceFunction)}
+	 * note: add 的是一个 Function，并给设置相应的 FunctionName
 	 *
 	 * @param function
 	 * 		the user defined function
@@ -1456,6 +1457,7 @@ public abstract class StreamExecutionEnvironment {
 		if (function instanceof ResultTypeQueryable) {
 			typeInfo = ((ResultTypeQueryable<OUT>) function).getProducedType();
 		}
+		//note: 找到相应的 TypeInformation
 		if (typeInfo == null) {
 			try {
 				typeInfo = TypeExtractor.createTypeInfo(
@@ -1470,7 +1472,9 @@ public abstract class StreamExecutionEnvironment {
 
 		clean(function);
 
+		//note: 创建一个 Operator
 		final StreamSource<OUT, ?> sourceOperator = new StreamSource<>(function);
+		//note: 创建 DataStreamSource
 		return new DataStreamSource<>(this, typeInfo, sourceOperator, isParallel, sourceName);
 	}
 
@@ -1547,12 +1551,13 @@ public abstract class StreamExecutionEnvironment {
 		if (transformations.size() <= 0) {
 			throw new IllegalStateException("No operators defined in streaming topology. Cannot execute.");
 		}
-		return new StreamGraphGenerator(transformations, config, checkpointCfg)
-			.setStateBackend(defaultStateBackend)
-			.setChaining(isChainingEnabled)
+		//note: 数据处理操作都在这个 transformations 列表里
+		return new StreamGraphGenerator(transformations, config, checkpointCfg) //note: ExecutionConfig/CheckpointConfig
+			.setStateBackend(defaultStateBackend) //note: StateBackend = null
+			.setChaining(isChainingEnabled) //note: isChainingEnabled = true
 			.setUserArtifacts(cacheFile)
-			.setTimeCharacteristic(timeCharacteristic)
-			.setDefaultBufferTimeout(bufferTimeout);
+			.setTimeCharacteristic(timeCharacteristic) //note: TimeCharacteristic = ProcessingTime
+			.setDefaultBufferTimeout(bufferTimeout); //note: default 100
 	}
 
 	/**

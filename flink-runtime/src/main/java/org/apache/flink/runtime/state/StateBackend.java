@@ -36,25 +36,30 @@ import java.util.Collection;
  * A <b>State Backend</b> defines how the state of a streaming application is stored and
  * checkpointed. Different State Backends store their state in different fashions, and use
  * different data structures to hold the state of a running application.
+ * note：State Backend 它决定了 streaming 应用的状态时如何存储以及 cp 的（不同的 backend 以不同的方式存储，并且使用了不同的数据结构）
  *
  * <p>For example, the {@link org.apache.flink.runtime.state.memory.MemoryStateBackend memory state backend}
  * keeps working state in the memory of the TaskManager and stores checkpoints in the memory of the
  * JobManager. The backend is lightweight and without additional dependencies, but not highly available
  * and supports only small state.
+ * note：MemoryStateBackend 在 TM 的内存中存储状态、在 JM 的内存中存储 cp，这个 backend 没有其他依赖、是轻量级的，但不是高可用，且只支持小状态
  *
  * <p>The {@link org.apache.flink.runtime.state.filesystem.FsStateBackend file system state backend}
  * keeps working state in the memory of the TaskManager and stores state checkpoints in a filesystem
  * (typically a replicated highly-available filesystem, like <a href="https://hadoop.apache.org/">HDFS</a>,
  * <a href="https://ceph.com/">Ceph</a>, <a href="https://aws.amazon.com/documentation/s3/">S3</a>,
  * <a href="https://cloud.google.com/storage/">GCS</a>, etc).
+ * note：FsStateBackend 在 TM 内存中存储 state、文件系统存储 cp
  * 
  * <p>The {@code RocksDBStateBackend} stores working state in <a href="http://rocksdb.org/">RocksDB</a>,
  * and checkpoints the state by default to a filesystem (similar to the {@code FsStateBackend}).
- * 
+ * note：RocksDBStateBackend 在 RocksDB 中存储 state，cp 默认还是会存储到文件系统中
+ *
  * <h2>Raw Bytes Storage and Backends</h2>
  * 
  * The {@code StateBackend} creates services for <i>raw bytes storage</i> and for <i>keyed state</i>
  * and <i>operator state</i>.
+ * note：也会用于 raw bytes storage(原始数据存储)、keyed state & operator state（key 和 Operator 的状态）
  * 
  * <p>The <i>raw bytes storage</i> (through the {@link CheckpointStreamFactory}) is the fundamental
  * service that simply stores bytes in a fault tolerant fashion. This service is used by the JobManager
@@ -94,6 +99,7 @@ public interface StateBackend extends java.io.Serializable {
 	/**
 	 * Resolves the given pointer to a checkpoint/savepoint into a checkpoint location. The location
 	 * supports reading the checkpoint metadata, or disposing the checkpoint storage location.
+	 * note：
 	 *
 	 * <p>If the state backend cannot understand the format of the pointer (for example because it
 	 * was created by a different state backend) this method should throw an {@code IOException}.
@@ -109,6 +115,7 @@ public interface StateBackend extends java.io.Serializable {
 	/**
 	 * Creates a storage for checkpoints for the given job. The checkpoint storage is
 	 * used to write checkpoint data and metadata.
+	 * note：对于指定的 job 和 cp 创建一个 Storage，这个 cp Storage 是用于写 cp data 和 meta
 	 *
 	 * @param jobId The job to store checkpoint data for.
 	 * @return A checkpoint storage for the given job.

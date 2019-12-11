@@ -67,6 +67,7 @@ public class StreamNode implements Serializable {
 	private TypeSerializer<?> typeSerializerIn2;
 	private TypeSerializer<?> typeSerializerOut;
 
+	//note: 记录相应的输入和输出 StreamEdge
 	private List<StreamEdge> inEdges = new ArrayList<StreamEdge>();
 	private List<StreamEdge> outEdges = new ArrayList<StreamEdge>();
 
@@ -286,6 +287,7 @@ public class StreamNode implements Serializable {
 		return coLocationGroup;
 	}
 
+	//note: slotSharingGroup 同时为 null 或者两者一样
 	public boolean isSameSlotSharingGroup(StreamNode downstreamVertex) {
 		return (slotSharingGroup == null && downstreamVertex.slotSharingGroup == null) ||
 				(slotSharingGroup != null && slotSharingGroup.equals(downstreamVertex.slotSharingGroup));

@@ -36,6 +36,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 /**
  * The task event dispatcher dispatches events flowing backwards from a consuming task to the task
  * producing the consumed result.
+ * note： task event 信息发布
  *
  * <p>Backwards events only work for tasks, which produce pipelined results, where both the
  * producing and consuming task are running at the same time.
@@ -67,6 +68,7 @@ public class TaskEventDispatcher implements TaskEventPublisher {
 	/**
 	 * Removes the given partition from listening to incoming task events, thus forbidding calls to
 	 * {@link #subscribeToEvent(ResultPartitionID, EventListener, Class)}.
+	 * note: 从监听的列表中移除指定的 partition
 	 *
 	 * @param partitionId
 	 * 		the partition ID

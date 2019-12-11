@@ -255,6 +255,7 @@ public class StreamGraphGenerator {
 		transform.getOutputType();
 
 		Collection<Integer> transformedIds;
+		//note: 根据 transform 的类型，做相应不同的转换
 		if (transform instanceof OneInputTransformation<?, ?>) {
 			transformedIds = transformOneInputTransform((OneInputTransformation<?, ?>) transform);
 		} else if (transform instanceof TwoInputTransformation<?, ?, ?>) {
@@ -298,6 +299,7 @@ public class StreamGraphGenerator {
 			streamGraph.setTransformationUID(transform.getId(), transform.getUid());
 		}
 		if (transform.getUserProvidedNodeHash() != null) {
+			//note: 用户提供 Node hash 的情况下
 			streamGraph.setTransformationUserHash(transform.getId(), transform.getUserProvidedNodeHash());
 		}
 
@@ -323,6 +325,7 @@ public class StreamGraphGenerator {
 	 * that downstream operations can connect to all upstream nodes.
 	 */
 	private <T> Collection<Integer> transformUnion(UnionTransformation<T> union) {
+		//note: 先获取所有的输入 Transformation
 		List<Transformation<T>> inputs = union.getInputs();
 		List<Integer> resultIds = new ArrayList<>();
 
@@ -658,8 +661,10 @@ public class StreamGraphGenerator {
 			return alreadyTransformed.get(transform);
 		}
 
+		//note: 获取 share group
 		String slotSharingGroup = determineSlotSharingGroup(transform.getSlotSharingGroup(), inputIds);
 
+		//note: 添加一个 Operator（streamGraph 端会添加一个 StreamNode）
 		streamGraph.addOperator(transform.getId(),
 				slotSharingGroup,
 				transform.getCoLocationGroupKey(),
@@ -679,6 +684,7 @@ public class StreamGraphGenerator {
 		streamGraph.setMaxParallelism(transform.getId(), transform.getMaxParallelism());
 
 		for (Integer inputId: inputIds) {
+			//note: 根据输入的 id，给这个 node 在 graph 中设置相应的 graph
 			streamGraph.addEdge(inputId, transform.getId(), 0);
 		}
 
@@ -750,14 +756,14 @@ public class StreamGraphGenerator {
 	 * note: 根据这个 operation 设置的 slot sharing group 和 inputs 的 slot sharing group 来确定其 slot sharing group
 	 * note：1. 如果用户指定了 group name，直接使用这个 name；
 	 * note：2. 如果所有的 input 都是同一个 group name，使用这个即可；
-	 * note：3.否则使用 default group；
+	 * note：3. 否则使用 default group；
 	 *
 	 * <p>If the user specifies a group name, this is taken as is. If nothing is specified and
 	 * the input operations all have the same group name then this name is taken. Otherwise the
 	 * default group is chosen.
 	 *
-	 * @param specifiedGroup The group specified by the user.
-	 * @param inputIds The IDs of the input operations.
+	 * @param specifiedGroup The group specified by the user. note: 用户指定的 group name
+	 * @param inputIds The IDs of the input operations. note: 输入 operation 的 id 集合
 	 */
 	private String determineSlotSharingGroup(String specifiedGroup, Collection<Integer> inputIds) {
 		if (!isSlotSharingEnabled) {

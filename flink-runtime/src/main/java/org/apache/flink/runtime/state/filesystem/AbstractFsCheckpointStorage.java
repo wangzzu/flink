@@ -51,12 +51,15 @@ public abstract class AbstractFsCheckpointStorage implements CheckpointStorage {
 	public static final String CHECKPOINT_DIR_PREFIX = "chk-";
 
 	/** The name of the directory for shared checkpoint state. */
+	//note: 共享的 checkpoint state 会存在这个目录里
 	public static final String CHECKPOINT_SHARED_STATE_DIR = "shared";
 
+	//note: master 不再引用，但 TM 会应用的 state
 	/** The name of the directory for state not owned/released by the master, but by the TaskManagers. */
 	public static final String CHECKPOINT_TASK_OWNED_STATE_DIR = "taskowned";
 
 	/** The name of the metadata files in checkpoints / savepoints. */
+	//note: checkpoint 的 metadata file
 	public static final String METADATA_FILE_NAME = "_metadata";
 
 	/** The magic number that is put in front of any reference. */

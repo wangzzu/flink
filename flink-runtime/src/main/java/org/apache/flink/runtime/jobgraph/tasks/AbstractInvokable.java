@@ -33,6 +33,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 /**
  * This is the abstract base class for every task that can be executed by a TaskManager.
  * Concrete tasks extend this class, for example the streaming and batch tasks.
+ * note：这是每个可以被 TM 执行的 task 的虚基类
  *
  * <p>The TaskManager invokes the {@link #invoke()} method when executing a
  * task. All operations of the task happen in this method (setting up input
@@ -81,6 +82,7 @@ public abstract class AbstractInvokable {
 	/**
 	 * Starts the execution.
 	 *
+	 * note：task 执行
 	 * <p>Must be overwritten by the concrete task implementation. This method
 	 * is called by the task manager when the actual execution of the task
 	 * starts.

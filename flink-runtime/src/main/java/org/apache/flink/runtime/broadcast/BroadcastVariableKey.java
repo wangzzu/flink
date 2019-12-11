@@ -23,6 +23,7 @@ import org.apache.flink.runtime.jobgraph.JobVertexID;
 /**
  * An identifier for a {@link BroadcastVariableMaterialization} based on the task's {@link JobVertexID}, broadcast
  * variable name and iteration superstep.
+ * note：根据 task 的 JobVertexID 生成的一个标识
  */
 public class BroadcastVariableKey {
 

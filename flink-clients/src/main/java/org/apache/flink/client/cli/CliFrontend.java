@@ -88,6 +88,7 @@ import scala.concurrent.duration.FiniteDuration;
 
 /**
  * Implementation of a simple command line frontend for executing programs.
+ * note: client 提交一个作业
  */
 public class CliFrontend {
 
@@ -175,6 +176,7 @@ public class CliFrontend {
 
 		final CommandLine commandLine = CliFrontendParser.parse(commandLineOptions, args, true);
 
+		//note: 对于 jar file 作业来说，相关的配置都在这里
 		final RunOptions runOptions = new RunOptions(commandLine);
 
 		// evaluate help flag
@@ -199,9 +201,11 @@ public class CliFrontend {
 			throw new CliArgsException("Could not build the program from JAR file.", e);
 		}
 
+		//note: 解析相关的参数配置，yarn 作业的配置也在这里
 		final CustomCommandLine<?> customCommandLine = getActiveCustomCommandLine(commandLine);
 
 		try {
+			//note: 执行
 			runProgram(customCommandLine, commandLine, runOptions, program);
 		} finally {
 			program.deleteExtractedLibraries();
@@ -224,9 +228,11 @@ public class CliFrontend {
 			if (clusterId == null && runOptions.getDetachedMode()) {
 				int parallelism = runOptions.getParallelism() == -1 ? defaultParallelism : runOptions.getParallelism();
 
+				//note: create job graph
 				final JobGraph jobGraph = PackagedProgramUtils.createJobGraph(program, configuration, parallelism);
 
 				final ClusterSpecification clusterSpecification = customCommandLine.getClusterSpecification(commandLine);
+				//note: 向远程集群提交这个作业
 				client = clusterDescriptor.deployJobCluster(
 					clusterSpecification,
 					jobGraph,
@@ -235,6 +241,7 @@ public class CliFrontend {
 				logAndSysout("Job has been submitted with JobID " + jobGraph.getJobID());
 
 				try {
+					//note: 作业提交之后，关闭这个 client 的连接
 					client.shutdown();
 				} catch (Exception e) {
 					LOG.info("Could not properly shut down the client.", e);
@@ -270,6 +277,7 @@ public class CliFrontend {
 						userParallelism = defaultParallelism;
 					}
 
+					//note: 执行 作业
 					executeProgram(program, client, userParallelism);
 				} finally {
 					if (clusterId == null && !client.isDetached()) {
@@ -744,6 +752,7 @@ public class CliFrontend {
 	protected void executeProgram(PackagedProgram program, ClusterClient<?> client, int parallelism) throws ProgramMissingJobException, ProgramInvocationException {
 		logAndSysout("Starting execution of program");
 
+		//note: 获得提交的结果
 		final JobSubmissionResult result = client.run(program, parallelism);
 
 		if (null == result) {
@@ -1059,6 +1068,7 @@ public class CliFrontend {
 
 	/**
 	 * Submits the job based on the arguments.
+	 * note：提交作业
 	 */
 	public static void main(final String[] args) {
 		EnvironmentInformation.logEnvironmentInfo(LOG, "Command Line Client", args);
@@ -1135,6 +1145,7 @@ public class CliFrontend {
 		config.setInteger(RestOptions.PORT, address.getPort());
 	}
 
+	//note: FlinkYarnSessionCli 被优先添加到 customCommandLine
 	public static List<CustomCommandLine<?>> loadCustomCommandLines(Configuration configuration, String configurationDirectory) {
 		List<CustomCommandLine<?>> customCommandLines = new ArrayList<>(2);
 
@@ -1165,6 +1176,7 @@ public class CliFrontend {
 
 	/**
 	 * Gets the custom command-line for the arguments.
+	 * note: FlinkYarnSessionCli 也会添加到这里
 	 * @param commandLine The input to the command-line.
 	 * @return custom command-line which is active (may only be one at a time)
 	 */

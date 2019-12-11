@@ -27,6 +27,8 @@ package org.apache.flink.runtime.jobmanager.scheduler;
  * inputs have locations assigned.
  */
 public enum LocationPreferenceConstraint {
+	//note: 等待所有的输入都已经 assign location
 	ALL, // wait for all inputs to have a location assigned
+	//note: 仅仅考虑那些已经有 location assigned 的 input
 	ANY // only consider those inputs who already have a location assigned
 }

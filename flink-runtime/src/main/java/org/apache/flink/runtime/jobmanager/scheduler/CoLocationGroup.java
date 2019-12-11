@@ -29,7 +29,9 @@ import org.apache.flink.util.Preconditions;
  * A Co-location group is a group of JobVertices, where the <i>i-th</i> subtask of one vertex
  * has to be executed on the same TaskManager as the <i>i-th</i> subtask of all
  * other JobVertices in the same group.
- * 
+ * note: 代表一组 JobVertices，一个 vertex 的第 i 个 subtask 可以在同一个 TaskManager 中作为同一个 group 所有 JobVertices 的第 i 个 subtask
+ * note: 可以用于确保一个迭代中第 i 个 subtask 会被调度在同一个 TM 上。
+ *
  * <p>The co-location group is used for example to make sure that the i-th subtasks for iteration
  * head and iteration tail are scheduled to the same TaskManager.</p>
  */

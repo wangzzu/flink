@@ -98,6 +98,7 @@ public class JobVertex implements java.io.Serializable {
 	private SlotSharingGroup slotSharingGroup;
 
 	/** The group inside which the vertex subtasks share slots */
+	//note: 用于协同 vertex 调度，
 	private CoLocationGroup coLocationGroup;
 
 	/** Optional, the name of the operator, such as 'Flat Map' or 'Join', to be included in the JSON plan */
@@ -362,6 +363,8 @@ public class JobVertex implements java.io.Serializable {
 	/**
 	 * Associates this vertex with a slot sharing group for scheduling. Different vertices in the same
 	 * slot sharing group can run one subtask each in the same slot.
+	 * note: 给这个 vertex 设置一个 slot sharing group name
+	 * note: 这样的话，同一个 slot sharing group 的不同 vertices 是可以在同一个 slot 的 subtask 中运行的
 	 * 
 	 * @param grp The slot sharing group to associate the vertex with.
 	 */
@@ -454,6 +457,7 @@ public class JobVertex implements java.io.Serializable {
 			IntermediateDataSetID id,
 			ResultPartitionType partitionType) {
 
+		//note: 创建 IntermediateDataSet，并将其添加到 results 中
 		IntermediateDataSet result = new IntermediateDataSet(id, partitionType, this);
 		this.results.add(result);
 		return result;
@@ -471,8 +475,10 @@ public class JobVertex implements java.io.Serializable {
 			DistributionPattern distPattern,
 			ResultPartitionType partitionType) {
 
+		//note: 连接 Vertex 的中间数据集
 		IntermediateDataSet dataSet = input.createAndAddResultDataSet(partitionType);
 
+		//note: 创建对应的 edge
 		JobEdge edge = new JobEdge(dataSet, this, distPattern);
 		this.inputs.add(edge);
 		dataSet.addConsumer(edge);
@@ -513,6 +519,8 @@ public class JobVertex implements java.io.Serializable {
 	/**
 	 * A hook that can be overwritten by sub classes to implement logic that is called by the
 	 * master when the job starts.
+	 * note: 当作业启动时，master 调用这个方法做一些初始化的工作（hook）
+	 * note：它提供了一个中心协调者的角色，有一些操作是需要在 master 端来做的
 	 * 
 	 * @param loader The class loader for user defined code.
 	 * @throws Exception The method may throw exceptions which cause the job to fail immediately.

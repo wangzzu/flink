@@ -31,6 +31,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
  * Simple factory which just wrap existed {@link StreamOperator}.
+ * note: 这个实现会封装 StreamOperator
  *
  * @param <OUT> The output type of the operator
  */
@@ -41,9 +42,11 @@ public class SimpleOperatorFactory<OUT> implements StreamOperatorFactory<OUT> {
 
 	/**
 	 * Create a SimpleOperatorFactory from existed StreamOperator.
+	 * note: 创建对应的 SimpleOperatorFactory
 	 */
 	@SuppressWarnings("unchecked")
 	public static <OUT> SimpleOperatorFactory<OUT> of(StreamOperator<OUT> operator) {
+		//note: 这里也可以看到，在判断的时候会 Operator 会分为以下几种类型
 		if (operator == null) {
 			return null;
 		} else if (operator instanceof StreamSource &&

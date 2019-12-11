@@ -277,6 +277,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	/**
 	 * This method implements the default action of the task (e.g. processing one event from the input). Implementations
 	 * should (in general) be non-blocking.
+	 * note: 这个 task 默认的执行方法
 	 *
 	 * @param context context object for collaborative interaction between the action and the stream task.
 	 * @throws Exception on any problems in the action.
@@ -289,6 +290,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 
 	/**
 	 * Runs the stream-tasks main processing loop.
+	 * note：一个 stream task 主要处理流程
 	 */
 	private void run() throws Exception {
 		final ActionContext actionContext = new ActionContext();

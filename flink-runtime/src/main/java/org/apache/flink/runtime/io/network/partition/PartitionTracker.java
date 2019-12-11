@@ -24,6 +24,7 @@ import java.util.Collection;
 
 /**
  * Utility for tracking partitions and issuing release calls to task executors and shuffle masters.
+ * note: 对于 TaskExecutor 和 ShuffleMaster 使用的 PartitionTracker 的统一抽象
  */
 public interface PartitionTracker {
 
@@ -52,6 +53,7 @@ public interface PartitionTracker {
 
 	/**
 	 * Releases all partitions for the given task executor ID, and stop the tracking of partitions that were released.
+	 * note: 对于指定的 TM id，释放所有的 Partition，并且停止继续追踪这些释放的 partition
 	 */
 	void stopTrackingAndReleasePartitionsFor(ResourceID producingTaskExecutorId);
 

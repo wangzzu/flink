@@ -557,6 +557,7 @@ public class FutureUtils {
 	 * The future fails (completes exceptionally) once one of the futures in the
 	 * conjunction fails. Upon successful completion, the future returns the
 	 * collection of the futures' results.
+	 * note: 如果 futures 都完成的话，这个新建的 future 就完成了
 	 *
 	 * <p>The ConjunctFuture gives access to how many Futures in the conjunction have already
 	 * completed successfully, via {@link ConjunctFuture#getNumFuturesCompleted()}.
@@ -882,6 +883,7 @@ public class FutureUtils {
 	 * This function takes a {@link CompletableFuture} and a function to apply to this future. If the input future
 	 * is already done, this function returns {@link CompletableFuture#thenApply(Function)}. Otherwise, the return
 	 * value is {@link CompletableFuture#thenApplyAsync(Function, Executor)} with the given executor.
+	 * note: completableFuture 执行完之后再执行 applyFun 这个方法（同步或者异步，跟当前 completableFuture 是否完成有关）
 	 *
 	 * @param completableFuture the completable future for which we want to apply.
 	 * @param executor the executor to run the apply function if the future is not yet done.

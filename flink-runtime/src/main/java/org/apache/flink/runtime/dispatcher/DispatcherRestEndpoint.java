@@ -80,6 +80,7 @@ public class DispatcherRestEndpoint extends WebMonitorEndpoint<DispatcherGateway
 		webSubmissionExtension = WebMonitorExtension.empty();
 	}
 
+	//note: 初始化一些 handler
 	@Override
 	protected List<Tuple2<RestHandlerSpecification, ChannelInboundHandler>> initializeHandlers(final CompletableFuture<String> localAddressFuture) {
 		List<Tuple2<RestHandlerSpecification, ChannelInboundHandler>> handlers = super.initializeHandlers(localAddressFuture);

@@ -179,6 +179,7 @@ public class JobGraphGenerator implements Visitor<PlanNode> {
 	/**
 	 * Translates a {@link org.apache.flink.optimizer.plan.OptimizedPlan} into a
 	 * {@link org.apache.flink.runtime.jobgraph.JobGraph}.
+	 * note：将 OptimizedPlan 转换成 JobGraph
 	 * 
 	 * @param program Optimized plan that is translated into a JobGraph.
 	 * @return JobGraph generated from the plan.

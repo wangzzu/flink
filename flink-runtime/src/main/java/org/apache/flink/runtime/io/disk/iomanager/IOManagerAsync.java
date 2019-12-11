@@ -80,6 +80,7 @@ public class IOManagerAsync extends IOManager implements UncaughtExceptionHandle
 		super(tempDirs);
 		
 		// start a write worker thread for each directory
+		//note: 每个临时目录都会有一个 writer 线程
 		this.writers = new WriterThread[tempDirs.length];
 		for (int i = 0; i < this.writers.length; i++) {
 			final WriterThread t = new WriterThread();
@@ -91,6 +92,7 @@ public class IOManagerAsync extends IOManager implements UncaughtExceptionHandle
 		}
 
 		// start a reader worker thread for each directory
+		//note: 给每个目录都创建一个 reader 线程
 		this.readers = new ReaderThread[tempDirs.length];
 		for (int i = 0; i < this.readers.length; i++) {
 			final ReaderThread t = new ReaderThread();

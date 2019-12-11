@@ -79,6 +79,7 @@ import java.util.concurrent.TimeUnit;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
+ * note：对于 yarn/standalone 模式，TM 启动的入口
  * This class is the executable entry point for the task manager in yarn or standalone mode.
  * It constructs the related components (network, I/O manager, memory manager, RPC service, HA service)
  * and starts them.
@@ -118,36 +119,45 @@ public class TaskManagerRunner implements FatalErrorHandler, AutoCloseableAsync 
 
 	private boolean shutdown;
 
+	//note: 初始化 TaskManagerRunner
 	public TaskManagerRunner(Configuration configuration, ResourceID resourceId) throws Exception {
 		this.configuration = checkNotNull(configuration);
 		this.resourceId = checkNotNull(resourceId);
 
+		//note: akka 超时设置
 		timeout = AkkaUtils.getTimeoutAsTime(configuration);
 
 		this.executor = java.util.concurrent.Executors.newScheduledThreadPool(
 			Hardware.getNumberCPUCores(),
 			new ExecutorThreadFactory("taskmanager-future"));
 
+		//note: HA 的配置
 		highAvailabilityServices = HighAvailabilityServicesUtils.createHighAvailabilityServices(
 			configuration,
 			executor,
 			HighAvailabilityServicesUtils.AddressResolution.TRY_ADDRESS_RESOLUTION);
 
+		//note: create rpc service
 		rpcService = createRpcService(configuration, highAvailabilityServices);
 
+		//note: 初始化心跳服务
 		HeartbeatServices heartbeatServices = HeartbeatServices.fromConfiguration(configuration);
 
+		//note: metrics 服务
 		metricRegistry = new MetricRegistryImpl(
 			MetricRegistryConfiguration.fromConfiguration(configuration),
 			ReporterSetup.fromConfiguration(configuration));
 
+		//note: 启动相应的 metrics 服务
 		final RpcService metricQueryServiceRpcService = MetricUtils.startMetricsRpcService(configuration, rpcService.getAddress());
 		metricRegistry.startQueryService(metricQueryServiceRpcService, resourceId);
 
+		//note: 初始化 blob 服务（如果不做 HA 的话，这个服务什么都不会做）
 		blobCacheService = new BlobCacheService(
 			configuration, highAvailabilityServices.createBlobStore(), null
 		);
 
+		//note: 初始化 TaskExecutor 对象
 		taskManager = startTaskManager(
 			this.configuration,
 			this.resourceId,
@@ -162,6 +172,7 @@ public class TaskManagerRunner implements FatalErrorHandler, AutoCloseableAsync 
 		this.terminationFuture = new CompletableFuture<>();
 		this.shutdown = false;
 
+		//note: 周期性地输出内存相关的日志信息，直到 terminationFuture complete
 		MemoryLogger.startIfConfigured(LOG, configuration, terminationFuture);
 	}
 
@@ -275,6 +286,7 @@ public class TaskManagerRunner implements FatalErrorHandler, AutoCloseableAsync 
 		SignalHandler.register(LOG);
 		JvmShutdownSafeguard.installAsShutdownHook(LOG);
 
+		//note: 拿到最大允许打开的文件句柄数
 		long maxOpenFileHandles = EnvironmentInformation.getOpenFileHandlesLimit();
 
 		if (maxOpenFileHandles != -1L) {
@@ -283,13 +295,17 @@ public class TaskManagerRunner implements FatalErrorHandler, AutoCloseableAsync 
 			LOG.info("Cannot determine the maximum number of open file descriptors");
 		}
 
+		//note: 加载 tm 相关的配置
 		final Configuration configuration = loadConfiguration(args);
 
+		//note: 文件系统的初始化
 		FileSystem.initialize(configuration, PluginUtils.createPluginManagerFromRootFolder(configuration));
 
+		//note: 安全模块的相关配置，比如 Hadoop、zk 相关的
 		SecurityUtils.install(new SecurityConfiguration(configuration));
 
 		try {
+			//note: 启动 tm runner
 			SecurityUtils.getInstalledContext().runSecured(new Callable<Void>() {
 				@Override
 				public Void call() throws Exception {
@@ -304,6 +320,7 @@ public class TaskManagerRunner implements FatalErrorHandler, AutoCloseableAsync 
 		}
 	}
 
+	//note: 将输入参数解析为 Configuration
 	@VisibleForTesting
 	static Configuration loadConfiguration(String[] args) throws FlinkParseException {
 		final CommandLineParser<ClusterConfiguration> commandLineParser = new CommandLineParser<>(new ClusterConfigurationParserFactory());
@@ -322,6 +339,7 @@ public class TaskManagerRunner implements FatalErrorHandler, AutoCloseableAsync 
 		return GlobalConfiguration.loadConfiguration(clusterConfiguration.getConfigDir(), dynamicProperties);
 	}
 
+	//note: 启动 TaskManagerRunner
 	public static void runTaskManager(Configuration configuration, ResourceID resourceId) throws Exception {
 		final TaskManagerRunner taskManagerRunner = new TaskManagerRunner(configuration, resourceId);
 
@@ -332,6 +350,7 @@ public class TaskManagerRunner implements FatalErrorHandler, AutoCloseableAsync 
 	//  Static utilities
 	// --------------------------------------------------------------------------------------------
 
+	//note: 创建并初始化 TaskExecutor 对象
 	public static TaskExecutor startTaskManager(
 			Configuration configuration,
 			ResourceID resourceID,
@@ -352,6 +371,7 @@ public class TaskManagerRunner implements FatalErrorHandler, AutoCloseableAsync 
 
 		InetAddress remoteAddress = InetAddress.getByName(rpcService.getAddress());
 
+		//note: TM 相关的配置都在这个对象中
 		TaskManagerServicesConfiguration taskManagerServicesConfiguration =
 			TaskManagerServicesConfiguration.fromConfiguration(
 				configuration,
@@ -361,12 +381,14 @@ public class TaskManagerRunner implements FatalErrorHandler, AutoCloseableAsync 
 				EnvironmentInformation.getMaxJvmHeapMemory(),
 				localCommunicationOnly);
 
+		//note: metrics group 相关的初始化
 		Tuple2<TaskManagerMetricGroup, MetricGroup> taskManagerMetricGroup = MetricUtils.instantiateTaskManagerMetricGroup(
 			metricRegistry,
 			TaskManagerLocation.getHostName(remoteAddress),
 			resourceID,
 			taskManagerServicesConfiguration.getSystemResourceMetricsProbingInterval());
 
+		//note: 初始化 TaskManagerServices（TM 相关服务都在这里）
 		TaskManagerServices taskManagerServices = TaskManagerServices.fromConfiguration(
 			taskManagerServicesConfiguration,
 			taskManagerMetricGroup.f1,
@@ -376,6 +398,7 @@ public class TaskManagerRunner implements FatalErrorHandler, AutoCloseableAsync 
 
 		String metricQueryServiceAddress = metricRegistry.getMetricQueryServiceGatewayRpcAddress();
 
+		//note: 创建 TaskExecutor 对象
 		return new TaskExecutor(
 			rpcService,
 			taskManagerConfiguration,
@@ -391,6 +414,7 @@ public class TaskManagerRunner implements FatalErrorHandler, AutoCloseableAsync 
 
 	/**
 	 * Create a RPC service for the task manager.
+	 * note：给这个 tm 创建一个 RPC service
 	 *
 	 * @param configuration The configuration for the TaskManager.
 	 * @param haServices to use for the task manager hostname retrieval

@@ -47,6 +47,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 /**
  * Provides facilities to download a set of libraries (typically JAR files) for a job from a
  * {@link PermanentBlobService} and create a class loader with references to them.
+ * note: 提供了一个工具从 PermanentBlobService 下载一个 job 的依赖包以及给它们创建一个 class loader 的引用
  */
 public class BlobLibraryCacheManager implements LibraryCacheManager {
 

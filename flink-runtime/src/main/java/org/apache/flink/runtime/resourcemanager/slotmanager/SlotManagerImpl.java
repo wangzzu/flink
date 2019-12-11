@@ -289,6 +289,7 @@ public class SlotManagerImpl implements SlotManager {
 
 	/**
 	 * Requests a slot with the respective resource profile.
+	 * note: 请求 slot
 	 *
 	 * @param slotRequest specifying the requested slot specs
 	 * @return true if the slot request was registered; false if the request is a duplicate
@@ -635,6 +636,7 @@ public class SlotManagerImpl implements SlotManager {
 
 	/**
 	 * Updates a slot with the given allocation id.
+	 * note: 使用指定的 AllocationID 更新一个 slot
 	 *
 	 * @param slotId to update
 	 * @param allocationId specifying the current allocation of the slot
@@ -662,6 +664,7 @@ public class SlotManagerImpl implements SlotManager {
 		}
 	}
 
+	//note: 更新 slot 的状态
 	private void updateSlotState(
 			TaskManagerSlot slot,
 			TaskManagerRegistration taskManagerRegistration,
@@ -680,6 +683,7 @@ public class SlotManagerImpl implements SlotManager {
 						// remove the pending slot request, since it has been completed
 						pendingSlotRequests.remove(pendingSlotRequest.getAllocationId());
 
+						//note: 分配完成
 						slot.completeAllocation(allocationId, jobId);
 					} else {
 						// we first have to free the slot in order to set a new allocationId
@@ -742,6 +746,7 @@ public class SlotManagerImpl implements SlotManager {
 	 * Tries to allocate a slot for the given slot request. If there is no slot available, the
 	 * resource manager is informed to allocate more resources and a timeout for the request is
 	 * registered.
+	 * note: 给指定的 slot request 分配一个 slot，如果没有 slot 可用，RM 会去申请更多的资源
 	 *
 	 * @param pendingSlotRequest to allocate a slot for
 	 * @throws ResourceManagerException if the slot request failed or is unfulfillable
@@ -751,6 +756,7 @@ public class SlotManagerImpl implements SlotManager {
 		TaskManagerSlot taskManagerSlot = findMatchingSlot(resourceProfile);
 
 		if (taskManagerSlot != null) {
+			//note: 找到了能满足条件的 slot
 			allocateSlot(taskManagerSlot, pendingSlotRequest);
 		} else {
 			Optional<PendingTaskManagerSlot> pendingTaskManagerSlotOptional = findFreeMatchingPendingTaskManagerSlot(resourceProfile);
@@ -818,6 +824,7 @@ public class SlotManagerImpl implements SlotManager {
 	/**
 	 * Allocates the given slot for the given slot request. This entails sending a registration
 	 * message to the task manager and treating failures.
+	 * note: 将指定 slot 分配到指定 slot request
 	 *
 	 * @param taskManagerSlot to allocate for the given slot request
 	 * @param pendingSlotRequest to allocate the given slot for
@@ -848,6 +855,7 @@ public class SlotManagerImpl implements SlotManager {
 		taskManagerRegistration.markUsed();
 
 		// RPC call to the task manager
+		//note: 向 TM 请求 slot
 		CompletableFuture<Acknowledge> requestFuture = gateway.requestSlot(
 			slotId,
 			pendingSlotRequest.getJobId(),

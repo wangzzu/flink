@@ -111,6 +111,7 @@ public class LocalStreamEnvironment extends StreamExecutionEnvironment {
 			LOG.info("Running job on local embedded Flink mini cluster");
 		}
 
+		//note: 启动 miniCluster
 		MiniCluster miniCluster = new MiniCluster(cfg);
 
 		try {

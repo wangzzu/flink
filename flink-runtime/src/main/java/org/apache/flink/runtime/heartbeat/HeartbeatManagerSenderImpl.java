@@ -70,6 +70,7 @@ public class HeartbeatManagerSenderImpl<I, O> extends HeartbeatManagerImpl<I, O>
 			heartbeatMonitorFactory);
 
 		this.heartbeatPeriod = heartbeatPeriod;
+		//note: 调度这个心跳服务
 		mainThreadExecutor.schedule(this, 0L, TimeUnit.MILLISECONDS);
 	}
 

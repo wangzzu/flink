@@ -396,6 +396,7 @@ public class CheckpointConfig implements java.io.Serializable {
 
 		/**
 		 * Delete externalized checkpoints on job cancellation.
+		 * note: 当作业取消时，所有的 checkpoint state 都会被删除
 		 *
 		 * <p>All checkpoint state will be deleted when you cancel the owning
 		 * job, both the meta data and actual program state. Therefore, you
@@ -413,6 +414,7 @@ public class CheckpointConfig implements java.io.Serializable {
 		 * <p>All checkpoint state is kept when you cancel the owning job. You
 		 * have to manually delete both the checkpoint meta data and actual
 		 * program state after cancelling the job.
+		 * note: 即使作业取消，所有的 checkpoint state 也会被保存
 		 *
 		 * <p>Note that checkpoint state is always kept if the job terminates
 		 * with state {@link JobStatus#FAILED}.

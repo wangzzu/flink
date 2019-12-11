@@ -43,6 +43,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * schedule multiple tasks simultaneously to the same resource. Sharing a resource with multiple
  * tasks is crucial for simple pipelined / streamed execution, where both the sender and the receiver
  * are typically active at the same time.
+ * note: 这个类表示一个 shared slot，它可以有多个 SimpleSlot，并且允许同时调度多个 task 在同一份资源上
  *
  * <p><b>IMPORTANT:</b> This class contains no synchronization. Thus, the caller has to guarantee proper
  * synchronization. In the current implementation, all concurrently modifying operations are

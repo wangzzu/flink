@@ -141,6 +141,7 @@ public class TaskManagerOptions {
 	/**
 	 * Defines the timeout it can take for the TaskManager registration. If the duration is
 	 * exceeded without a successful registration, then the TaskManager terminates.
+	 * note： TM 注册时使用的 timeout 参数，如果超时，这个 TM 将会终止
 	 */
 	public static final ConfigOption<String> REGISTRATION_TIMEOUT =
 		key("taskmanager.registration.timeout")
@@ -170,6 +171,7 @@ public class TaskManagerOptions {
 			.withDeprecatedKeys("taskmanager.debug.memory.startLogThread")
 			.withDescription("Flag indicating whether to start a thread, which repeatedly logs the memory usage of the JVM.");
 
+	//note: 内存相关日志打印的时间间隔
 	public static final ConfigOption<Long> DEBUG_MEMORY_USAGE_LOG_INTERVAL_MS =
 		key("taskmanager.debug.memory.log-interval")
 			.defaultValue(5000L)
@@ -191,6 +193,7 @@ public class TaskManagerOptions {
 	/**
 	 * Amount of memory to be allocated by the task manager's memory manager. If not
 	 * set, a relative fraction will be allocated, as defined by {@link #MANAGED_MEMORY_FRACTION}.
+	 * note： TM memory manager 可以分配的内存量，如果没有设置，根据 MANAGED_MEMORY_FRACTION 来计算
 	 */
 	public static final ConfigOption<String> MANAGED_MEMORY_SIZE =
 			key("taskmanager.memory.size")
@@ -203,6 +206,7 @@ public class TaskManagerOptions {
 	/**
 	 * Fraction of free memory allocated by the memory manager if {@link #MANAGED_MEMORY_SIZE} is
 	 * not set.
+	 * note： 如果 MANAGED_MEMORY_SIZE 没有设置，它会根据这个比例来计算
 	 */
 	public static final ConfigOption<Float> MANAGED_MEMORY_FRACTION =
 			key("taskmanager.memory.fraction")
@@ -220,6 +224,7 @@ public class TaskManagerOptions {
 	/**
 	 * Memory allocation method (JVM heap or off-heap), used for managed memory of the TaskManager
 	 * as well as the network buffers.
+	 * note：内存分配管理，用于 TM 的内存管理
 	 **/
 	public static final ConfigOption<Boolean> MEMORY_OFF_HEAP =
 			key("taskmanager.memory.off-heap")
@@ -234,6 +239,7 @@ public class TaskManagerOptions {
 
 	/**
 	 * Whether TaskManager managed memory should be pre-allocated when the TaskManager is starting.
+	 * note：当 TM 启动时，TM 管理的内存是否允许预分配，这个也跟使用 backend 有关
 	 */
 	public static final ConfigOption<Boolean> MANAGED_MEMORY_PRE_ALLOCATE =
 			key(MANAGED_MEMORY_PRE_ALLOCATE_KEY)

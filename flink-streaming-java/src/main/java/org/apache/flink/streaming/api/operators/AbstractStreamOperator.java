@@ -80,6 +80,7 @@ import java.util.Locale;
 /**
  * Base class for all stream operators. Operators that contain a user function should extend the class
  * {@link AbstractUdfStreamOperator} instead (which is a specialized subclass of this class).
+ * note: 所有 stream operator 的默认类，如果这个 operator 包含 udf，那么可以继承 AbstractUdfStreamOperator 这个类
  *
  * <p>For concrete implementations, one of the following two interfaces must also be implemented, to
  * mark the operator as unary or binary:
@@ -278,6 +279,7 @@ public abstract class AbstractStreamOperator<OUT>
 				keyedStateInputs, // access to keyed state stream
 				operatorStateInputs); // access to operator state stream
 
+			//note: 其他的 operator 只需要实现这个方法即可
 			initializeState(initializationContext);
 		} finally {
 			closeFromRegistry(operatorStateInputs, streamTaskCloseableRegistry);
@@ -320,6 +322,7 @@ public abstract class AbstractStreamOperator<OUT>
 	/**
 	 * This method is called at the very end of the operator's life, both in the case of a successful
 	 * completion of the operation, and in the case of a failure and canceling.
+	 * note: operator 生命周期结束的时候被调用
 	 *
 	 * <p>This method is expected to make a thorough effort to release all resources
 	 * that the operator has acquired.

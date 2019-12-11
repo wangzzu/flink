@@ -33,6 +33,7 @@ import java.util.Collections;
 /**
  * This represents a Source. This does not actually transform anything since it has no inputs but
  * it is the root {@code Transformation} of any topology.
+ * note: source 端的 Transformation
  *
  * @param <T> The type of the elements that this source produces
  */

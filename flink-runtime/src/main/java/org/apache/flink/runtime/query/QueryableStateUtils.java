@@ -96,6 +96,7 @@ public final class QueryableStateUtils {
 	/**
 	 * Initializes the {@link KvStateServer server} responsible for sending the
 	 * requested internal state to the {@link KvStateClientProxy client proxy}.
+	 * note： 初始化一个 KvStateServer 对象
 	 *
 	 * @param address the address to bind to.
 	 * @param ports the range of ports the state server will attempt to listen to

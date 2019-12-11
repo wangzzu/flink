@@ -29,6 +29,7 @@ bin=`cd "$bin"; pwd`
 
 . "$bin"/config.sh
 
+#note：几种集群模式
 case $DAEMON in
     (taskexecutor)
         CLASS_TO_RUN=org.apache.flink.runtime.taskexecutor.TaskManagerRunner

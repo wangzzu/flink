@@ -81,6 +81,9 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * holds all the slots that were offered to it and accepted, and can thus provides registered free slots even if the
  * ResourceManager is down. The slots will only be released when they are useless, e.g. when the job is fully running
  * but we still have some free slots.
+ * note: Slot Pool 用于处理 slot 请求，它会向 ResourceManager 请求 slot 分配；Slot Pool 会维护所有请求的 slot
+ * note:（即使后面 ResourceManager 挂掉了，Slot Pool 可以向自己的 job 提供 slot），slot 如果他们不再使用的话，即使作业在运行，也是可以释放掉的
+ * note: 所有的 allocation 和 slot 都会使用生成的 AllocationID 区分；
  *
  * <p>All the allocation or the slot offering will be identified by self generated AllocationID, we will use it to
  * eliminate ambiguities.
@@ -98,6 +101,7 @@ public class SlotPoolImpl implements SlotPool {
 	private final JobID jobId;
 
 	/** All registered TaskManagers, slots will be accepted and used only if the resource is registered. */
+	//note: 所有注册的 TMs
 	private final HashSet<ResourceID> registeredTaskManagers;
 
 	/** The book-keeping of all allocated slots. */
@@ -107,9 +111,11 @@ public class SlotPoolImpl implements SlotPool {
 	private final AvailableSlots availableSlots;
 
 	/** All pending requests waiting for slots. */
+	//note: 所有正在申请 slot 的请求都会存在这个 map 里
 	private final DualKeyLinkedMap<SlotRequestId, AllocationID, PendingRequest> pendingRequests;
 
 	/** The requests that are waiting for the resource manager to be connected. */
+	//note: 等待与 ResourceManager 建立连接的请求，会缓存在这里
 	private final LinkedHashMap<SlotRequestId, PendingRequest> waitingForResourceManager;
 
 	/** Timeout for external request calls (e.g. to the ResourceManager or the TaskExecutor). */
@@ -195,6 +201,7 @@ public class SlotPoolImpl implements SlotPool {
 
 	/**
 	 * Start the slot pool to accept RPC calls.
+	 * note: 启动 slot pool，来接收 RPC 调用请求
 	 *
 	 * @param jobMasterId The necessary leader id for running the job.
 	 * @param newJobManagerAddress for the slot requests which are sent to the resource manager
@@ -209,7 +216,9 @@ public class SlotPoolImpl implements SlotPool {
 		this.jobManagerAddress = newJobManagerAddress;
 		this.componentMainThreadExecutor = componentMainThreadExecutor;
 
+		//note: 检查所有可用的 slot，如果有空闲的 slot，这里会释放掉
 		scheduleRunAsync(this::checkIdleSlot, idleSlotTimeout);
+		//note: 检查 bath 请求，它的资源请求是否可以满足条件
 		scheduleRunAsync(this::checkBatchSlotTimeout, batchSlotTimeout);
 
 		if (log.isDebugEnabled()) {
@@ -268,6 +277,7 @@ public class SlotPoolImpl implements SlotPool {
 	//  Resource Manager Connection
 	// ------------------------------------------------------------------------
 
+	//note: 向 RM 请求 slot
 	@Override
 	public void connectToResourceManager(@Nonnull ResourceManagerGateway resourceManagerGateway) {
 		this.resourceManagerGateway = checkNotNull(resourceManagerGateway);
@@ -309,6 +319,7 @@ public class SlotPoolImpl implements SlotPool {
 		return pendingRequest.getAllocatedSlotFuture();
 	}
 
+	//note: 向 ResourceManager 请求 slot
 	private void requestSlotFromResourceManager(
 			final ResourceManagerGateway resourceManagerGateway,
 			final PendingRequest pendingRequest) {
@@ -331,6 +342,7 @@ public class SlotPoolImpl implements SlotPool {
 				}
 			});
 
+		//note: 请求 slot
 		CompletableFuture<Acknowledge> rmResponse = resourceManagerGateway.requestSlot(
 			jobMasterId,
 			new SlotRequest(jobId, allocationId, pendingRequest.getResourceProfile(), jobManagerAddress),
@@ -390,6 +402,7 @@ public class SlotPoolImpl implements SlotPool {
 		releaseSingleSlot(slotRequestId, cause);
 	}
 
+	//note: 将 slotRequestId 分配到 allocationID 中
 	@Override
 	public Optional<PhysicalSlot> allocateAvailableSlot(
 		@Nonnull SlotRequestId slotRequestId,
@@ -431,6 +444,7 @@ public class SlotPoolImpl implements SlotPool {
 					}
 				});
 
+		//note: 请求新的 slot
 		return requestNewAllocatedSlotInternal(pendingRequest)
 			.thenApply((Function.identity()));
 	}
@@ -455,10 +469,12 @@ public class SlotPoolImpl implements SlotPool {
 		return availableSlots.listSlotInfo();
 	}
 
+	//note: 释放 slotRequestId
 	private void releaseSingleSlot(SlotRequestId slotRequestId, Throwable cause) {
 		final PendingRequest pendingRequest = removePendingRequest(slotRequestId);
 
 		if (pendingRequest != null) {
+			//note: 如果这个 slotRequestId 还在请求中，这里会把这 request fail
 			failPendingRequest(pendingRequest, new FlinkException("Pending slot request with " + slotRequestId + " has been released."));
 		} else {
 			final AllocatedSlot allocatedSlot = allocatedSlots.remove(slotRequestId);
@@ -788,6 +804,7 @@ public class SlotPoolImpl implements SlotPool {
 	@VisibleForTesting
 	protected void timeoutPendingSlotRequest(SlotRequestId slotRequestId) {
 		log.info("Pending slot request [{}] timed out.", slotRequestId);
+		//note: 移除这个 pending 的请求
 		final PendingRequest pendingRequest = removePendingRequest(slotRequestId);
 
 		if (pendingRequest != null) {
@@ -814,6 +831,7 @@ public class SlotPoolImpl implements SlotPool {
 
 	/**
 	 * Check the available slots, release the slot that is idle for a long time.
+	 * note: 检查可用的 slot，如果一个 slot 长时间不使用这里会释放掉
 	 */
 	protected void checkIdleSlot() {
 
@@ -823,6 +841,7 @@ public class SlotPoolImpl implements SlotPool {
 		final List<AllocatedSlot> expiredSlots = new ArrayList<>(availableSlots.size());
 
 		for (SlotAndTimestamp slotAndTimestamp : availableSlots.availableSlots.values()) {
+			//note: 默认的超时时间是跟心跳超时保持一致，50s
 			if (currentRelativeTimeMillis - slotAndTimestamp.timestamp > idleSlotTimeout.toMilliseconds()) {
 				expiredSlots.add(slotAndTimestamp.slot);
 			}
@@ -835,6 +854,7 @@ public class SlotPoolImpl implements SlotPool {
 			if (availableSlots.tryRemove(allocationID) != null) {
 
 				log.info("Releasing idle slot [{}].", allocationID);
+				//note: 通知 TM 释放掉这个 slot
 				final CompletableFuture<Acknowledge> freeSlotFuture = expiredSlot.getTaskManagerGateway().freeSlot(
 					allocationID,
 					cause,
@@ -853,6 +873,7 @@ public class SlotPoolImpl implements SlotPool {
 			}
 		}
 
+		//note: 这里相当于会不停调度
 		scheduleRunAsync(this::checkIdleSlot, idleSlotTimeout);
 	}
 
@@ -862,11 +883,14 @@ public class SlotPoolImpl implements SlotPool {
 		if (!pendingBatchRequests.isEmpty()) {
 			final Set<ResourceProfile> allocatedResourceProfiles = getAllocatedResourceProfiles();
 
+			//note: 检查 PendingRequest 的资源需求是否可以满足
 			final Map<Boolean, List<PendingRequest>> fulfillableAndUnfulfillableRequests = pendingBatchRequests
 				.stream()
 				.collect(Collectors.partitioningBy(canBeFulfilledWithAllocatedSlot(allocatedResourceProfiles)));
 
+			//note: 能够满足资源需求的请求列表
 			final List<PendingRequest> fulfillableRequests = fulfillableAndUnfulfillableRequests.get(true);
+			//note: 不能满足资源需求的请求列表
 			final List<PendingRequest> unfulfillableRequests = fulfillableAndUnfulfillableRequests.get(false);
 
 			final long currentTimestamp = clock.relativeTimeMillis();
@@ -875,10 +899,12 @@ public class SlotPoolImpl implements SlotPool {
 				fulfillableRequest.markFulfillable();
 			}
 
+			//note: 检查 unfulfillableRequests，判断是够这个请求是否超时
 			for (PendingRequest unfulfillableRequest : unfulfillableRequests) {
 				unfulfillableRequest.markUnfulfillable(currentTimestamp);
 
 				if (unfulfillableRequest.getUnfulfillableSince() + batchSlotTimeout.toMilliseconds() <= currentTimestamp) {
+					//note: 将这个请求标记为 timeout
 					timeoutPendingSlotRequest(unfulfillableRequest.getSlotRequestId());
 				}
 			}
@@ -901,13 +927,14 @@ public class SlotPoolImpl implements SlotPool {
 			.concat(
 				pendingRequests.values().stream(),
 				waitingForResourceManager.values().stream())
-			.filter(PendingRequest::isBatchRequest)
+			.filter(PendingRequest::isBatchRequest) //note: 过滤出 batch 的 slot 请求
 			.collect(Collectors.toList());
 	}
 
 	private Predicate<PendingRequest> canBeFulfilledWithAllocatedSlot(Set<ResourceProfile> allocatedResourceProfiles) {
 		return pendingRequest -> {
 			for (ResourceProfile allocatedResourceProfile : allocatedResourceProfiles) {
+				//note: 检查当前这个 pendingRequest 的资源需求是否可以满足
 				if (allocatedResourceProfile.isMatching(pendingRequest.getResourceProfile())) {
 					return true;
 				}
@@ -998,6 +1025,7 @@ public class SlotPoolImpl implements SlotPool {
 
 	/**
 	 * Organize allocated slots from different points of view.
+	 * note: allocated slots 的相应缓存
 	 */
 	static class AllocatedSlots {
 
@@ -1151,6 +1179,7 @@ public class SlotPoolImpl implements SlotPool {
 
 	/**
 	 * Organize all available slots from different points of view.
+	 * note: 维护一个 slot 相应的缓存列表
 	 */
 	protected static class AvailableSlots {
 
@@ -1215,6 +1244,7 @@ public class SlotPoolImpl implements SlotPool {
 
 		/**
 		 * Remove all available slots come from specified TaskManager.
+		 * note: 删除某个 TM 所有可用的 slot
 		 *
 		 * @param taskManager The id of the TaskManager
 		 * @return The set of removed slots for the given TaskManager
@@ -1243,6 +1273,7 @@ public class SlotPoolImpl implements SlotPool {
 			}
 		}
 
+		//note: 移除某个 slot
 		AllocatedSlot tryRemove(AllocationID slotId) {
 			final SlotAndTimestamp sat = availableSlots.remove(slotId);
 			if (sat != null) {
@@ -1315,6 +1346,7 @@ public class SlotPoolImpl implements SlotPool {
 
 	/**
 	 * A pending request for a slot.
+	 * note: slot 的 pending 请求
 	 */
 	protected static class PendingRequest {
 
@@ -1347,10 +1379,12 @@ public class SlotPoolImpl implements SlotPool {
 			this.unfillableSince = Long.MAX_VALUE;
 		}
 
+		//note: streaming slot 请求
 		static PendingRequest createStreamingRequest(SlotRequestId slotRequestId, ResourceProfile resourceProfile) {
 			return new PendingRequest(slotRequestId, resourceProfile, false);
 		}
 
+		//note: batch slot 请求
 		static PendingRequest createBatchRequest(SlotRequestId slotRequestId, ResourceProfile resourceProfile) {
 			return new PendingRequest(slotRequestId, resourceProfile, true);
 		}

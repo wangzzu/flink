@@ -26,6 +26,7 @@ import org.apache.flink.configuration.Configuration;
 
 /**
  * Utility class that contains helper methods to work with Flink {@link Function} class.
+ * note: 执行 Function 相关方法的基础类
  */
 @Internal
 public final class FunctionUtils {

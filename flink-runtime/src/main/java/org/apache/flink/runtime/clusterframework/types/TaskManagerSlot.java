@@ -125,6 +125,7 @@ public class TaskManagerSlot {
 		assignedSlotRequest = Preconditions.checkNotNull(pendingSlotRequest);
 	}
 
+	//note: 分配完成，这里会更新相应的状态
 	public void completeAllocation(AllocationID allocationId, JobID jobId) {
 		Preconditions.checkNotNull(allocationId, "Allocation id must not be null.");
 		Preconditions.checkNotNull(jobId, "Job id must not be null.");

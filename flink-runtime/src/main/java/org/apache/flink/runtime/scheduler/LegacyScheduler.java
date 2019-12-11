@@ -262,11 +262,14 @@ public class LegacyScheduler implements SchedulerNG {
 		executionGraph.registerJobStatusListener(jobStatusListener);
 	}
 
+	//note: ExecutionGraph 开始调度
 	@Override
 	public void startScheduling() {
+		//note: 启动这个线程
 		mainThreadExecutor.assertRunningInMainThread();
 
 		try {
+			//note: 调度这个 graph
 			executionGraph.scheduleForExecution();
 		}
 		catch (Throwable t) {

@@ -31,7 +31,8 @@ import java.util.NoSuchElementException;
  * This class implements a list (array based) that is physically bounded in maximum size, but can virtually grow beyond
  * the bounded size. When the list grows beyond the size bound, elements are dropped from the head of the list (FIFO
  * order). If dropped elements are accessed, a default element is returned instead.
- * 
+ * note：一个固定大小的 list，如果超过长度限制就会按照 FIFO 的策略移除旧的数据
+ *
  * <p>The list by itself is serializable, but a full list can only be serialized if the values
  * are also serializable.
  *

@@ -37,6 +37,7 @@ import java.util.List;
  */
 @Internal
 public class UnionTransformation<T> extends Transformation<T> {
+	//note: 这里会记录上游 inputs
 	private final List<Transformation<T>> inputs;
 
 	/**

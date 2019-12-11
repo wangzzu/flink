@@ -52,6 +52,7 @@ abstract class SlotProviderStrategy {
 
 	/**
 	 * Allocating slot with specific requirement.
+	 * note: 根据指定的需求分配这个 slot
 	 *
 	 * @param slotRequestId identifying the slot request
 	 * @param scheduledUnit The task to allocate the slot for
@@ -98,6 +99,7 @@ abstract class SlotProviderStrategy {
 		return slotProvider;
 	}
 
+	//note: batch slot 请求
 	static class BatchSlotProviderStrategy extends SlotProviderStrategy {
 
 		BatchSlotProviderStrategy(SlotProvider slotProvider, boolean allowQueuedScheduling) {

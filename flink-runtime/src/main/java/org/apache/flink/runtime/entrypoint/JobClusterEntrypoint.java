@@ -25,6 +25,7 @@ import org.apache.flink.runtime.dispatcher.MemoryArchivedExecutionGraphStore;
 
 /**
  * Base class for per-job cluster entry points.
+ * note: 集群级别每个 job 的入口
  */
 public abstract class JobClusterEntrypoint extends ClusterEntrypoint {
 

@@ -32,6 +32,7 @@ public class ShuffleServiceOptions {
 
 	/**
 	 * The full class name of the shuffle service factory implementation to be used by the cluster.
+	 * note：shuffle-service-factory class，默认是 nettyShuffle
 	 */
 	public static final ConfigOption<String> SHUFFLE_SERVICE_FACTORY_CLASS = ConfigOptions
 		.key("shuffle-service-factory.class")

@@ -30,6 +30,7 @@ import static org.apache.flink.configuration.description.LinkElement.link;
 public class AkkaOptions {
 
 	/**
+	 * note： AKKA 超时参数设置，超时可能会是慢机器或网络原因导致
 	 * Timeout for akka ask calls.
 	 */
 	public static final ConfigOption<String> ASK_TIMEOUT = ConfigOptions

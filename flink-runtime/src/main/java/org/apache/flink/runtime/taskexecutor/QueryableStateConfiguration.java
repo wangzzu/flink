@@ -28,6 +28,7 @@ import static org.apache.flink.util.Preconditions.checkArgument;
 
 /**
  * Simple configuration object for the parameters for the server-side of queryable state.
+ * note：Queryable State 相关的一些配置，包括：线程数、端口 range 等
  */
 public class QueryableStateConfiguration {
 

@@ -31,6 +31,7 @@ import java.util.Collection;
 
 /**
  * Container class for job information which is stored in the {@link ExecutionGraph}.
+ * note：job information，包括作业运行 code 相关的信息
  */
 public class JobInformation implements Serializable {
 

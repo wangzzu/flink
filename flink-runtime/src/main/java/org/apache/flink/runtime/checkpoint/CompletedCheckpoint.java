@@ -49,6 +49,8 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * and that is considered successful. The CompletedCheckpoint class contains all the metadata of the
  * checkpoint, i.e., checkpoint ID, timestamps, and the handles to all states that are part of the
  * checkpoint.
+ * note：CompletedCheckpoint 描述了一个完整的 cp（所有必须的 task 对于它们的状态已经 ack 了）
+ * note：它会包含 cp 的所有元数据、cp id、时间戳以及所有的状态
  *
  * <h2>Size the CompletedCheckpoint Instances</h2>
  *

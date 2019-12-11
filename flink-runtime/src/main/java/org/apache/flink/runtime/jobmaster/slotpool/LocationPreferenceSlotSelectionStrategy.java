@@ -41,10 +41,12 @@ public enum LocationPreferenceSlotSelectionStrategy implements SlotSelectionStra
 
 	/**
 	 * Calculates the candidate's locality score.
+	 * note: 给每个候选 slot 打分，localWeigh 代表的是同一个 TM 的同一个 slot，这个比重是同一个 hostName 的 10 倍
 	 */
 	private static final BiFunction<Integer, Integer, Integer> LOCALITY_EVALUATION_FUNCTION =
 		(localWeigh, hostLocalWeigh) -> localWeigh * 10 + hostLocalWeigh;
 
+	//note: 选择 best slot
 	@Override
 	public Optional<SlotInfoAndLocality> selectBestSlotForProfile(
 		@Nonnull Collection<SlotInfoAndResources> availableSlots,
@@ -59,16 +61,19 @@ public enum LocationPreferenceSlotSelectionStrategy implements SlotSelectionStra
 		final ResourceProfile resourceProfile = slotProfile.getResourceProfile();
 
 		// if we have no location preferences, we can only filter by the additional requirements.
+		//note: 选择 best slot 来分配 task
 		return locationPreferences.isEmpty() ?
 			selectWithoutLocationPreference(availableSlots, resourceProfile) :
 			selectWitLocationPreference(availableSlots, locationPreferences, resourceProfile);
 	}
 
+	//note: 在没有 resourceProfile 的情况下，这里就是完全按照资源是否满足去选择
 	@Nonnull
 	private Optional<SlotInfoAndLocality> selectWithoutLocationPreference(
 		@Nonnull Collection<SlotInfoAndResources> availableSlots,
 		@Nonnull ResourceProfile resourceProfile) {
 
+		//note: 遍历 availableSlots 列表，返回第一个能满足资源需求的 slot
 		for (SlotInfoAndResources candidate : availableSlots) {
 			if (candidate.getRemainingResources().isMatching(resourceProfile)) {
 				return Optional.of(SlotInfoAndLocality.of(candidate.getSlotInfo(), Locality.UNCONSTRAINED));
@@ -87,6 +92,7 @@ public enum LocationPreferenceSlotSelectionStrategy implements SlotSelectionStra
 		final Map<ResourceID, Integer> preferredResourceIDs = new HashMap<>(locationPreferences.size());
 		final Map<String, Integer> preferredFQHostNames = new HashMap<>(locationPreferences.size());
 
+		//note: 统计每个 locationPreferences 中  ResourceID/Hostname 级别对应的次数
 		for (TaskManagerLocation locationPreference : locationPreferences) {
 			preferredResourceIDs.merge(locationPreference.getResourceID(), 1, Integer::sum);
 			preferredFQHostNames.merge(locationPreference.getFQDNHostname(), 1, Integer::sum);
@@ -99,6 +105,7 @@ public enum LocationPreferenceSlotSelectionStrategy implements SlotSelectionStra
 		for (SlotInfoAndResources candidate : availableSlots) {
 
 			if (candidate.getRemainingResources().isMatching(resourceProfile)) {
+				//note: 遍历 availableSlots，当前 slot 资源满足的情况下，会做下面的处理
 
 				// this gets candidate is local-weigh
 				Integer localWeigh = preferredResourceIDs.getOrDefault(
@@ -108,6 +115,7 @@ public enum LocationPreferenceSlotSelectionStrategy implements SlotSelectionStra
 				Integer hostLocalWeigh = preferredFQHostNames.getOrDefault(
 					candidate.getSlotInfo().getTaskManagerLocation().getFQDNHostname(), 0);
 
+				//note: 打分
 				int candidateScore = LOCALITY_EVALUATION_FUNCTION.apply(localWeigh, hostLocalWeigh);
 				if (candidateScore > bestCandidateScore) {
 					bestCandidateScore = candidateScore;
@@ -120,6 +128,7 @@ public enum LocationPreferenceSlotSelectionStrategy implements SlotSelectionStra
 		}
 
 		// at the end of the iteration, we return the candidate with best possible locality or null.
+		//note: 选择分数最高的 slot 返回
 		return bestCandidate != null ?
 			Optional.of(SlotInfoAndLocality.of(bestCandidate.getSlotInfo(), bestCandidateLocality)) :
 			Optional.empty();

@@ -111,11 +111,16 @@ import static org.apache.flink.util.Preconditions.checkState;
  * runs it, providing all services necessary for example to consume input data,
  * produce its results (intermediate result partitions) and communicate
  * with the JobManager.
+ * note：task 代表了 TM 中一个并行子 task 的执行，它封装了一个 Flink operator 并且执行它，提供了所有必须的服务，比如：消费输入数据、产出结果、与 JM 通信
  *
  * <p>The Flink operators (implemented as subclasses of
  * {@link AbstractInvokable} have only data readers, writers, and certain event callbacks.
  * The task connects those to the network stack and actor messages, and tracks the state
  * of the execution and handles exceptions.
+ * note: Flink operator 只有 data reader、writer 和一些 event callbacks；
+ * note: task 将这些连接到网络栈和 actor msgs 中，并且执行的状态和处理异常；
+ * note: task 并不知道它们如何跟其他 task 联系或者它们是第一次试图执行这个 task 还是重试的操作（这些只有 JM 才知道）；
+ * note: 所有的 task 只知道自己要运行的 code、task 的配置以及生产和消费中间结果的 id 信息；
  *
  * <p>Tasks have no knowledge about how they relate to other tasks, or whether they
  * are the first attempt to execute the task, or a repeated attempt. All of that
@@ -134,6 +139,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 	private static final ThreadGroup TASK_THREADS_GROUP = new ThreadGroup("Flink Task Threads");
 
 	/** For atomic state updates. */
+	//note: 原子状态更新
 	private static final AtomicReferenceFieldUpdater<Task, ExecutionState> STATE_UPDATER =
 			AtomicReferenceFieldUpdater.newUpdater(Task.class, ExecutionState.class, "executionState");
 
@@ -157,6 +163,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 	private final TaskInfo taskInfo;
 
 	/** The name of the task, including subtask indexes. */
+	//note: task name
 	private final String taskNameWithSubtask;
 
 	/** The job-wide configuration object. */
@@ -205,6 +212,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 	private final InputSplitProvider inputSplitProvider;
 
 	/** Checkpoint notifier used to communicate with the CheckpointCoordinator. */
+	//note: cp 通信
 	private final CheckpointResponder checkpointResponder;
 
 	/** GlobalAggregateManager used to update aggregates on the JobMaster. */
@@ -226,6 +234,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 	private final AccumulatorRegistry accumulatorRegistry;
 
 	/** The thread that executes the task. */
+	//note: 执行 task 的线程
 	private final Thread executingThread;
 
 	/** Parent group for all metrics of this task. */
@@ -316,6 +325,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 		Preconditions.checkArgument(0 <= attemptNumber, "The attempt number must be positive.");
 		Preconditions.checkArgument(0 <= targetSlotNumber, "The target slot number must be positive.");
 
+		//note: 创建 taskInfo 对象
 		this.taskInfo = new TaskInfo(
 				taskInformation.getTaskName(),
 				taskInformation.getMaxNumberOfSubtaks(),
@@ -403,6 +413,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 		invokableHasBeenCanceled = new AtomicBoolean(false);
 
 		// finally, create the executing thread, but do not start it
+		//note: 创建一个 task thread
 		executingThread = new Thread(TASK_THREADS_GROUP, this, taskNameWithSubtask);
 	}
 
@@ -533,10 +544,12 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 		}
 	}
 
+	//note: 真正运行 task 的地方
 	private void doRun() {
 		// ----------------------------
 		//  Initial State transition
 		// ----------------------------
+		//note: 首先做状态转移
 		while (true) {
 			ExecutionState current = this.executionState;
 			if (current == ExecutionState.CREATED) {
@@ -573,6 +586,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 
 		// all resource acquisitions and registrations from here on
 		// need to be undone in the end
+		//note: 所有资源的获得和注册都是从这里开始
 		Map<String, Future<Path>> distributedCacheEntries = new HashMap<>();
 		AbstractInvokable invokable = null;
 
@@ -590,9 +604,11 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 
 			// first of all, get a user-code classloader
 			// this may involve downloading the job's JAR files and/or classes
+			//note: 首先获得 user-code classloader，这可能涉及到下载 job 的 jar file 或 class
 			LOG.info("Loading JAR files for task {}.", this);
 
 			userCodeClassLoader = createUserCodeClassloader();
+			//note: 这个 task 的执行配置
 			final ExecutionConfig executionConfig = serializedExecutionConfig.deserializeValue(userCodeClassLoader);
 
 			if (executionConfig.getTaskCancellationInterval() >= 0) {
@@ -615,7 +631,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 			// memory to run the necessary data exchanges
 			// the registration must also strictly be undone
 			// ----------------------------------------------------------------
-
+			//note: 在 网络栈 上注册 task，如果没有足够的内存用于数据交换 operator 将会失败
 			LOG.info("Registering task at network: {}.", this);
 
 			setupPartitionsAndGates(consumableNotifyingPartitionWriters, inputGates);
@@ -646,8 +662,10 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 			//  call the user code initialization methods
 			// ----------------------------------------------------------------
 
+			//note: 调用用户的代码初始化方法
 			TaskKvStateRegistry kvStateRegistry = kvStateService.createKvStateTaskRegistry(jobId, getJobVertexId());
 
+			//note: 初始化 RuntimeEnvironment 对象
 			Environment env = new RuntimeEnvironment(
 				jobId,
 				vertexId,
@@ -680,6 +698,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 			executingThread.setContextClassLoader(userCodeClassLoader);
 
 			// now load and instantiate the task's invokable code
+			//note: 加载并实例化 task invokable 代码
 			invokable = loadAndInstantiateInvokable(userCodeClassLoader, nameOfInvokableClass, env);
 
 			// ----------------------------------------------------------------
@@ -691,22 +710,27 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 			this.invokable = invokable;
 
 			// switch to the RUNNING state, if that fails, we have been canceled/failed in the meantime
+			//note: 转换到 RUNNING 状态
 			if (!transitionState(ExecutionState.DEPLOYING, ExecutionState.RUNNING)) {
 				throw new CancelTaskException();
 			}
 
 			// notify everyone that we switched to running
+			//note: 通知 JobMaster 这个 task 的状态更新了
 			taskManagerActions.updateTaskExecutionState(new TaskExecutionState(jobId, executionId, ExecutionState.RUNNING));
 
+			// TODO: 2019-11-10 这里做了两次，应该是代码可以删除一次
 			// make sure the user code classloader is accessible thread-locally
 			executingThread.setContextClassLoader(userCodeClassLoader);
 
 			// run the invokable
+			//note: task 开始执行
 			invokable.invoke();
 
 			// make sure, we enter the catch block if the task leaves the invoke() method due
 			// to the fact that it has been canceled
 			if (isCanceledOrFailed()) {
+				//note: 如果 task 已经离开了 invoke() 方法，检查它是不是被取消了
 				throw new CancelTaskException();
 			}
 
@@ -715,6 +739,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 			// ----------------------------------------------------------------
 
 			// finish the produced partitions. if this fails, we consider the execution failed.
+			//note: task 执行完成，如果这里执行失败，我们会认为这个 task 执行失败了
 			for (ResultPartitionWriter partitionWriter : consumableNotifyingPartitionWriters) {
 				if (partitionWriter != null) {
 					partitionWriter.finish();
@@ -723,6 +748,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 
 			// try to mark the task as finished
 			// if that fails, the task was canceled/failed in the meantime
+			//note: 将 task 的状态转移成 FINISHED
 			if (!transitionState(ExecutionState.RUNNING, ExecutionState.FINISHED)) {
 				throw new CancelTaskException();
 			}
@@ -741,11 +767,13 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 
 			try {
 				// check if the exception is unrecoverable
+				//note: 检查异常是不是不可恢复的
 				if (ExceptionUtils.isJvmFatalError(t) ||
 						(t instanceof OutOfMemoryError && taskManagerConfig.shouldExitJvmOnOutOfMemoryError())) {
 
 					// terminate the JVM immediately
 					// don't attempt a clean shutdown, because we cannot expect the clean shutdown to complete
+					//note: 立即终止 JVM 进程
 					try {
 						LOG.error("Encountered fatal error {} - terminating the JVM", t.getClass().getName(), t);
 					} finally {
@@ -757,6 +785,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 				// loop for multiple retries during concurrent state changes via calls to cancel() or
 				// to failExternally()
 				while (true) {
+					//note: task 的状态做相应的转移，并且取消 task 的执行
 					ExecutionState current = this.executionState;
 
 					if (current == ExecutionState.RUNNING || current == ExecutionState.DEPLOYING) {
@@ -801,20 +830,24 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 		}
 		finally {
 			try {
+				//note: 释放 task 的资源
 				LOG.info("Freeing task resources for {} ({}).", taskNameWithSubtask, executionId);
 
 				// clear the reference to the invokable. this helps guard against holding references
 				// to the invokable and its structures in cases where this Task object is still referenced
+				//note: clear invokable 的引用
 				this.invokable = null;
 
 				// stop the async dispatcher.
 				// copy dispatcher reference to stack, against concurrent release
+				//note: 停止异步的 dispatcher
 				ExecutorService dispatcher = this.asyncCallDispatcher;
 				if (dispatcher != null && !dispatcher.isShutdown()) {
 					dispatcher.shutdownNow();
 				}
 
 				// free the network resources
+				//note: 释放网络上的资源
 				releaseNetworkResources();
 
 				// free memory resources
@@ -823,6 +856,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 				}
 
 				// remove all of the tasks library resources
+				//note: 移除这个 task 缓存的 task 资源信息
 				libraryCache.unregisterTask(jobId, executionId);
 				fileCache.releaseJob(jobId, executionId);
 				blobService.getPermanentBlobService().releaseJob(jobId);
@@ -844,6 +878,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 			// counted as finished when this happens
 			// errors here will only be logged
 			try {
+				//note: metrics close
 				metrics.close();
 			}
 			catch (Throwable t) {
@@ -870,6 +905,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 	/**
 	 * Releases network resources before task exits. We should also fail the partition to release if the task
 	 * has failed, is canceled, or is being canceled at the moment.
+	 * note: 在 task 退出前，释放相应的网络资源
 	 */
 	private void releaseNetworkResources() {
 		LOG.debug("Release task {} network resources (state: {}).", taskNameWithSubtask, getExecutionState());
@@ -887,6 +923,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 	/**
 	 * There are two scenarios to close the network resources. One is from {@link TaskCanceler} to early
 	 * release partitions and gates. Another is from task thread during task exiting.
+	 * note: 有两种情况：第一种是调用 TaskCanceler 取消 task，第二种是 task 线程退出。
 	 */
 	private void closeNetworkResources() {
 		for (ResultPartitionWriter partitionWriter : consumableNotifyingPartitionWriters) {
@@ -908,6 +945,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 		}
 	}
 
+	//note: 获得用户代码的 ClassLoader
 	private ClassLoader createUserCodeClassloader() throws Exception {
 		long startDownloadTime = System.currentTimeMillis();
 
@@ -990,6 +1028,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 	 * Otherwise it sets the state to FAILED, and, if the invokable code is running,
 	 * starts an asynchronous thread that aborts that code.
 	 *
+	 * note：将这个 task Execution 标记为 failed（将 task 的状态转移为 FAILED）
 	 * <p>This method never blocks.</p>
 	 */
 	@Override
@@ -1018,7 +1057,10 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 				}
 			}
 			else if (current == ExecutionState.RUNNING) {
+				//note: 如果 task 原来的状态是 RUNNING 状态的话
 				if (transitionState(ExecutionState.RUNNING, targetState, cause)) {
+					//note: 状态已经转移成功
+
 					// we are canceling / failing out of the running state
 					// we need to cancel the invokable
 
@@ -1033,6 +1075,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 						// because the canceling may block on user code, we cancel from a separate thread
 						// we do not reuse the async call handler, because that one may be blocked, in which
 						// case the canceling could not continue
+						//note: 在取消 task 时，这里单独启用了一个 task 去做，如果重新使用其他的线程的话，该线程可能会 block
 
 						// The canceller calls cancel and interrupts the executing thread once
 						Runnable canceler = new TaskCanceler(LOG, this :: closeNetworkResources, invokable, executingThread, taskNameWithSubtask);
@@ -1121,6 +1164,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 
 	/**
 	 * Calls the invokable to trigger a checkpoint.
+	 * note: 触发一个 checkpoint
 	 *
 	 * @param checkpointID The ID identifying the checkpoint.
 	 * @param checkpointTimestamp The timestamp associated with the checkpoint.
@@ -1152,6 +1196,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 					FileSystemSafetyNet.setSafetyNetCloseableRegistryForThread(safetyNetCloseableRegistry);
 
 					try {
+						//note: 触发 checkpoint
 						boolean success = invokable.triggerCheckpoint(checkpointMetaData, checkpointOptions, advanceToEndOfEventTime);
 						if (!success) {
 							checkpointResponder.declineCheckpoint(
@@ -1274,6 +1319,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 	//  Utilities
 	// ------------------------------------------------------------------------
 
+	//note: 取消 task 的执行
 	private void cancelInvokable(AbstractInvokable invokable) {
 		// in case of an exception during execution, we still call "cancel()" on the task
 		if (invokable != null && invokableHasBeenCanceled.compareAndSet(false, true)) {
@@ -1328,6 +1374,8 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 	 * the Environment and the TaskStateSnapshot. If no such constructor exists, and there is
 	 * no initial state, the method will fall back to the stateless convenience constructor that
 	 * accepts only the Environment.
+	 * note: 这个方法首先会通过构造器（Environment 和 TaskStateSnapshot 参数）实例化这个 task
+	 * note: 如果构造器没有 TaskStateSnapshot 参数，这个方法会转到无状态构造器创建过程，只会接受 Environment 这个参数
 	 *
 	 * @param classLoader The classloader to load the class through.
 	 * @param className The name of the class to load.
@@ -1354,6 +1402,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 		Constructor<? extends AbstractInvokable> statelessCtor;
 
 		try {
+			//note: 无状态构造器
 			statelessCtor = invokableClass.getConstructor(Environment.class);
 		} catch (NoSuchMethodException ee) {
 			throw new FlinkException("Task misses proper constructor", ee);
@@ -1394,6 +1443,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 	/**
 	 * This runner calls cancel() on the invokable, closes input-/output resources,
 	 * and initially interrupts the task thread.
+	 * note：取消 task 的线程，它会调用 invokable 的 cancel() 方法来操作，关闭 input/output 资源，并且初始化 task 线程的中断线程
 	 */
 	private static class TaskCanceler implements Runnable {
 
@@ -1519,6 +1569,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 	 * If the task thread does not go away gracefully within a certain time, we
 	 * trigger a hard cancel action (notify TaskManager of fatal error, which in
 	 * turn kills the process).
+	 * note：如果 task 线程在一定的时间内没有关闭，它会触发一个更强的取消操作，直接抛出 fatal 错误
 	 */
 	private static class TaskCancelerWatchDog implements Runnable {
 
@@ -1568,6 +1619,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 				if (executerThread.isAlive()) {
 					String msg = "Task did not exit gracefully within " + (timeoutMillis / 1000) + " + seconds.";
 					log.error(msg);
+					//note: task 直接通知 TM 一个 fatal 异常，强制挂掉这个 task
 					taskManager.notifyFatalError(msg, null);
 				}
 			}

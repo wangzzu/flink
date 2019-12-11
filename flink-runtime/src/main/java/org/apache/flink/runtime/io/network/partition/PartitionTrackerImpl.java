@@ -59,6 +59,7 @@ public class PartitionTrackerImpl implements PartitionTracker {
 		this.taskExecutorGatewayLookup = taskExecutorGatewayLookup;
 	}
 
+	//note: 开始 tack partition
 	@Override
 	public void startTrackingPartition(ResourceID producingTaskExecutorId, ResultPartitionDeploymentDescriptor resultPartitionDeploymentDescriptor) {
 		Preconditions.checkNotNull(producingTaskExecutorId);
@@ -102,6 +103,7 @@ public class PartitionTrackerImpl implements PartitionTracker {
 					partitionMetaData -> partitionMetaData.resultPartitionDeploymentDescriptor,
 					toList())));
 
+		//note: release partition
 		partitionsToReleaseByResourceId.forEach(this::internalReleasePartitions);
 	}
 
@@ -117,6 +119,7 @@ public class PartitionTrackerImpl implements PartitionTracker {
 		Preconditions.checkNotNull(producingTaskExecutorId);
 
 		// this is a bit icky since we make 2 calls to pT#stopTrackingPartitions
+		//note: stop tracking partition（实际上就是从缓存中删除）
 		Collection<ResultPartitionID> resultPartitionIds = partitionTable.stopTrackingPartitions(producingTaskExecutorId);
 
 		stopTrackingAndReleasePartitions(resultPartitionIds);
@@ -146,6 +149,7 @@ public class PartitionTrackerImpl implements PartitionTracker {
 		return Optional.of(partitionInfo);
 	}
 
+	//note: release partition
 	private void internalReleasePartitions(
 		ResourceID potentialPartitionLocation,
 		Collection<ResultPartitionDeploymentDescriptor> partitionDeploymentDescriptors) {

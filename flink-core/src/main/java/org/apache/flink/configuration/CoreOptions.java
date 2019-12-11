@@ -207,6 +207,7 @@ public class CoreOptions {
 	/**
 	 * The config parameter defining the directories for temporary files, separated by
 	 * ",", "|", or the system's {@link java.io.File#pathSeparator}.
+	 * note： 临时文件目录的参数配置
 	 */
 	@Documentation.OverrideDefault("'LOCAL_DIRS' on Yarn. '_FLINK_TMP_DIR' on Mesos. System.getProperty(\"java.io.tmpdir\") in standalone.")
 	public static final ConfigOption<String> TMP_DIRS =

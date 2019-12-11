@@ -51,6 +51,7 @@ import java.util.UUID;
  * Container for multiple {@link TaskSlot} instances. Additionally, it maintains multiple indices
  * for faster access to tasks and sets of allocated slots.
  *
+ * note：维护 task slot 的信息
  * <p>The task slot table automatically registers timeouts for allocated slots which cannot be assigned
  * to a job manager.
  *
@@ -61,6 +62,7 @@ public class TaskSlotTable implements TimeoutListener<AllocationID> {
 	private static final Logger LOG = LoggerFactory.getLogger(TaskSlotTable.class);
 
 	/** Timer service used to time out allocated slots. */
+	//note: 分配 slot 时，监控 timeout 的服务
 	private final TimerService<AllocationID> timerService;
 
 	/** The list of all task slots. */
@@ -113,6 +115,7 @@ public class TaskSlotTable implements TimeoutListener<AllocationID> {
 
 	/**
 	 * Start the task slot table with the given slot actions.
+	 * note：设置一个 slotActions，并启动 timeout 监控服务
 	 *
 	 * @param initialSlotActions to use for slot actions
 	 */
@@ -153,6 +156,7 @@ public class TaskSlotTable implements TimeoutListener<AllocationID> {
 	// Slot report methods
 	// ---------------------------------------------------------------------
 
+	//note: 创建一个 SlotReport 对象，用于向 RM 汇报
 	public SlotReport createSlotReport(ResourceID resourceId) {
 		final int numberSlots = taskSlots.size();
 
@@ -312,7 +316,9 @@ public class TaskSlotTable implements TimeoutListener<AllocationID> {
 
 			final JobID jobId = taskSlot.getJobId();
 
-			if (taskSlot.markFree()) {
+			if (taskSlot.markFree()) { //note: 如果 slot 可以被标记为 free 的话
+				//note: 更新相应的状态信息
+
 				// remove the allocation id to task slot mapping
 				allocationIDTaskSlotMap.remove(allocationId);
 
@@ -336,10 +342,13 @@ public class TaskSlotTable implements TimeoutListener<AllocationID> {
 			} else {
 				// we couldn't free the task slot because it still contains task, fail the tasks
 				// and set the slot state to releasing so that it gets eventually freed
+
+				//note: 将这个 slot 标记为 release
 				taskSlot.markReleasing();
 
 				Iterator<Task> taskIterator = taskSlot.getTasks();
 
+				//note: 遍历将这个 task slot 的所有 task 全部标记为 fail
 				while (taskIterator.hasNext()) {
 					taskIterator.next().failExternally(cause);
 				}
@@ -366,6 +375,7 @@ public class TaskSlotTable implements TimeoutListener<AllocationID> {
 
 	/**
 	 * Check whether the slot for the given index is allocated for the given job and allocation id.
+	 * note：检查这个 slot 是否分配给了指定的 job 和 id
 	 *
 	 * @param index of the task slot
 	 * @param jobId for which the task slot should be allocated

@@ -38,6 +38,7 @@ public class CheckpointingOptions {
 			.withDescription("The state backend to be used to store and checkpoint state.");
 
 	/** The maximum number of completed checkpoints to retain.*/
+	//note: 已经完成 cp 保留的最大数量
 	public static final ConfigOption<Integer> MAX_RETAINED_CHECKPOINTS = ConfigOptions
 			.key("state.checkpoints.num-retained")
 			.defaultValue(1)
@@ -71,6 +72,7 @@ public class CheckpointingOptions {
 
 	/**
 	 * This option configures local recovery for this state backend. By default, local recovery is deactivated.
+	 * note：state backend 的本地 recovery 配置，默认情况下，本地 recovery 是不允许的
 	 *
 	 * <p>Local recovery currently only covers keyed state backends.
 	 * Currently, MemoryStateBackend does not support local recovery and ignore
@@ -85,6 +87,7 @@ public class CheckpointingOptions {
 
 	/**
 	 * The config parameter defining the root directories for storing file-based state for local recovery.
+	 * note：存储状态信息的目录，用于本地恢复
 	 *
 	 * <p>Local recovery currently only covers keyed state backends.
 	 * Currently, MemoryStateBackend does not support local recovery and ignore

@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
+ * note：周期性打印内存、GC 信息的定时服务
  * A thread the periodically logs statistics about:
  * <ul>
  *     <li>Heap and non-heap memory usage</li>
@@ -79,6 +80,7 @@ public class MemoryLogger extends Thread {
 	/**
 	 * Creates a new memory logger that logs in the given interval and lives until the
 	 * given termination future completes.
+	 * note: 周期性地打印内存的日志信息，直到指定的 future 完成
 	 *
 	 * @param logger The logger to use for outputting the memory statistics.
 	 * @param interval The interval in which the thread logs.

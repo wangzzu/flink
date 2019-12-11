@@ -44,6 +44,7 @@ import static org.apache.flink.client.cli.CliFrontendParser.YARN_DETACHED_OPTION
 
 /**
  * Base class for command line options that refer to a JAR file program.
+ * note: 对于一个 jar file 作业来说，最基本的参数配置
  */
 public abstract class ProgramOptions extends CommandLineOptions {
 
@@ -77,9 +78,11 @@ public abstract class ProgramOptions extends CommandLineOptions {
 			line.getOptionValues(ARGS_OPTION.getOpt()) :
 			line.getArgs();
 
+		//note: main class
 		this.entryPointClass = line.hasOption(CLASS_OPTION.getOpt()) ?
 			line.getOptionValue(CLASS_OPTION.getOpt()) : null;
 
+		//note: 是否是 python 提交的作业
 		isPython = line.hasOption(PY_OPTION.getOpt()) | line.hasOption(PYMODULE_OPTION.getOpt())
 			| "org.apache.flink.client.python.PythonGatewayServer".equals(entryPointClass);
 		// If specified the option -py(--python)
@@ -131,6 +134,7 @@ public abstract class ProgramOptions extends CommandLineOptions {
 			args = newArgs;
 		}
 
+		//note: jar 包路径
 		if (line.hasOption(JAR_OPTION.getOpt())) {
 			this.jarFilePath = line.getOptionValue(JAR_OPTION.getOpt());
 		} else if (!isPython && args.length > 0) {
@@ -143,6 +147,7 @@ public abstract class ProgramOptions extends CommandLineOptions {
 
 		this.programArgs = args;
 
+		//note: 需要加载的 classpath 路径
 		List<URL> classpaths = new ArrayList<URL>();
 		if (line.hasOption(CLASSPATH_OPTION.getOpt())) {
 			for (String path : line.getOptionValues(CLASSPATH_OPTION.getOpt())) {
@@ -155,6 +160,7 @@ public abstract class ProgramOptions extends CommandLineOptions {
 		}
 		this.classpaths = classpaths;
 
+		//note: 默认的并发度配置
 		if (line.hasOption(PARALLELISM_OPTION.getOpt())) {
 			String parString = line.getOptionValue(PARALLELISM_OPTION.getOpt());
 			try {

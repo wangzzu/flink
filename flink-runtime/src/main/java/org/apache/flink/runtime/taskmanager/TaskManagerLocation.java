@@ -36,6 +36,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * It describes the host where the TaskManager operates and its server port
  * for data exchange. This class also contains utilities to work with the
  * TaskManager's host name, which is used to localize work assignments.
+ * note: TM 通信的基本信息，主要是端口跟 host
  */
 public class TaskManagerLocation implements Comparable<TaskManagerLocation>, java.io.Serializable {
 
@@ -97,6 +98,7 @@ public class TaskManagerLocation implements Comparable<TaskManagerLocation>, jav
 	/**
 	 * Gets the ID of the resource in which the TaskManager is started. The format of this depends
 	 * on how the TaskManager is started:
+	 * note：这个 tm 的 resourceID，跟运行的环境有关系，如果是 Yarn 就是 container id
 	 * <ul>
 	 *     <li>If the TaskManager is started via YARN, this is the YARN container ID.</li>
 	 *     <li>If the TaskManager is started via Mesos, this is the Mesos container ID.</li>

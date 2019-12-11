@@ -113,9 +113,10 @@ import static org.apache.flink.util.Preconditions.checkState;
 /**
  * JobMaster implementation. The job master is responsible for the execution of a single
  * {@link JobGraph}.
+ * note: JonMaster 负责一个 JobGraph 的执行
  *
  * <p>It offers the following methods as part of its rpc interface to interact with the JobMaster
- * remotely:
+ * remotely: note：它提供下面这个接口来与远程 JobMaster 交互用来更新 task 的执行状态
  * <ul>
  * <li>{@link #updateTaskExecutionState} updates the task execution state for
  * given task</li>
@@ -263,6 +264,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 
 		this.jobManagerJobMetricGroup = jobMetricGroupFactory.create(jobGraph);
 		//note: 创建作业调度器实例 {@link LegacyScheduler}
+		//note: 创建 schedulerNG 的时候也会创建 ExecutionGraph 服务
 		this.schedulerNG = createScheduler(jobManagerJobMetricGroup);
 		this.jobStatusListener = null;
 
@@ -369,6 +371,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 
 	/**
 	 * Updates the task execution state for a given task.
+	 * note：对于指定的 task，更新其执行状态
 	 *
 	 * @param taskExecutionState New task execution state for a given task
 	 * @return Acknowledge the task execution state update
@@ -707,6 +710,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 			return Acknowledge.get();
 		}
 
+		//note: 如果这个 newJobMasterId 已经存在，这里会关闭这个作业，然后再设置新的 newJobMasterId
 		setNewFencingToken(newJobMasterId);
 
 		//note: start jobMaster service
@@ -725,7 +729,9 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 		startHeartbeatServices();
 
 		// start the slot pool make sure the slot pool now accepts messages for this leader
+		//note: 这里相当于进一步初始化 slotPool（启动两个定时服务）
 		slotPool.start(getFencingToken(), getAddress(), getMainThreadExecutor());
+		//note: 启动 Scheduler，默认的调度器是 SchedulerImpl
 		scheduler.start(getMainThreadExecutor());
 
 		//TODO: Remove once the ZooKeeperLeaderRetrieval returns the stored address upon start
@@ -752,12 +758,14 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 		}
 
 		// set new leader id
+		//note: 设置 leader id
 		setFencingToken(newJobMasterId);
 	}
 
 	/**
 	 * Suspending job, all the running tasks will be cancelled, and communication with other components
 	 * will be disposed.
+	 * note: 暂停这个作业（fencing 这个作业），所有正在运行的 task 都会被取消
 	 *
 	 * <p>Mostly job is suspended because of the leadership has been revoked, one can be restart this job by
 	 * calling the {@link #start(JobMasterId)} method once we take the leadership back again.
@@ -807,7 +815,9 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 		}
 	}
 
+	//note: 相应的心跳服务
 	private void startHeartbeatServices() {
+		//note: 与 TM 通信
 		taskManagerHeartbeatManager = heartbeatServices.createHeartbeatManagerSender(
 			resourceId,
 			new TaskManagerHeartbeatListener(),
@@ -832,15 +842,18 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 		jobManagerJobMetricGroup = newJobManagerJobMetricGroup;
 	}
 
+	//note: 重启或开始 调度 一个作业
 	private void resetAndStartScheduler() throws Exception {
 		validateRunsInMainThread();
 
 		final CompletableFuture<Void> schedulerAssignedFuture;
 
 		if (schedulerNG.requestJobStatus() == JobStatus.CREATED) {
+			//note: 刚启动的作业
 			schedulerAssignedFuture = CompletableFuture.completedFuture(null);
 			schedulerNG.setMainThreadExecutor(getMainThreadExecutor());
 		} else {
+			//note: reset 作业
 			suspendAndClearSchedulerFields(new FlinkException("ExecutionGraph is being reset in order to be rescheduled."));
 			final JobManagerJobMetricGroup newJobManagerJobMetricGroup = jobMetricGroupFactory.create(jobGraph);
 			final SchedulerNG newScheduler = createScheduler(newJobManagerJobMetricGroup);
@@ -857,12 +870,16 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 		schedulerAssignedFuture.thenRun(this::startScheduling);
 	}
 
+	//note: 开始调度这个作业
 	private void startScheduling() {
 		checkState(jobStatusListener == null);
 		// register self as job status change listener
+		//note: 作业状态变更的 listener
 		jobStatusListener = new JobManagerJobStatusListener();
+		//note: 注册 JobStatusListener
 		schedulerNG.registerJobStatusListener(jobStatusListener);
 
+		//note: 开始调度
 		schedulerNG.startScheduling();
 	}
 
@@ -907,6 +924,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 		validateRunsInMainThread();
 
 		if (newJobStatus.isGloballyTerminalState()) {
+			//note: 如果 jbo 的 zt 变化了（变为终止情况）
 			runAsync(() -> registeredTaskManagers.keySet()
 				.forEach(partitionTracker::stopTrackingAndReleasePartitionsFor));
 
@@ -932,6 +950,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 		}
 	}
 
+	//note: 重新与 ResourceManager 建立连接
 	private void reconnectToResourceManager(Exception cause) {
 		closeResourceManagerConnection(cause);
 		tryConnectToResourceManager();
@@ -943,6 +962,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 		}
 	}
 
+	//note: 连接 ResourceManager(
 	private void connectToResourceManager() {
 		assert(resourceManagerAddress != null);
 		assert(resourceManagerConnection == null);
@@ -1046,7 +1066,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 		@Override
 		public void notifyLeaderAddress(final String leaderAddress, final UUID leaderSessionID) {
 			runAsync(
-				() -> notifyOfNewResourceManagerLeader( //note:
+				() -> notifyOfNewResourceManagerLeader( //note: 更新 ResourceManager 的最新 leader
 					leaderAddress,
 					ResourceManagerId.fromUuidOrNull(leaderSessionID)));
 		}

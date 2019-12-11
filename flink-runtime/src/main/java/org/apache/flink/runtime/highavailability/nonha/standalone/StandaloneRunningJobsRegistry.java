@@ -38,6 +38,7 @@ public class StandaloneRunningJobsRegistry implements RunningJobsRegistry {
 		checkNotNull(jobID);
 
 		synchronized (jobStatus) {
+			//note: 将作业状态标记为 RUNNING
 			jobStatus.put(jobID, JobSchedulingStatus.RUNNING);
 		}
 	}
@@ -57,6 +58,7 @@ public class StandaloneRunningJobsRegistry implements RunningJobsRegistry {
 
 		synchronized (jobStatus) {
 			JobSchedulingStatus status = jobStatus.get(jobID);
+			//note: 如果缓存没有记录的话，这里会初始化为 PENDING
 			return status == null ? JobSchedulingStatus.PENDING : status;
 		}
 	}

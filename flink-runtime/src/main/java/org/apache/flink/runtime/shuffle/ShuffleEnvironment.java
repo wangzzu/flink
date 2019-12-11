@@ -34,6 +34,7 @@ import java.util.Collection;
 
 /**
  * Interface for the implementation of shuffle service local environment.
+ * note：shuffle 服务实现的本地环境
  *
  * <p>Input/Output interface of local shuffle service environment is based on memory {@link Buffer Buffers}. A producer
  * can write shuffle data into the buffers, obtained from the created {@link ResultPartitionWriter ResultPartitionWriters}

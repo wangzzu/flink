@@ -232,6 +232,7 @@ public class StackTraceSampleCoordinator {
 
 	/**
 	 * Collects stack traces of a task.
+	 * note：收集一个 task 的 stack trace
 	 *
 	 * @param sampleId    ID of the sample.
 	 * @param executionId ID of the sampled task.

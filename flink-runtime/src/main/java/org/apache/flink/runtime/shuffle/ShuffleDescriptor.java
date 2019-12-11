@@ -27,6 +27,7 @@ import java.util.Optional;
 
 /**
  * Interface for shuffle deployment descriptor of result partition resource.
+ * note: result partition resource 的 shuffler 部署描述符
  *
  * <p>The descriptor is used for the deployment of the partition producer/consumer and their data exchange
  */

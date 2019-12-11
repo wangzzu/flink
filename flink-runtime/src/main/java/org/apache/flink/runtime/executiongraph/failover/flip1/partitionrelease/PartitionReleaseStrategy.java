@@ -30,6 +30,7 @@ import java.util.List;
 /**
  * Interface for strategies that decide when to release
  * {@link IntermediateResultPartition IntermediateResultPartitions}.
+ * note：决定什么时候释放 IntermediateResultPartitions 的策略
  */
 public interface PartitionReleaseStrategy {
 

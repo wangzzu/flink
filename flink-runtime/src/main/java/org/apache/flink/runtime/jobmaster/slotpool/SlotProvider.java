@@ -31,7 +31,9 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * The slot provider is responsible for preparing slots for ready-to-run tasks.
- *
+ * note：Slot provider 用于 run task 的 slot，它支持两种分配模式
+ * note：1. 立即分配：请求一个 task slot 立即满足，我们可以调用 `getNow` 获取分配的 slot；
+ * note：2. 排队分配：请求一个 task slot，会先放到 queue 中，然后返回一个 future；
  * <p>It supports two allocating modes:
  * <ul>
  *     <li>Immediate allocating: A request for a task slot immediately gets satisfied, we can call
@@ -48,7 +50,7 @@ public interface SlotProvider {
 	 * @param slotRequestId identifying the slot request
 	 * @param scheduledUnit The task to allocate the slot for
 	 * @param slotProfile profile of the requested slot
-	 * @param allowQueuedScheduling Whether allow the task be queued if we do not have enough resource
+	 * @param allowQueuedScheduling Whether allow the task be queued if we do not have enough resource note: 默认是 true
 	 * @param allocationTimeout after which the allocation fails with a timeout exception
 	 * @return The future of the allocation
 	 */

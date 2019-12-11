@@ -31,6 +31,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * 
  * Intermediate data sets may be read by other operators, materialized, or
  * discarded.
+ * note：可以认为是中间数据集，它是 Operator 生产的数据集合
  */
 public class IntermediateDataSet implements java.io.Serializable {
 	
@@ -38,7 +39,8 @@ public class IntermediateDataSet implements java.io.Serializable {
 
 	
 	private final IntermediateDataSetID id; 		// the identifier
-	
+
+	//note: 上游的 JobVertex
 	private final JobVertex producer;			// the operation that produced this data set
 	
 	private final List<JobEdge> consumers = new ArrayList<JobEdge>();

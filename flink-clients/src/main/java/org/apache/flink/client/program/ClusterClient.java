@@ -65,6 +65,7 @@ import scala.concurrent.duration.FiniteDuration;
 
 /**
  * Encapsulates the functionality necessary to submit a program to a remote cluster.
+ * note: 对向远程集群提交一个作业过程的封装
  *
  * @param <T> type of the cluster id
  */
@@ -244,6 +245,7 @@ public abstract class ClusterClient<T> {
 	/**
 	 * General purpose method to run a user jar from the CliFrontend in either blocking or detached mode, depending
 	 * on whether {@code setDetached(true)} or {@code setDetached(false)}.
+	 * note: 提交用户作业的一般的流程
 	 * @param prog the packaged program
 	 * @param parallelism the parallelism to execute the contained Flink job
 	 * @return The result of the execution
@@ -256,10 +258,12 @@ public abstract class ClusterClient<T> {
 		try {
 			Thread.currentThread().setContextClassLoader(prog.getUserCodeClassLoader());
 			if (prog.isUsingProgramEntryPoint()) {
+				//note: jar 包提交的情况下，走这种模式
 				final JobWithJars jobWithJars = prog.getPlanWithJars();
 				return run(jobWithJars, parallelism, prog.getSavepointSettings());
 			}
 			else if (prog.isUsingInteractiveMode()) {
+				//note: 交互模式启动作业
 				log.info("Starting program in interactive mode (detached: {})", isDetached());
 
 				final List<URL> libraries = prog.getAllLibraries();
@@ -304,6 +308,7 @@ public abstract class ClusterClient<T> {
 	/**
 	 * Runs a program on the Flink cluster to which this client is connected. The call blocks until the
 	 * execution is complete, and returns afterwards.
+	 * note: 当 Client 连接后在 Flink 集群提交一个作业，这个会阻塞直到这个作业完成
 	 *
 	 * @param jobWithJars The program to be executed.
 	 * @param parallelism The default parallelism to use when running the program. The default parallelism is used
@@ -334,7 +339,9 @@ public abstract class ClusterClient<T> {
 	public JobSubmissionResult run(FlinkPlan compiledPlan,
 			List<URL> libraries, List<URL> classpaths, ClassLoader classLoader, SavepointRestoreSettings savepointSettings)
 			throws ProgramInvocationException {
+		//note: get jobGraph
 		JobGraph job = getJobGraph(flinkConfig, compiledPlan, libraries, classpaths, savepointSettings);
+		//note: 提交作业
 		return submitJob(job, classLoader);
 	}
 
@@ -439,9 +446,11 @@ public abstract class ClusterClient<T> {
 	public static JobGraph getJobGraph(Configuration flinkConfig, FlinkPlan optPlan, List<URL> jarFiles, List<URL> classpaths, SavepointRestoreSettings savepointSettings) {
 		JobGraph job;
 		if (optPlan instanceof StreamingPlan) {
+			//note: streaming 的形式
 			job = ((StreamingPlan) optPlan).getJobGraph();
 			job.setSavepointRestoreSettings(savepointSettings);
 		} else {
+			//note: 其他形式
 			JobGraphGenerator gen = new JobGraphGenerator(flinkConfig);
 			job = gen.compileJobGraph((OptimizedPlan) optPlan);
 		}

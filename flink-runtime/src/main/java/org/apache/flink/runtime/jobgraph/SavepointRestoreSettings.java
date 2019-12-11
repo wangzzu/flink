@@ -24,6 +24,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
  * Savepoint restore settings.
+ * note: SavePoint 的相关配置
  */
 public class SavepointRestoreSettings implements Serializable {
 
@@ -41,6 +42,7 @@ public class SavepointRestoreSettings implements Serializable {
 	/**
 	 * Flag indicating whether non restored state is allowed if the savepoint
 	 * contains state for an operator that is not part of the job.
+	 * note: 如果 savepoint 包含了一个不是这个 job 的 operator 状态，是否还允许恢复状态的标志位
 	 */
 	private final boolean allowNonRestoredState;
 

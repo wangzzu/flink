@@ -30,6 +30,7 @@ import org.apache.flink.core.io.InputSplitSource;
 
 /**
  * The base interface for data sources that produces records.
+ * note: data source 产生数据的基本接口
  * <p>
  * The input format handles the following:
  * <ul>

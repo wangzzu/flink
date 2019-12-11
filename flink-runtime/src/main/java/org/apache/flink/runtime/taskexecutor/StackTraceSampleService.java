@@ -36,6 +36,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
  * Samples the stack traces of tasks for back pressure tracking.
+ * note：抽样 task 的栈信息，主要是用于 反压 追踪
  *
  * @see org.apache.flink.runtime.rest.handler.legacy.backpressure.BackPressureStatsTracker
  */

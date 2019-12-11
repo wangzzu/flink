@@ -28,6 +28,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
  * The report of currently allocated slots from a given TaskExecutor by a JobMaster.
+ * note： JobMaster 当前从这个 TM 申请到的 slot 列表（这个信息会周期性地发送，主要是为了状态一致性）
  * This report is sent periodically to the TaskExecutor in order to reconcile the internal state of slot allocations.
  */
 public class AllocatedSlotReport implements Serializable {

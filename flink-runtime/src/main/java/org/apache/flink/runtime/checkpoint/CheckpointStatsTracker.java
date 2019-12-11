@@ -37,10 +37,12 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
  * Tracker for checkpoint statistics.
+ * note：追踪 cp 状态的 tracker，CheckpointCoordinator 会使用这个，方便于更细粒度的状态收集
  *
  * <p>This is tightly integrated with the {@link CheckpointCoordinator} in
  * order to ease the gathering of fine-grained statistics.
  *
+ * note：tracked stats 会包含下面的内容
  * <p>The tracked stats include summary counts, a detailed history of recent
  * and in progress checkpoints as well as summaries about the size, duration
  * and more of recent checkpoints.

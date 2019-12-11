@@ -212,6 +212,7 @@ public abstract class ClusterEntrypoint implements AutoCloseableAsync, FatalErro
 
 			final DispatcherResourceManagerComponentFactory<?> dispatcherResourceManagerComponentFactory = createDispatcherResourceManagerComponentFactory(configuration);
 
+			//note: 创建 DispatcherResourceManagerComponent 对象
 			clusterComponent = dispatcherResourceManagerComponentFactory.create(
 				configuration,
 				commonRpcService,
@@ -495,6 +496,7 @@ public abstract class ClusterEntrypoint implements AutoCloseableAsync, FatalErro
 		final Configuration configuration = GlobalConfiguration.loadConfiguration(entrypointClusterConfiguration.getConfigDir(), dynamicProperties);
 
 		final int restPort = entrypointClusterConfiguration.getRestPort();
+		System.out.println("XXXXXX" + restPort);
 
 		if (restPort >= 0) {
 			configuration.setInteger(RestOptions.PORT, restPort);

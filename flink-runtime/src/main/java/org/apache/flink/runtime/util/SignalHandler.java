@@ -68,6 +68,7 @@ public class SignalHandler {
 			}
 			registered = true;
 
+			//note: 是否是 windows 系统
 			final String[] SIGNALS = OperatingSystem.isWindows()
 				? new String[]{ "TERM", "INT"}
 				: new String[]{ "TERM", "HUP", "INT" };

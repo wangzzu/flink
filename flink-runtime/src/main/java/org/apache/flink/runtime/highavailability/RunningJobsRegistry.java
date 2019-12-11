@@ -39,6 +39,7 @@ public interface RunningJobsRegistry {
 
 	/**
 	 * The scheduling status of a job, as maintained by the {@code RunningJobsRegistry}.
+	 * note: 一个作业的调度状态
 	 */
 	enum JobSchedulingStatus {
 

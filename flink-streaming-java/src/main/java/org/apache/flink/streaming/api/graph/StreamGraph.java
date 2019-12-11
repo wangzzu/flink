@@ -335,6 +335,7 @@ public class StreamGraph extends StreamingPlan {
 	/**
 	 * Adds a new virtual node that is used to connect a downstream vertex to only the outputs
 	 * with the selected names.
+	 * note: 增加一个虚拟的节点
 	 *
 	 * <p>When adding an edge from the virtual node to a downstream node the connection will be made
 	 * to the original node, only with the selected names given here.
@@ -458,6 +459,7 @@ public class StreamGraph extends StreamingPlan {
 			int virtualId = upStreamVertexID;
 			upStreamVertexID = virtualSideOutputNodes.get(virtualId).f0;
 			if (outputTag == null) {
+				//note: 更新 outputTag
 				outputTag = virtualSideOutputNodes.get(virtualId).f1;
 			}
 			addEdgeInternal(upStreamVertexID, downStreamVertexID, typeNumber, partitioner, null, outputTag, shuffleMode);
@@ -466,6 +468,7 @@ public class StreamGraph extends StreamingPlan {
 			upStreamVertexID = virtualSelectNodes.get(virtualId).f0;
 			if (outputNames.isEmpty()) {
 				// selections that happen downstream override earlier selections
+				//note: 更新 outputNames
 				outputNames = virtualSelectNodes.get(virtualId).f1;
 			}
 			addEdgeInternal(upStreamVertexID, downStreamVertexID, typeNumber, partitioner, outputNames, outputTag, shuffleMode);
@@ -473,6 +476,7 @@ public class StreamGraph extends StreamingPlan {
 			int virtualId = upStreamVertexID;
 			upStreamVertexID = virtualPartitionNodes.get(virtualId).f0;
 			if (partitioner == null) {
+				//note: 更新 partitioner
 				partitioner = virtualPartitionNodes.get(virtualId).f1;
 			}
 			shuffleMode = virtualPartitionNodes.get(virtualId).f2;

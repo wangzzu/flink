@@ -27,7 +27,7 @@ import java.util.Map;
  * StreamGraphHasher that works with user provided hashes. This is useful in case we want to set (alternative) hashes
  * explicitly, e.g. to provide a way of manual backwards compatibility between versions when the mechanism of generating
  * hashes has changed in an incompatible way.
- *
+ * note: 主要用于用户自定义 hash，对于我们想要明确设置 hash 的情况是有用的，比如：如果 hash 机制变化了，跟之前的不兼容，这里可以提供了一个向后兼容的方式
  */
 public class StreamGraphUserHashHasher implements StreamGraphHasher {
 

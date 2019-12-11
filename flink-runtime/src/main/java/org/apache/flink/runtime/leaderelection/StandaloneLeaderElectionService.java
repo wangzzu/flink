@@ -30,6 +30,7 @@ import java.util.UUID;
  * implementation assumes that there is only a single {@link LeaderContender} and thus directly
  * grants him the leadership upon start up. Furthermore, there is no communication needed between
  * multiple standalone leader election services.
+ * note: LeaderElectionService 的 Standalone 模式的实现，它会假设整个集群只有一个 leader 候选者
  */
 public class StandaloneLeaderElectionService implements LeaderElectionService {
 
@@ -45,6 +46,7 @@ public class StandaloneLeaderElectionService implements LeaderElectionService {
 		contender = Preconditions.checkNotNull(newContender);
 
 		// directly grant leadership to the given contender
+		//note: 直接把当前的 JobManager 设置为 leader
 		contender.grantLeadership(HighAvailabilityServices.DEFAULT_LEADER_ID);
 	}
 

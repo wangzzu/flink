@@ -31,6 +31,7 @@ public interface LeaderRetrievalListener {
 	/**
 	 * This method is called by the {@link LeaderRetrievalService} when a new leader is elected.
 	 *
+	 * note：如果一个新的 leader 被选举出来的话，这个将会被调用
 	 * @param leaderAddress The address of the new leader
 	 * @param leaderSessionID The new leader session ID
 	 */

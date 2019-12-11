@@ -38,9 +38,11 @@ import java.util.Map;
  *     <li>Allocated - The slot has been allocated for a job.</li>
  *     <li>Active - The slot is in active use by a job manager which is the leader of the allocating job.</li>
  * </ul>
+ * note：一个 slot 上可以运行多个 task
  *
  * <p>A task slot can only be allocated if it is in state free. An allocated task slot can transit
  * to state active.
+ * note： task slot 只有在 free 状态时才能被 allocated，一个活跃的 slot 可以添加 task
  *
  * <p>An active slot allows to add tasks from the respective job and with the correct allocation id.
  * An active slot can be marked as inactive which sets the state back to allocated.
@@ -57,6 +59,7 @@ public class TaskSlot {
 	private final ResourceProfile resourceProfile;
 
 	/** Tasks running in this slot. */
+	//note: 这个 slot 上运动的 tasks
 	private final Map<ExecutionAttemptID, Task> tasks;
 
 	/** State of this slot. */
@@ -262,6 +265,7 @@ public class TaskSlot {
 
 	/**
 	 * Mark the slot as free. A slot can only be marked as free if it's empty.
+	 * note： 将这个 slot 标记为 free，只有为 empty 的情况才能标记
 	 *
 	 * @return True if the new state is free; otherwise false
 	 */

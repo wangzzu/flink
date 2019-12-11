@@ -57,6 +57,7 @@ import java.util.stream.Collectors;
 /**
  * Manager which is responsible for slot sharing. Slot sharing allows to run different
  * tasks in the same slot and to realize co-location constraints.
+ * note: 主要负责 slot sharing 的 manager，它运行在同一个 slot 中运行不同的 task 并实现约束共享
  *
  * <p>The SlotSharingManager allows to create a hierarchy of {@link TaskSlot} such that
  * every {@link TaskSlot} is uniquely identified by a {@link SlotRequestId} identifying
@@ -97,9 +98,11 @@ public class SlotSharingManager {
 	private final Map<SlotRequestId, TaskSlot> allTaskSlots;
 
 	/** Root nodes which have not been completed because the allocated slot is still pending. */
+	//note: 还未完成的 slot request
 	private final Map<SlotRequestId, MultiTaskSlot> unresolvedRootSlots;
 
 	/** Root nodes which have been completed (the underlying allocated slot has been assigned). */
+	//note: 已经完成的 node 列表
 	private final Map<TaskManagerLocation, Map<AllocationID, MultiTaskSlot>> resolvedRootSlots;
 
 	SlotSharingManager(
@@ -131,6 +134,7 @@ public class SlotSharingManager {
 	/**
 	 * Creates a new root slot with the given {@link SlotRequestId}, {@link SlotContext} future and
 	 * the {@link SlotRequestId} of the allocated slot.
+	 * note: 根据指定的 SlotRequestId 创建一个 MultiTaskSlot 对象
 	 *
 	 * @param slotRequestId of the root slot
 	 * @param slotContextFuture with which we create the root slot
@@ -208,6 +212,7 @@ public class SlotSharingManager {
 	/**
 	 * Gets an unresolved slot which does not yet contain the given groupId. An unresolved
 	 * slot is a slot whose underlying allocated slot has not been allocated yet.
+	 * note: unresolved slot 列表中不包含指定 groupId 的第一个 MultiTaskSlot
 	 *
 	 * @param groupId which the returned slot must not contain
 	 * @return the unresolved slot or null if there was no root slot with free capacities
@@ -241,6 +246,7 @@ public class SlotSharingManager {
 	static final class MultiTaskSlotLocality {
 		private final MultiTaskSlot multiTaskSlot;
 
+		//note: 调度后的位置情况
 		private final Locality locality;
 
 		MultiTaskSlotLocality(MultiTaskSlot multiTaskSlot, Locality locality) {
@@ -311,6 +317,7 @@ public class SlotSharingManager {
 
 	/**
 	 * {@link TaskSlot} implementation which can have multiple other task slots assigned as children.
+	 * note: 主要针对 shared slot 的情况，与 SingleTaskSlot 相对应
 	 */
 	public final class MultiTaskSlot extends TaskSlot implements PhysicalSlot.Payload {
 
@@ -331,6 +338,7 @@ public class SlotSharingManager {
 		private boolean releasingChildren;
 
 		// the total resources reserved by all the descendants.
+		//note: 所有后代保留的资源
 		private ResourceProfile reservedResources;
 
 		private MultiTaskSlot(
@@ -475,6 +483,7 @@ public class SlotSharingManager {
 			}
 		}
 
+		//note: 释放这个 task slot
 		@Override
 		public void release(Throwable cause) {
 			releasingChildren = true;

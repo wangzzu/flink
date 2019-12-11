@@ -220,6 +220,7 @@ public class RestClient implements AutoCloseableAsync {
 			RestAPIVersion.getLatestVersion(messageHeaders.getSupportedAPIVersions()));
 	}
 
+	//note: 主要是用于 client 发送请求
 	public <M extends MessageHeaders<R, P, U>, U extends MessageParameters, R extends RequestBody, P extends ResponseBody> CompletableFuture<P> sendRequest(
 			String targetAddress,
 			int targetPort,
@@ -311,6 +312,7 @@ public class RestClient implements AutoCloseableAsync {
 					}
 					File file = path.toFile();
 					LOG.trace("Adding file {} to request.", file);
+					//note: 这里直接调用 netty 的接口，上传指定的文件
 					bodyRequestEncoder.addBodyFileUpload("file_" + fileIndex, file, fileUpload.getContentType(), false);
 					fileIndex++;
 				}
