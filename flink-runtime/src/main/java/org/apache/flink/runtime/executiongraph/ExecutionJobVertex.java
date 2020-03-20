@@ -71,7 +71,7 @@ import java.util.stream.Collectors;
 /**
  * An {@code ExecutionJobVertex} is part of the {@link ExecutionGraph}, and the peer
  * to the {@link JobVertex}.
- * note：它等同于 JobVertex，它是 ExecutionGraph 的一部分，代表了一个并行的 Operator
+ * note：它等同于 JobVertex，它是 ExecutionGraph 的一部分，代表了一个并行的 Operator Chain
  *
  * <p>The {@code ExecutionJobVertex} corresponds to a parallelized operation. It
  * contains an {@link ExecutionVertex} for each parallel instance of that operation.
@@ -173,6 +173,7 @@ public class ExecutionJobVertex implements AccessExecutionJobVertex, Archiveable
 		this.graph = graph;
 		this.jobVertex = jobVertex;
 
+		//note: 并发度
 		int vertexParallelism = jobVertex.getParallelism();
 		int numTaskVertices = vertexParallelism > 0 ? vertexParallelism : defaultParallelism;
 
@@ -196,10 +197,12 @@ public class ExecutionJobVertex implements AccessExecutionJobVertex, Archiveable
 		this.parallelism = numTaskVertices;
 		this.resourceProfile = ResourceProfile.fromResourceSpec(jobVertex.getMinResources(), 0);
 
+		//note: taskVertices 记录这个 task 每个并发
 		this.taskVertices = new ExecutionVertex[numTaskVertices];
 		this.operatorIDs = Collections.unmodifiableList(jobVertex.getOperatorIDs());
 		this.userDefinedOperatorIds = Collections.unmodifiableList(jobVertex.getUserDefinedOperatorIDs());
 
+		//note: 记录输入的 IntermediateResult 列表
 		this.inputs = new ArrayList<>(jobVertex.getInputs().size());
 
 		// take the sharing group
@@ -212,11 +215,14 @@ public class ExecutionJobVertex implements AccessExecutionJobVertex, Archiveable
 		}
 
 		// create the intermediate results
+		//note: 创建 IntermediateResult 对象数组（根据 JobVertex 的 targets 来确定）
 		this.producedDataSets = new IntermediateResult[jobVertex.getNumberOfProducedIntermediateDataSets()];
 
 		for (int i = 0; i < jobVertex.getProducedDataSets().size(); i++) {
+			//note: JobGraph 中 IntermediateDataSet 这里会转换为 IntermediateResult 对象
 			final IntermediateDataSet result = jobVertex.getProducedDataSets().get(i);
 
+			//note: 这里一个 IntermediateDataSet 会对应一个 IntermediateResult
 			this.producedDataSets[i] = new IntermediateResult(
 					result.getId(),
 					this,
@@ -226,7 +232,7 @@ public class ExecutionJobVertex implements AccessExecutionJobVertex, Archiveable
 
 		// create all task vertices
 		//note: task vertices 创建
-		//note: 一个 JobVertex/ExecutionJobVertex 代表的是一个operator，而具体的 ExecutionVertex 则代表了每一个 Task
+		//note: 一个 JobVertex/ExecutionJobVertex 代表的是一个operator chain，而具体的 ExecutionVertex 则代表了每一个 Task
 		for (int i = 0; i < numTaskVertices; i++) {
 			ExecutionVertex vertex = new ExecutionVertex(
 					this,
@@ -395,6 +401,7 @@ public class ExecutionJobVertex implements AccessExecutionJobVertex, Archiveable
 			if (taskInformationOrBlobKey == null) {
 				final BlobWriter blobWriter = graph.getBlobWriter();
 
+				//note: taskINFO 也会上传到 BlobServer
 				final TaskInformation taskInformation = new TaskInformation(
 					jobVertex.getID(),
 					jobVertex.getName(),
@@ -466,6 +473,7 @@ public class ExecutionJobVertex implements AccessExecutionJobVertex, Archiveable
 						+ edge.getSourceId());
 			}
 
+			//note: 更新 input 列表
 			this.inputs.add(ires);
 
 			int consumerIndex = ires.registerConsumer();

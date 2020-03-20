@@ -158,6 +158,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	protected StreamInputProcessor inputProcessor;
 
 	/** the head operator that consumes the input streams of this task. */
+	//note: Operator 被封装在 Task 中
 	protected OP headOperator;
 
 	/** The chain of operators executed by this task. */
@@ -177,6 +178,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	 * processing time (default = {@code System.currentTimeMillis()}) and
 	 * register timers for tasks to be executed in the future.
 	 */
+	//note: Processing time timer：确定当前的 process time 以及向 task 注册 timer
 	protected ProcessingTimeService timerService;
 
 	private final Thread.UncaughtExceptionHandler uncaughtExceptionHandler;
@@ -263,6 +265,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	//  Life cycle methods for specific implementations
 	// ------------------------------------------------------------------------
 
+	//note: 不同实现类，初始化方法不一样
 	protected abstract void init() throws Exception;
 
 	protected void cancelTask() throws Exception {
@@ -283,8 +286,8 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	 * @throws Exception on any problems in the action.
 	 */
 	protected void processInput(ActionContext context) throws Exception {
-		if (!inputProcessor.processInput()) {
-			context.allActionsCompleted();
+		if (!inputProcessor.processInput()) { //note: 这里做的处理
+			context.allActionsCompleted(); //note: 如果 finish 的话，将会走到这里
 		}
 	}
 
@@ -296,6 +299,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 		final ActionContext actionContext = new ActionContext();
 		while (true) {
 			if (mailbox.hasMail()) {
+				//note: 如果 mailbox 有 letter，先做相应的处理
 				Optional<Runnable> maybeLetter;
 				while ((maybeLetter = mailbox.tryTakeMail()).isPresent()) {
 					Runnable letter = maybeLetter.get();
@@ -352,6 +356,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 		return syncSavepointLatch;
 	}
 
+	//note: task 真正开始执行
 	@Override
 	public final void invoke() throws Exception {
 
@@ -362,6 +367,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 
 			asyncOperationsThreadPool = Executors.newCachedThreadPool(new ExecutorThreadFactory("AsyncOperations", uncaughtExceptionHandler));
 
+			//note: checkpoint 相关的设置
 			CheckpointExceptionHandlerFactory cpExceptionHandlerFactory = createCheckpointExceptionHandlerFactory();
 
 			checkpointExceptionHandler = cpExceptionHandlerFactory
@@ -378,10 +384,12 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 				timerService = new SystemProcessingTimeService(this, getCheckpointLock(), timerThreadFactory);
 			}
 
+			//note: 创建 OperatorChain
 			operatorChain = new OperatorChain<>(this, recordWriters);
 			headOperator = operatorChain.getHeadOperator();
 
 			// task specific initialization
+			//note: 具体 task 的初始化
 			init();
 
 			// save the work of reloading state, etc, if the task is already canceled
@@ -400,7 +408,9 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 				// so that we avoid race conditions in the case that initializeState()
 				// registers a timer, that fires before the open() is called.
 
+				//note: 初始化状态
 				initializeState();
+				//note: 初始化所有 Operator，调用其 open 方法
 				openAllOperators();
 			}
 
@@ -410,6 +420,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 			}
 
 			// let the task do its work
+			//note: task run 起来
 			isRunning = true;
 			run();
 
@@ -426,6 +437,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 			// we close the operators by trying to acquire the checkpoint scope lock
 			// we also need to make sure that no triggers fire concurrently with the close logic
 			// at the same time, this makes sure that during any "regular" exit where still
+			//note: task 完成之后的一些处理操作
 			synchronized (lock) {
 				// this is part of the main logic, so if this fails, the task is considered failed
 				closeAllOperators();

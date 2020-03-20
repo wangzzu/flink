@@ -52,6 +52,7 @@ public enum LocationPreferenceSlotSelectionStrategy implements SlotSelectionStra
 		@Nonnull Collection<SlotInfoAndResources> availableSlots,
 		@Nonnull SlotProfile slotProfile) {
 
+		//note: 获取可以分配的 TM 位置信息列表
 		Collection<TaskManagerLocation> locationPreferences = slotProfile.getPreferredLocations();
 
 		if (availableSlots.isEmpty()) {
@@ -84,8 +85,8 @@ public enum LocationPreferenceSlotSelectionStrategy implements SlotSelectionStra
 
 	@Nonnull
 	private Optional<SlotInfoAndLocality> selectWitLocationPreference(
-		@Nonnull Collection<SlotInfoAndResources> availableSlots,
-		@Nonnull Collection<TaskManagerLocation> locationPreferences,
+		@Nonnull Collection<SlotInfoAndResources> availableSlots, //note: 可用的 slot 列表
+		@Nonnull Collection<TaskManagerLocation> locationPreferences, //note: 较优的 TM 位置
 		@Nonnull ResourceProfile resourceProfile) {
 
 		// we build up two indexes, one for resource id and one for host names of the preferred locations.
@@ -93,6 +94,7 @@ public enum LocationPreferenceSlotSelectionStrategy implements SlotSelectionStra
 		final Map<String, Integer> preferredFQHostNames = new HashMap<>(locationPreferences.size());
 
 		//note: 统计每个 locationPreferences 中  ResourceID/Hostname 级别对应的次数
+		//note: 对于 locationPreferences 中设置的权重比较大
 		for (TaskManagerLocation locationPreference : locationPreferences) {
 			preferredResourceIDs.merge(locationPreference.getResourceID(), 1, Integer::sum);
 			preferredFQHostNames.merge(locationPreference.getFQDNHostname(), 1, Integer::sum);

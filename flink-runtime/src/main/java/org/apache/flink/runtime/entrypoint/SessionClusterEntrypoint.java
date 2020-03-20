@@ -49,6 +49,7 @@ public abstract class SessionClusterEntrypoint extends ClusterEntrypoint {
 		final Time expirationTime =  Time.seconds(configuration.getLong(JobManagerOptions.JOB_STORE_EXPIRATION_TIME));
 		final long maximumCacheSizeBytes = configuration.getLong(JobManagerOptions.JOB_STORE_CACHE_SIZE);
 
+		//note: 这里存储到文件系统中
 		return new FileArchivedExecutionGraphStore(
 			tmpDir,
 			expirationTime,

@@ -29,7 +29,7 @@ public enum MemoryType {
 	/**
 	 * Denotes memory that is part of the Java heap.
 	 */
-	//note: 内存不会是 heap 的一部分
+	//note: 表示内存是 heap 的一部分
 	HEAP,
 
 	/**

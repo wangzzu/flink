@@ -95,6 +95,8 @@ public class SlotManagerImpl implements SlotManager {
 	/** Map of pending/unfulfilled slot allocation requests. */
 	private final HashMap<AllocationID, PendingSlotRequest> pendingSlotRequests;
 
+	//note: pendingSlots 记录的是 SlotManager 主动去向资源管理系统申请，该系统新启动了 worker 来创建的资源，但这些slot 还没有主动汇报过来
+	//note: 就会先放到这个 map 中，如果 TM 注册过来的话，该 slot 就会从 pendingSlots 中移除，存储到 slots 中
 	private final HashMap<TaskManagerSlotId, PendingTaskManagerSlot> pendingSlots;
 
 	/** ResourceManager's id. */
@@ -114,6 +116,7 @@ public class SlotManagerImpl implements SlotManager {
 	private boolean started;
 
 	/** Release task executor only when each produced result partition is either consumed or failed. */
+	//note: 只有产生的中间结果被消费了或者失败了，这里才会释放
 	private final boolean waitResultConsumedBeforeRelease;
 
 	/**
@@ -221,6 +224,7 @@ public class SlotManagerImpl implements SlotManager {
 
 		started = true;
 
+		//note: 检查 TaskManager 是否超时，如果超时的话，这里会尽可能释放这个资源
 		taskManagerTimeoutCheck = scheduledExecutor.scheduleWithFixedDelay(
 			() -> mainThreadExecutor.execute(
 				() -> checkTaskManagerTimeouts()),
@@ -228,6 +232,7 @@ public class SlotManagerImpl implements SlotManager {
 			taskManagerTimeout.toMilliseconds(),
 			TimeUnit.MILLISECONDS);
 
+		//note: 遍历队列里排队的 slot request，如果发现其请求超时，这里会通知这个资源申请失败
 		slotRequestTimeoutCheck = scheduledExecutor.scheduleWithFixedDelay(
 			() -> mainThreadExecutor.execute(
 				() -> checkSlotRequestTimeouts()),
@@ -485,7 +490,9 @@ public class SlotManagerImpl implements SlotManager {
 				if (pendingSlotRequest.getAssignedPendingTaskManagerSlot() != null) {
 					continue;
 				}
+				//note: 如果排队等待的 SlotRequest 还没被分配到资源
 				if (!isFulfillableByRegisteredSlots(pendingSlotRequest.getResourceProfile())) {
+					//note: 如果还没有合适的资源分配，不能分配的 SlotRequest，这里会通知其分配失败
 					slotRequestIterator.remove();
 					resourceActions.notifyAllocationFailure(
 						pendingSlotRequest.getJobId(),
@@ -565,6 +572,7 @@ public class SlotManagerImpl implements SlotManager {
 	 * Registers a slot for the given task manager at the slot manager. The slot is identified by
 	 * the given slot id. The given resource profile defines the available resources for the slot.
 	 * The task manager connection can be used to communicate with the task manager.
+	 * note: 从一个 TM 中注册过来的 slot
 	 *
 	 * @param slotId identifying the slot on the task manager
 	 * @param allocationId which is currently deployed in the slot
@@ -579,6 +587,7 @@ public class SlotManagerImpl implements SlotManager {
 			TaskExecutorConnection taskManagerConnection) {
 
 		if (slots.containsKey(slotId)) {
+			//note: 如果这个 slot 之前缓存里已经存在了，这里会移除旧的状态，后面重新更新其状态
 			// remove the old slot first
 			removeSlot(
 				slotId,
@@ -593,6 +602,7 @@ public class SlotManagerImpl implements SlotManager {
 		final PendingTaskManagerSlot pendingTaskManagerSlot;
 
 		if (allocationId == null) {
+			//note: 如果在 pendingSlots 中找到了这个 slot 信息
 			pendingTaskManagerSlot = findExactlyMatchingPendingTaskManagerSlot(resourceProfile);
 		} else {
 			pendingTaskManagerSlot = null;
@@ -601,6 +611,7 @@ public class SlotManagerImpl implements SlotManager {
 		if (pendingTaskManagerSlot == null) {
 			updateSlot(slotId, allocationId, jobId);
 		} else {
+			//note: 先从 pendingSlots 中移除这个 slot
 			pendingSlots.remove(pendingTaskManagerSlot.getTaskManagerSlotId());
 			final PendingSlotRequest assignedPendingSlotRequest = pendingTaskManagerSlot.getAssignedPendingSlotRequest();
 
@@ -619,6 +630,7 @@ public class SlotManagerImpl implements SlotManager {
 			slotId,
 			resourceProfile,
 			taskManagerConnection);
+		//note: 更新到 slots 中
 		slots.put(slotId, slot);
 		return slot;
 	}
@@ -759,9 +771,11 @@ public class SlotManagerImpl implements SlotManager {
 			//note: 找到了能满足条件的 slot
 			allocateSlot(taskManagerSlot, pendingSlotRequest);
 		} else {
+			//note: 如果没有找到可以满足的 slot
 			Optional<PendingTaskManagerSlot> pendingTaskManagerSlotOptional = findFreeMatchingPendingTaskManagerSlot(resourceProfile);
 
 			if (!pendingTaskManagerSlotOptional.isPresent()) {
+				//note: 如果没有的话，这里会尝试新申请资源
 				pendingTaskManagerSlotOptional = allocateResource(resourceProfile);
 			}
 
@@ -798,6 +812,7 @@ public class SlotManagerImpl implements SlotManager {
 	}
 
 	private Optional<PendingTaskManagerSlot> allocateResource(ResourceProfile resourceProfile) throws ResourceManagerException {
+		//note: 分配资源，如果可以，这里会重新启动一个 worker 来满足需求
 		final Collection<ResourceProfile> requestedSlots = resourceActions.allocateResource(resourceProfile);
 
 		if (requestedSlots.isEmpty()) {
@@ -1073,6 +1088,7 @@ public class SlotManagerImpl implements SlotManager {
 	// Internal timeout methods
 	// ---------------------------------------------------------------------------------------------
 
+	//note: 遍历注册过来的 TaskManager，如果发现其空闲时间超过设置的 timeout 时间，这里就释放这个 TaskManager
 	@VisibleForTesting
 	void checkTaskManagerTimeouts() {
 		if (!taskManagerRegistrations.isEmpty()) {
@@ -1123,6 +1139,7 @@ public class SlotManagerImpl implements SlotManager {
 		resourceActions.releaseResource(timedOutTaskManagerId, cause);
 	}
 
+	//note: 遍历队列里排队的 slot request，如果发现其请求超时，这里会通知这个资源申请失败
 	private void checkSlotRequestTimeouts() {
 		if (!pendingSlotRequests.isEmpty()) {
 			long currentTime = System.currentTimeMillis();

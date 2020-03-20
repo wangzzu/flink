@@ -283,6 +283,7 @@ public class LegacyScheduler implements SchedulerNG {
 		executionGraph.suspend(cause);
 	}
 
+	//note: 取消这个任务
 	@Override
 	public void cancel() {
 		mainThreadExecutor.assertRunningInMainThread();
@@ -301,6 +302,7 @@ public class LegacyScheduler implements SchedulerNG {
 	}
 
 	@Override
+	//note: 请求 next input split
 	public SerializedInputSplit requestNextInputSplit(JobVertexID vertexID, ExecutionAttemptID executionAttempt) throws IOException {
 		mainThreadExecutor.assertRunningInMainThread();
 
@@ -324,6 +326,7 @@ public class LegacyScheduler implements SchedulerNG {
 			throw new IllegalStateException("No InputSplitAssigner for vertex ID " + vertexID);
 		}
 
+		//note: 在这里获取
 		final InputSplit nextInputSplit = execution.getNextInputSplit();
 
 		if (log.isDebugEnabled()) {
@@ -341,6 +344,7 @@ public class LegacyScheduler implements SchedulerNG {
 		}
 	}
 
+	//note: 请求一个 intermediateResult Partition 的 状态
 	@Override
 	public ExecutionState requestPartitionState(
 			final IntermediateDataSetID intermediateResultId,
@@ -348,6 +352,7 @@ public class LegacyScheduler implements SchedulerNG {
 
 		mainThreadExecutor.assertRunningInMainThread();
 
+		//note: 获取这个 intermediateResultId 对应的 Execution
 		final Execution execution = executionGraph.getRegisteredExecutions().get(resultPartitionId.getProducerId());
 		if (execution != null) {
 			return execution.getState();
@@ -380,6 +385,7 @@ public class LegacyScheduler implements SchedulerNG {
 		mainThreadExecutor.assertRunningInMainThread();
 
 		try {
+			//note: 当前 partition 已经可以消费了
 			executionGraph.scheduleOrUpdateConsumers(partitionID);
 		} catch (ExecutionGraphException e) {
 			throw new RuntimeException(e);
@@ -490,6 +496,7 @@ public class LegacyScheduler implements SchedulerNG {
 	}
 
 	@Override
+	//note: 触发一次 savepoint
 	public CompletableFuture<String> triggerSavepoint(final String targetDirectory, final boolean cancelJob) {
 		mainThreadExecutor.assertRunningInMainThread();
 
@@ -510,6 +517,7 @@ public class LegacyScheduler implements SchedulerNG {
 			checkpointCoordinator.stopCheckpointScheduler();
 		}
 
+		//note: 通过 checkpointCoordinator 触发
 		return checkpointCoordinator
 			.triggerSavepoint(System.currentTimeMillis(), targetDirectory)
 			.thenApply(CompletedCheckpoint::getExternalPointer)
@@ -539,11 +547,13 @@ public class LegacyScheduler implements SchedulerNG {
 		}
 	}
 
+	//note: task 在做完本地的 snapshot 后，把会通过这个接口通知一下 JM
 	@Override
 	public void acknowledgeCheckpoint(final JobID jobID, final ExecutionAttemptID executionAttemptID, final long checkpointId, final CheckpointMetrics checkpointMetrics, final TaskStateSnapshot checkpointState) {
 		mainThreadExecutor.assertRunningInMainThread();
 
 		final CheckpointCoordinator checkpointCoordinator = executionGraph.getCheckpointCoordinator();
+		//note: 创建一个 checkpoint 的 ackMessage 消息
 		final AcknowledgeCheckpoint ackMessage = new AcknowledgeCheckpoint(
 			jobID,
 			executionAttemptID,
@@ -556,6 +566,7 @@ public class LegacyScheduler implements SchedulerNG {
 		if (checkpointCoordinator != null) {
 			ioExecutor.execute(() -> {
 				try {
+					//note: 通知给 JM
 					checkpointCoordinator.receiveAcknowledgeMessage(ackMessage, taskManagerLocationInfo);
 				} catch (Throwable t) {
 					log.warn("Error while processing checkpoint acknowledgement message", t);
@@ -620,9 +631,11 @@ public class LegacyScheduler implements SchedulerNG {
 		// to have only the data of the synchronous savepoint committed.
 		// in case of failure, and if the job restarts, the coordinator
 		// will be restarted by the CheckpointCoordinatorDeActivator.
+		//note: 先停止 cp 的调度，这样可以保证仅仅同步操作的 savepoint 可以 commit
 		checkpointCoordinator.stopCheckpointScheduler();
 
 		final long now = System.currentTimeMillis();
+		//note: 触发一次 savepoint
 		final CompletableFuture<String> savepointFuture = checkpointCoordinator
 				.triggerSynchronousSavepoint(now, advanceToEndOfEventTime, targetDirectory)
 				.thenApply(CompletedCheckpoint::getExternalPointer);
@@ -635,6 +648,7 @@ public class LegacyScheduler implements SchedulerNG {
 					log.info("Failed during stopping job {} with a savepoint. Reason: {}", jobGraph.getJobID(), throwable.getMessage());
 					throw new CompletionException(throwable);
 				} else if (jobstatus != JobStatus.FINISHED) {
+					//note: 这里如果作业的状态没有变为 FINISHED 将会抛出异常
 					log.info("Failed during stopping job {} with a savepoint. Reason: Reached state {} instead of FINISHED.", jobGraph.getJobID(), jobstatus);
 					throw new CompletionException(new FlinkException("Reached state " + jobstatus + " instead of FINISHED."));
 				}

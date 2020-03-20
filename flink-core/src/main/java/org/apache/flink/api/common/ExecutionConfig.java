@@ -40,7 +40,8 @@ import static org.apache.flink.util.Preconditions.checkArgument;
 /**
  * A config to define the behavior of the program execution. It allows to define (among other
  * options) the following settings:
- *
+ * note：执行的一些配置
+ * note：1. 并发度；2.失败时重试间隔；3.重试时间；4.程序执行模式；5.
  * <ul>
  *     <li>The default parallelism of the program, i.e., how many parallel tasks to use for
  *         all functions that do not define a specific value directly.</li>

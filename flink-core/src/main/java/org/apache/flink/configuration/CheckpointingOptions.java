@@ -23,6 +23,7 @@ import org.apache.flink.annotation.docs.Documentation;
 /**
  * A collection of all configuration options that relate to checkpoints
  * and savepoints.
+ * note: checkpoint 和 savepoint 相关的内容
  */
 public class CheckpointingOptions {
 
@@ -31,6 +32,7 @@ public class CheckpointingOptions {
 	// ------------------------------------------------------------------------
 
 	/** The state backend to be used to store and checkpoint state. */
+	//note: 用存储和快照状态的 backend
 	@Documentation.CommonOption(position = Documentation.CommonOption.POSITION_FAULT_TOLERANCE)
 	public static final ConfigOption<String> STATE_BACKEND = ConfigOptions
 			.key("state.backend")
@@ -62,6 +64,7 @@ public class CheckpointingOptions {
 	 *
 	 * <p>Some state backends may not support incremental checkpoints and ignore
 	 * this option.*/
+	//note: 增量 checkpoint 的开关，state backend 是否应该创建 增量 checkpoint（如果 state backend 不支持增量 checkpoint 会自动忽略这个配置）
 	public static final ConfigOption<Boolean> INCREMENTAL_CHECKPOINTS = ConfigOptions
 			.key("state.backend.incremental")
 			.defaultValue(false)
@@ -116,6 +119,7 @@ public class CheckpointingOptions {
 
 	/** The default directory used for storing the data files and meta data of checkpoints in a Flink supported filesystem.
 	 * The storage path must be accessible from all participating processes/nodes(i.e. all TaskManagers and JobManagers).*/
+	//note: 存储 checkpoint data 文件以及 meta 文件的目录（需要是 flink 支持的文件系统），JM 和 TM 必须有权限访问
 	@Documentation.CommonOption(position = Documentation.CommonOption.POSITION_FAULT_TOLERANCE)
 	public static final ConfigOption<String> CHECKPOINTS_DIRECTORY = ConfigOptions
 			.key("state.checkpoints.dir")

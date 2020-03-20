@@ -352,6 +352,7 @@ public class BlobServer extends Thread implements BlobService, BlobWriter, Perma
 
 	/**
 	 * Retrieves the local path of a (job-unrelated) file associated with a job and a blob key.
+	 * note: 根据 blob 可以拿到对应的文件的本地路径
 	 *
 	 * <p>The blob server looks the blob key up in its local storage. If the file exists, it is
 	 * returned. If the file does not exist, it is retrieved from the HA blob store (if available)

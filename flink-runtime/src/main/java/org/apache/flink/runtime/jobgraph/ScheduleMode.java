@@ -23,6 +23,7 @@ package org.apache.flink.runtime.jobgraph;
  * note：调度策略：决定 execution graph 的 task 怎么启动
  */
 public enum ScheduleMode {
+	//note: LAZY 应该是主要为 批 服务的
 	/** Schedule tasks lazily from the sources. Downstream tasks are started once their input data are ready */
 	//note: 从 source 端开始调度，一旦输入数据 ready 下游 task 开始启动
 	LAZY_FROM_SOURCES(true),

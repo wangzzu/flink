@@ -33,8 +33,10 @@ public class IntermediateResult {
 
 	private final IntermediateDataSetID id;
 
+	//note: 记录生产的 ExecutionJobVertex 节点
 	private final ExecutionJobVertex producer;
 
+	//note: 中间结果的分区列表（每个具体的 task 会代表一个分区）
 	private final IntermediateResultPartition[] partitions;
 
 	/**

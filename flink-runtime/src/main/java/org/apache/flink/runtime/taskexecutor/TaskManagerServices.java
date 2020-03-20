@@ -282,11 +282,13 @@ public class TaskManagerServices {
 		final BroadcastVariableManager broadcastVariableManager = new BroadcastVariableManager();
 
 		//note: 当前 TM 拥有的 slot 及每个 slot 的资源信息
+		//note: TM 的 slot 数由 taskmanager.numberOfTaskSlots 决定，默认是 1
 		final int numOfSlots = taskManagerServicesConfiguration.getNumberOfSlots();
 		final List<ResourceProfile> resourceProfiles =
 			Collections.nCopies(numOfSlots, computeSlotResourceProfile(numOfSlots, managedMemorySize));
 
 		//note: 注册一个超时（AKKA 超时设置）服务（在 TaskSlotTable 用于监控 slot 分配是否超时）
+		//note: 超时参数由 akka.ask.timeout 控制，默认是 10s
 		final TimerService<AllocationID> timerService = new TimerService<>(
 			new ScheduledThreadPoolExecutor(1),
 			taskManagerServicesConfiguration.getTimerServiceShutdownTimeout());
@@ -314,6 +316,7 @@ public class TaskManagerServices {
 			stateRootDirectoryFiles,
 			taskIOExecutor);
 
+		//note: 将上面初始化的这些服务，封装到一个 TaskManagerServices 对象中
 		return new TaskManagerServices(
 			taskManagerLocation,
 			memoryManager,
@@ -361,8 +364,10 @@ public class TaskManagerServices {
 		// it strictly needs to happen AFTER the network stack has been initialized
 
 		// check if a value has been configured
+		//note: 通过 taskmanager.memory.size 控制，默认是 0
 		long configuredMemory = taskManagerServicesConfiguration.getConfiguredMemory();
 
+		//note: 通过 taskmanager.memory.off-heap 控制，默认是 HEAP
 		MemoryType memType = taskManagerServicesConfiguration.getMemoryType();
 
 		final long memorySize;

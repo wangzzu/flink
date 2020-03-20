@@ -196,6 +196,7 @@ public interface JobMasterGateway extends
 
 	/**
 	 * Request the details of the executed job.
+	 * note: 请求这个执行作业的 JobDetails
 	 *
 	 * @param timeout for the rpc call
 	 * @return Future details of the executed job
@@ -212,6 +213,7 @@ public interface JobMasterGateway extends
 
 	/**
 	 * Requests the {@link ArchivedExecutionGraph} of the executed job.
+	 * note: 请求这个作业的 `ArchivedExecutionGraph`（它是 `ExecutionGraph` 序列化之后的结果）
 	 *
 	 * @param timeout for the rpc call
 	 * @return Future which is completed with the {@link ArchivedExecutionGraph} of the executed job
@@ -256,6 +258,7 @@ public interface JobMasterGateway extends
 
 	/**
 	 * Notifies that the allocation has failed.
+	 * note: 通知分配失败
 	 *
 	 * @param allocationID the failed allocation id.
 	 * @param cause the reason that the allocation failed

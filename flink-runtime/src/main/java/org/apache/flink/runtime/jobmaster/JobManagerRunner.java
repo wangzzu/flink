@@ -55,6 +55,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 /**
  * The runner for the job manager. It deals with job level leader election and make underlying job manager
  * properly reacted.
+ * note: job manger 的 runner，它处理作业级别相关事情
  */
 public class JobManagerRunner implements LeaderContender, OnCompletionActions, AutoCloseableAsync {
 
@@ -91,6 +92,7 @@ public class JobManagerRunner implements LeaderContender, OnCompletionActions, A
 	/** flag marking the runner as shut down. */
 	private volatile boolean shutdown;
 
+	//note: 用于 Dispatcher 与 JobMaster 通信
 	private volatile CompletableFuture<JobMasterGateway> leaderGatewayFuture;
 
 	// ------------------------------------------------------------------------
@@ -138,12 +140,13 @@ public class JobManagerRunner implements LeaderContender, OnCompletionActions, A
 
 			// high availability services next
 			this.runningJobsRegistry = haServices.getRunningJobsRegistry();
+			//note: leader HA service
 			this.leaderElectionService = haServices.getJobManagerLeaderElectionService(jobGraph.getJobID());
 
 			this.leaderGatewayFuture = new CompletableFuture<>();
 
 			// now start the JobManager
-			//note: 创建 JobManager
+			//note: 创建 JobMaster
 			this.jobMasterService = jobMasterFactory.createJobMasterService(jobGraph, this, userCodeLoader);
 		}
 		catch (Throwable t) {
@@ -303,13 +306,13 @@ public class JobManagerRunner implements LeaderContender, OnCompletionActions, A
 	}
 
 	private CompletableFuture<Void> verifyJobSchedulingStatusAndStartJobManager(UUID leaderSessionId) {
-		//note: 拿到作业的调度状态
+		//note: 拿到作业的调度状态（如果使用的 zk HA 的话，作业调度状态是存储在 zk 中的，JobManager 挂掉的话，从 zk 是可以恢复的）
 		final CompletableFuture<JobSchedulingStatus> jobSchedulingStatusFuture = getJobSchedulingStatus();
 
 		return jobSchedulingStatusFuture.thenCompose(
 			jobSchedulingStatus -> {
 				if (jobSchedulingStatus == JobSchedulingStatus.DONE) {
-					//note: 如果调度完成的话，会走到这里
+					//note: 如果作业已经终止的话，FINISHED/CANCELED/FAILED
 					return jobAlreadyDone();
 				} else {
 					//note: 启动 JobMaster
@@ -324,7 +327,7 @@ public class JobManagerRunner implements LeaderContender, OnCompletionActions, A
 			jobGraph.getName(), jobGraph.getJobID(), leaderSessionId, getAddress());
 
 		try {
-			//note: 更新作业的状态
+			//note: 更新作业的状态为 RUNNING
 			runningJobsRegistry.setJobRunning(jobGraph.getJobID());
 		} catch (IOException e) {
 			return FutureUtils.completedExceptionally(

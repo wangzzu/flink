@@ -53,6 +53,7 @@ public class TaskKvStateRegistry {
 
 	/**
 	 * Registers the KvState instance at the KvStateRegistry.
+	 * note: 注册一个 KvState
 	 *
 	 * @param keyGroupRange    Key group range the KvState instance belongs to
 	 * @param registrationName The registration name (not necessarily the same

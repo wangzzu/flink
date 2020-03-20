@@ -33,6 +33,7 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * Gateway for the Dispatcher component.
+ * note: Dispatcher 相关的接口
  */
 public interface DispatcherGateway extends FencedRpcGateway<DispatcherId>, RestfulGateway {
 

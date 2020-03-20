@@ -49,6 +49,7 @@ import static org.apache.flink.util.Preconditions.checkState;
 /**
  * Base class for state descriptors. A {@code StateDescriptor} is used for creating partitioned
  * {@link State} in stateful operations.
+ * note: state descriptors 的基类
  *
  * <p>Subclasses must correctly implement {@link #equals(Object)} and {@link #hashCode()}.
  *

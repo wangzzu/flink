@@ -288,6 +288,7 @@ public class SchedulerImpl implements Scheduler {
 			slotAndLocality.getLocality(),
 			this);
 
+		//note: 把 slot 分配到 task 上
 		if (allocatedSlot.tryAssignPayload(singleTaskSlot)) {
 			return singleTaskSlot;
 		} else {
@@ -346,6 +347,7 @@ public class SchedulerImpl implements Scheduler {
 		final SlotSharingManager.MultiTaskSlotLocality multiTaskSlotLocality;
 		try {
 			if (scheduledUnit.getCoLocationConstraint() != null) {
+				//note: CoLocationConstraint 约束表示那些 task 需要在一个 slot 中执行，从源头限制了这个分配
 				multiTaskSlotLocality = allocateCoLocatedMultiTaskSlot(
 					scheduledUnit.getCoLocationConstraint(),
 					multiTaskSlotManager,
@@ -367,6 +369,7 @@ public class SchedulerImpl implements Scheduler {
 		// sanity check
 		Preconditions.checkState(!multiTaskSlotLocality.getMultiTaskSlot().contains(scheduledUnit.getJobVertexId()));
 
+		//note: 给这个 slotRequestId 分配一个 task slot
 		final SlotSharingManager.SingleTaskSlot leaf = multiTaskSlotLocality.getMultiTaskSlot().allocateSingleTaskSlot(
 			slotRequestId,
 			slotProfile.getResourceProfile(),
@@ -407,6 +410,7 @@ public class SchedulerImpl implements Scheduler {
 				SlotSharingManager.MultiTaskSlot multiTaskSlot = (SlotSharingManager.MultiTaskSlot) taskSlot;
 
 				if (multiTaskSlot.mayHaveEnoughResourcesToFulfill(slotProfile.getResourceProfile())) {
+					//note: 检查资源是否可以满足，如果可以的话，这里就返回
 					return SlotSharingManager.MultiTaskSlotLocality.of(multiTaskSlot, Locality.LOCAL);
 				}
 
@@ -426,6 +430,7 @@ public class SchedulerImpl implements Scheduler {
 		}
 
 		// get a new multi task slot
+		//note: 通过 allocateMultiTaskSlot 创建一个 MultiTaskSlot 对象
 		SlotSharingManager.MultiTaskSlotLocality multiTaskSlotLocality = allocateMultiTaskSlot(
 			coLocationConstraint.getGroupId(),
 			multiTaskSlotManager,
@@ -443,12 +448,14 @@ public class SchedulerImpl implements Scheduler {
 		}
 
 		final SlotRequestId slotRequestId = new SlotRequestId();
+		//note: 创建一个 MultiTaskSlot 对象
 		final SlotSharingManager.MultiTaskSlot coLocationSlot =
 			multiTaskSlotLocality.getMultiTaskSlot().allocateMultiTaskSlot(
 				slotRequestId,
 				coLocationConstraint.getGroupId());
 
 		// mark the requested slot as co-located slot for other co-located tasks
+		//note: 分配好之后，这里才会给 coLocationConstraint 设置一个 slotRequestId
 		coLocationConstraint.setSlotRequestId(slotRequestId);
 
 		// lock the co-location constraint once we have obtained the allocated slot
@@ -499,7 +506,8 @@ public class SchedulerImpl implements Scheduler {
 			boolean allowQueuedScheduling,
 			@Nullable Time allocationTimeout) throws NoResourceAvailableException {
 
-		//note: 从已经完成的 node 列表中过滤出与这个 groupId 相关的 slot（如果之前还没有这个 groupId 相关的 slot，这里会返回空集合）
+		//note: 从已经完成的 node 列表中过滤出与不包含这个 groupId 的 slot（如果之前还没有这个 groupId 相关的 slot，这里会返回空集合）
+		//note: 主要是为了避免同一个 ExecutionJobVertex 中不同的 SubTask 分配到同一个 slot 中
 		Collection<SlotSelectionStrategy.SlotInfoAndResources> resolvedRootSlotsInfo =
 				slotSharingManager.listResolvedRootSlotInfo(groupId);
 
@@ -531,13 +539,13 @@ public class SchedulerImpl implements Scheduler {
 
 				//note: 如果这里拿到的 slot 与要分配的 slot 是在同一个 TM 上并且之前在 SlotSharingManager 中没有获取到合适的 slot
 				final PhysicalSlot allocatedSlot = poolSlotAndLocality.getSlot();
-				//note: 新创建一个 MultiTaskSlot 对象
+				//note: 新创建一个 MultiTaskSlot 对象（root slot）
 				final SlotSharingManager.MultiTaskSlot multiTaskSlot = slotSharingManager.createRootSlot(
 					multiTaskSlotRequestId,
 					CompletableFuture.completedFuture(poolSlotAndLocality.getSlot()),
 					allocatedSlotRequestId);
 
-				//note: 将这个 multiTaskSlot 绑定到这个 slot 上
+				//note: 将这个 multiTaskSlot 绑定到这个 slot 上（只有这个 slot 还没被分配过就是可以的）
 				if (allocatedSlot.tryAssignPayload(multiTaskSlot)) {
 					return SlotSharingManager.MultiTaskSlotLocality.of(multiTaskSlot, poolSlotAndLocality.getLocality());
 				} else {
@@ -551,7 +559,7 @@ public class SchedulerImpl implements Scheduler {
 		if (multiTaskSlotLocality != null) {
 			// prefer slot sharing group slots over unused slots
 			if (optionalPoolSlotAndLocality.isPresent()) {
-				//note: 如果在 SlotSharingManager 申请到了，但是不满足最优的 Locality 条件，这里会释放掉 tryAllocateFromAvailable 申请的
+				//note: 如果在 SlotSharingManager 申请到了 slot，但是不满足最优的 Locality 条件，这里会释放掉，然后再之前得到的 multiTaskSlotLocality
 				slotPool.releaseSlot(
 					allocatedSlotRequestId,
 					new FlinkException("Locality constraint is not better fulfilled by allocated slot."));
@@ -562,7 +570,7 @@ public class SchedulerImpl implements Scheduler {
 
 		if (allowQueuedScheduling) {
 			// there is no slot immediately available --> check first for uncompleted slots at the slot sharing group
-			//note: 返回 UnresolvedR slot 列表中不包含指定 groupId 的第一个 MultiTaskSlot
+			//note: 返回 Unresolved slot 列表中不包含指定 groupId 的第一个 MultiTaskSlot
 			SlotSharingManager.MultiTaskSlot multiTaskSlot = slotSharingManager.getUnresolvedRootSlot(groupId);
 
 			if (multiTaskSlot == null) { //note: 如果还没有的情况下

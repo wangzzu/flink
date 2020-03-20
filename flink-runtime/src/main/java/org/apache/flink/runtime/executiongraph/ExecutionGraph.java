@@ -151,7 +151,7 @@ import static org.apache.flink.util.Preconditions.checkState;
  * "fallback strategy" that is used when a local failover is unsuccessful, or when a issue is
  * found in the state of the ExecutionGraph that could mark it as inconsistent (caused by a bug).
  * note：global failover，会取消这个 all vertices 的 task 的 executions，从上次 cp 重启整个 DataFlow；
- * note：global failover 被认为是一种'fallback 策略'，它通常用于本来 failover 失败的情况，也可能是 bug 导致的数据状态不一致
+ * note：global failover 被认为是一种'failback 策略'，它通常用于本来 failover 失败的情况，也可能是 bug 导致的数据状态不一致
  *
  * <p>A <b>local failover</b> is triggered when an individual vertex execution (a task) fails.
  * The local failover is coordinated by the {@link FailoverStrategy}. A local failover typically
@@ -208,6 +208,7 @@ public class ExecutionGraph implements AccessExecutionGraph {
 	private boolean isStoppable = true;
 
 	/** All job vertices that are part of this graph. */
+	//note: 记录这个 Job 的 JobVertexId 与 ExecutionJobVertex 之间的关系
 	private final ConcurrentHashMap<JobVertexID, ExecutionJobVertex> tasks;
 
 	/** All vertices, in the order in which they were created. **/
@@ -242,6 +243,7 @@ public class ExecutionGraph implements AccessExecutionGraph {
 	private final RestartStrategy restartStrategy;
 
 	/** The slot provider strategy to use for allocating slots for tasks as they are needed. */
+	//note: slot provider 策略，决定 slot 应该怎么去分配
 	private final SlotProviderStrategy slotProviderStrategy;
 
 	/** The classloader for the user code. Needed for calls into user code classes. */
@@ -464,6 +466,7 @@ public class ExecutionGraph implements AccessExecutionGraph {
 
 		this.allowQueuedScheduling = allowQueuedScheduling;
 
+		//note: 将 jobInformation 序列化并上传到 BlobServer
 		this.jobInformationOrBlobKey = BlobWriter.serializeAndTryOffload(jobInformation, jobInformation.getJobId(), blobWriter);
 
 		this.futureExecutor = Preconditions.checkNotNull(futureExecutor);
@@ -610,6 +613,7 @@ public class ExecutionGraph implements AccessExecutionGraph {
 			failureManager);
 
 		// register the master hooks on the checkpoint coordinator
+		//note: 向 Checkpoint Coordinator 注册 hook
 		for (MasterTriggerRestoreHook<?> hook : masterHooks) {
 			if (!checkpointCoordinator.addMasterHook(hook)) {
 				LOG.warn("Trying to register multiple checkpoint hooks with the name: {}", hook.getIdentifier());
@@ -903,9 +907,11 @@ public class ExecutionGraph implements AccessExecutionGraph {
 		final ArrayList<ExecutionJobVertex> newExecJobVertices = new ArrayList<>(topologiallySorted.size());
 		final long createTimestamp = System.currentTimeMillis();
 
+		//note: 开始遍历处理
 		for (JobVertex jobVertex : topologiallySorted) {
 
 			if (jobVertex.isInputVertex() && !jobVertex.isStoppable()) {
+				//note: source 节点
 				this.isStoppable = false;
 			}
 
@@ -920,17 +926,19 @@ public class ExecutionGraph implements AccessExecutionGraph {
 					globalModVersion,
 					createTimestamp);
 
-			//note: 将创建的 ExecutionJobVertex 与前置的 IntermediateResult 连接起来
+			//note: 将创建的 ExecutionJobVertex 与前置的 IntermediateResult 连接起来（最开始的 source 节点是没有 IntermediateResult 的）
 			ejv.connectToPredecessors(this.intermediateResults);
 
-			//note:
+			//note: 将生成的 ExecutionJobVertex 对象记录到 tasks 中
 			ExecutionJobVertex previousTask = this.tasks.putIfAbsent(jobVertex.getID(), ejv);
 			if (previousTask != null) {
 				throw new JobException(String.format("Encountered two job vertices with ID %s : previous=[%s] / new=[%s]",
 					jobVertex.getID(), ejv, previousTask));
 			}
 
+			//note: 根据 ExecutionJobVertex 的 target IntermediateResult 列表来更新 intermediateResults
 			for (IntermediateResult res : ejv.getProducedDataSets()) {
+				//note: 这里会记录全局的 IntermediateResult 信息
 				IntermediateResult previousDataSet = this.intermediateResults.putIfAbsent(res.getId(), res);
 				if (previousDataSet != null) {
 					throw new JobException(String.format("Encountered two intermediate data set with ID %s : previous=[%s] / new=[%s]",
@@ -939,6 +947,7 @@ public class ExecutionGraph implements AccessExecutionGraph {
 			}
 
 			this.verticesInCreationOrder.add(ejv);
+			//note: 总的线程数
 			this.numVerticesTotal += ejv.getParallelism();
 			newExecJobVertices.add(ejv);
 		}
@@ -958,7 +967,7 @@ public class ExecutionGraph implements AccessExecutionGraph {
 
 		final long currentGlobalModVersion = globalModVersion;
 
-		//note: 先将状态转移为 RUNNING
+		//note: 先将作业状态转移为 RUNNING
 		if (transitionState(JobStatus.CREATED, JobStatus.RUNNING)) {
 
 			//note: 这里会真正调度相应的 Execution Graph
@@ -990,6 +999,7 @@ public class ExecutionGraph implements AccessExecutionGraph {
 		}
 	}
 
+	//note: 取消这个作业
 	public void cancel() {
 
 		assertRunningInJobMasterMainThread();
@@ -1005,11 +1015,13 @@ public class ExecutionGraph implements AccessExecutionGraph {
 
 					final CompletableFuture<Void> ongoingSchedulingFuture = schedulingFuture;
 
+					//note: 如果还正在调度，这里直接取消
 					// cancel ongoing scheduling action
 					if (ongoingSchedulingFuture != null) {
 						ongoingSchedulingFuture.cancel(false);
 					}
 
+					//note: 这里会异步地取消每个 Vertex
 					final ConjunctFuture<Void> allTerminal = cancelVerticesAsync();
 					allTerminal.whenComplete(
 						(Void value, Throwable throwable) -> {
@@ -1060,6 +1072,7 @@ public class ExecutionGraph implements AccessExecutionGraph {
 		final ArrayList<CompletableFuture<?>> futures = new ArrayList<>(verticesInCreationOrder.size());
 
 		// cancel all tasks (that still need cancelling)
+		//note: 取消每个 Vertex（对应的是每个任务）
 		for (ExecutionJobVertex ejv : verticesInCreationOrder) {
 			futures.add(ejv.cancelWithFuture());
 		}
@@ -1279,6 +1292,7 @@ public class ExecutionGraph implements AccessExecutionGraph {
 	 * Returns the termination future of this {@link ExecutionGraph}. The termination future
 	 * is completed with the terminal {@link JobStatus} once the ExecutionGraph reaches this
 	 * terminal state and all {@link Execution} have been terminated.
+	 * note: ExecutionGraph
 	 *
 	 * @return Termination future of this {@link ExecutionGraph}.
 	 */

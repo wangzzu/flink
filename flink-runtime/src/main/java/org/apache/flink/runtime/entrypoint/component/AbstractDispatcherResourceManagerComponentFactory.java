@@ -116,10 +116,13 @@ public abstract class AbstractDispatcherResourceManagerComponentFactory<T extend
 		T dispatcher = null;
 
 		try {
+			//note: 用于 Dispatcher leader 选举
 			dispatcherLeaderRetrievalService = highAvailabilityServices.getDispatcherLeaderRetriever();
 
+			//note: 用于 Resource Manager leader 选举（对于使用 zk 的 HA 模式来说，与上面的区别是使用的路径不同）
 			resourceManagerRetrievalService = highAvailabilityServices.getResourceManagerLeaderRetriever();
 
+			//note: Dispatcher 的 Gateway
 			final LeaderGatewayRetriever<DispatcherGateway> dispatcherGatewayRetriever = new RpcGatewayRetriever<>(
 				rpcService,
 				DispatcherGateway.class,
@@ -127,6 +130,7 @@ public abstract class AbstractDispatcherResourceManagerComponentFactory<T extend
 				10,
 				Time.milliseconds(50L));
 
+			//note: ResourceManager 的 Gateway
 			final LeaderGatewayRetriever<ResourceManagerGateway> resourceManagerGatewayRetriever = new RpcGatewayRetriever<>(
 				rpcService,
 				ResourceManagerGateway.class,
@@ -134,11 +138,13 @@ public abstract class AbstractDispatcherResourceManagerComponentFactory<T extend
 				10,
 				Time.milliseconds(50L));
 
+			//note: 它主要使用 web 前端的 rest 接口调用
 			final ExecutorService executor = WebMonitorEndpoint.createExecutorService(
 				configuration.getInteger(RestOptions.SERVER_NUM_THREADS),
 				configuration.getInteger(RestOptions.SERVER_THREAD_PRIORITY),
 				"DispatcherRestEndpoint");
 
+			//note: metrics Fetcher
 			final long updateInterval = configuration.getLong(MetricOptions.METRIC_FETCHER_UPDATE_INTERVAL);
 			final MetricFetcher metricFetcher = updateInterval == 0
 				? VoidMetricFetcher.INSTANCE
@@ -148,7 +154,7 @@ public abstract class AbstractDispatcherResourceManagerComponentFactory<T extend
 					dispatcherGatewayRetriever,
 					executor);
 
-			//note: stand alone 模式下，这里创建的是 DispatcherRestEndpoint 对象
+			//note: standalone 模式下，这里创建的是 DispatcherRestEndpoint 对象
 			webMonitorEndpoint = restEndpointFactory.createRestEndpoint(
 				configuration,
 				dispatcherGatewayRetriever,
@@ -170,7 +176,7 @@ public abstract class AbstractDispatcherResourceManagerComponentFactory<T extend
 				hostname,
 				ConfigurationUtils.getSystemResourceMetricsProbingInterval(configuration));
 
-			//note: 创建 ResourceManager 对象
+			//note: 创建 ResourceManager 对象（StandAlone 模式，这里创建的是 StandaloneResourceManager 对象）
 			resourceManager = resourceManagerFactory.createResourceManager(
 				configuration,
 				ResourceID.generate(),
@@ -185,7 +191,7 @@ public abstract class AbstractDispatcherResourceManagerComponentFactory<T extend
 
 			final HistoryServerArchivist historyServerArchivist = HistoryServerArchivist.createHistoryServerArchivist(configuration, webMonitorEndpoint);
 
-			//note: 创建 dispatcher 对象
+			//note: 创建 dispatcher 对象（StandAlone 模式下，创建的是 StandaloneDispatcher 对象）
 			dispatcher = dispatcherFactory.createDispatcher(
 				configuration,
 				rpcService,
@@ -199,10 +205,12 @@ public abstract class AbstractDispatcherResourceManagerComponentFactory<T extend
 				fatalErrorHandler,
 				historyServerArchivist);
 
+			//note: 启动 ResourceManager
 			log.debug("Starting ResourceManager.");
 			resourceManager.start();
-			resourceManagerRetrievalService.start(resourceManagerGatewayRetriever);
+			resourceManagerRetrievalService.start(resourceManagerGatewayRetriever); //note: 监听 leader
 
+			//note: 启动 Dispatcher
 			log.debug("Starting Dispatcher.");
 			dispatcher.start();
 			dispatcherLeaderRetrievalService.start(dispatcherGatewayRetriever);
@@ -217,6 +225,7 @@ public abstract class AbstractDispatcherResourceManagerComponentFactory<T extend
 
 		} catch (Exception exception) {
 			// clean up all started components
+			//note: 清除前面启动的所有服务的组件
 			if (dispatcherLeaderRetrievalService != null) {
 				try {
 					dispatcherLeaderRetrievalService.stop();

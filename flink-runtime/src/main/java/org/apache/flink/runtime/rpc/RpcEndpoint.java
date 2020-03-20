@@ -195,6 +195,7 @@ public abstract class RpcEndpoint implements RpcGateway, AutoCloseableAsync {
 	 * <p>This method is called when the RpcEndpoint is being started. The method is guaranteed
 	 * to be executed in the main thread context and can be used to start the rpc endpoint in the
 	 * context of the rpc endpoint's main thread.
+	 * note: 当 RpcEndpoint 开始启动时，这个方法将会被调用
 	 *
 	 * <p>IMPORTANT: This method should never be called directly by the user.
 	 *

@@ -42,6 +42,7 @@ public class JobManagerTable {
 		JobManagerConnection previousJMC = jobManagerConnections.put(jobId, jobManagerConnection);
 
 		if (previousJMC != null) {
+			//note: 如果这个作业之前已经记录过，这里会返回 false
 			jobManagerConnections.put(jobId, previousJMC);
 
 			return false;

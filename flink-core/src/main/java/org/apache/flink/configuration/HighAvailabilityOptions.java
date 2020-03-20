@@ -56,6 +56,7 @@ public class HighAvailabilityOptions {
 	/**
 	 * The ID of the Flink cluster, used to separate multiple Flink clusters
 	 * Needs to be set for standalone clusters, is automatically inferred in YARN and Mesos.
+	 * note: Flink Cluster 的 id，用于区分多个不同的 Flink 集群
 	 */
 	public static final ConfigOption<String> HA_CLUSTER_ID =
 			key("high-availability.cluster-id")
@@ -66,6 +67,7 @@ public class HighAvailabilityOptions {
 
 	/**
 	 * File system path (URI) where Flink persists metadata in high-availability setups.
+	 * note: HA 模式下，持久化 metadata 的文件系统路径
 	 */
 	@Documentation.CommonOption(position = Documentation.CommonOption.POSITION_HIGH_AVAILABILITY)
 	public static final ConfigOption<String> HA_STORAGE_PATH =

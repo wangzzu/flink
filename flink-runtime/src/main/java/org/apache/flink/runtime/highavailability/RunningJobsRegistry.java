@@ -47,6 +47,7 @@ public interface RunningJobsRegistry {
 		PENDING,
 
 		/** Job has been scheduled and is not yet finished. */
+		//note: 作业已经被调度，但还没有完成
 		RUNNING,
 
 		/** Job has been finished, successfully or unsuccessfully. */

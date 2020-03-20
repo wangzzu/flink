@@ -88,6 +88,7 @@ public class BlobUtils {
 	 * 		thrown if the (distributed) file storage cannot be created
 	 */
 	public static BlobStoreService createBlobStoreFromConfig(Configuration config) throws IOException {
+		//note: 根据是否支持 HA 模型来选择
 		if (HighAvailabilityMode.isHighAvailabilityModeActivated(config)) {
 			return createFileSystemBlobStore(config);
 		} else {
@@ -123,6 +124,7 @@ public class BlobUtils {
 			configuration.getValue(HighAvailabilityOptions.HA_CLUSTER_ID);
 		storagePath += "/" + clusterId;
 
+		//note: 创建一个 FileSystemBlobStore 对象
 		return new FileSystemBlobStore(fileSystem, storagePath);
 	}
 
@@ -195,6 +197,7 @@ public class BlobUtils {
 
 	/**
 	 * Returns the (designated) physical storage location of the BLOB with the given key.
+	 * note: 根据 blob key 获取其真实的物理存储路径
 	 *
 	 * @param storageDir
 	 * 		storage directory used be the BLOB service
@@ -257,6 +260,7 @@ public class BlobUtils {
 	static String getStorageLocationPath(
 			String storageDir, @Nullable JobID jobId, BlobKey key) {
 		if (jobId == null) {
+			//note: 获取文件的路径
 			// format: $base/no_job/blob_$key
 			return String.format("%s/%s/%s%s",
 				storageDir, NO_JOB_DIR_PREFIX, BLOB_FILE_PREFIX, key.toString());

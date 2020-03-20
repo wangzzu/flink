@@ -140,7 +140,8 @@ public class EnvironmentInformation {
 
 	/**
 	 * Gets an estimate of the size of the free heap memory.
-	 * 
+	 *
+	 * note: 先做一次 FGC，然后看下有多少内存可用
 	 * NOTE: This method is heavy-weight. It triggers a garbage collection to reduce fragmentation and get
 	 * a better estimate at the size of free memory. It is typically more accurate than the plain version
 	 * {@link #getSizeOfFreeHeapMemory()}.

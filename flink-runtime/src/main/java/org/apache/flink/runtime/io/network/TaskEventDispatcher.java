@@ -49,6 +49,7 @@ public class TaskEventDispatcher implements TaskEventPublisher {
 	/**
 	 * Registers the given partition for incoming task events allowing calls to {@link
 	 * #subscribeToEvent(ResultPartitionID, EventListener, Class)}.
+	 * note: 注册指定的 partition
 	 *
 	 * @param partitionId
 	 * 		the partition ID

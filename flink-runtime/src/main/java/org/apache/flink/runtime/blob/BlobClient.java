@@ -338,6 +338,7 @@ public final class BlobClient implements Closeable {
 
 	/**
 	 * Uploads data from the given input stream to the BLOB server.
+	 * note: 从指定的 input stream 上传数据到 blob server
 	 *
 	 * @param jobId
 	 * 		the ID of the job the BLOB belongs to (or <tt>null</tt> if job-unrelated)

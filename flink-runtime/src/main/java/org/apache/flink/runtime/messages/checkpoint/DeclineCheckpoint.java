@@ -28,6 +28,7 @@ import org.apache.flink.util.SerializedThrowable;
  * {@link org.apache.flink.runtime.jobmaster.JobMaster} to tell the checkpoint coordinator
  * that a checkpoint request could not be heeded. This can happen if a Task is already in
  * RUNNING state but is internally not yet ready to perform checkpoints.
+ * note: TM 向 JM 发送这个消息，告诉 JM 的 Checkpoint Coordinator 这个 checkpoint request 没有响应，比如：TM 做 checkpoint 失败
  */
 public class DeclineCheckpoint extends AbstractCheckpointMessage implements java.io.Serializable {
 

@@ -78,6 +78,7 @@ public abstract class LeaderRetrievalHandler<T extends RestfulGateway> extends S
 		optLeaderConsumer.ifPresent(
 			gateway -> {
 				try {
+					//note: 处理（这里就是 netty 的处理逻辑了）
 					respondAsLeader(channelHandlerContext, routedRequest, gateway);
 				} catch (Exception e) {
 					logger.error("Error while responding to the http request.", e);

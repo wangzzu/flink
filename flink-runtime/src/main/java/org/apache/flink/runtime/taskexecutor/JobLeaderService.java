@@ -183,6 +183,7 @@ public class JobLeaderService {
 	/**
 	 * Add the given job to be monitored. This means that the service tries to detect leaders for
 	 * this job and then tries to establish a connection to it.
+	 * note: 监控指定的 job，它意味着这个服务会自动发现作业的 leader，并且保持相应的连接
 	 *
 	 * @param jobId identifying the job to monitor
 	 * @param defaultTargetAddress of the job leader
@@ -351,6 +352,7 @@ public class JobLeaderService {
 
 		/**
 		 * Rpc connection for the job manager <--> task manager connection.
+		 * note: TM 与 JM 之间连接的实现
 		 */
 		private final class JobManagerRegisteredRpcConnection extends RegisteredRpcConnection<JobMasterId, JobMasterGateway, JMTMRegistrationSuccess> {
 

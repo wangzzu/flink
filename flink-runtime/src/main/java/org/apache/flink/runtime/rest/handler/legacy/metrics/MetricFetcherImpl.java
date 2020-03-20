@@ -95,6 +95,7 @@ public class MetricFetcherImpl<T extends RestfulGateway> implements MetricFetche
 
 	/**
 	 * This method can be used to signal this MetricFetcher that the metrics are still in use and should be updated.
+	 * note: update metrics
 	 */
 	@Override
 	public void update() {

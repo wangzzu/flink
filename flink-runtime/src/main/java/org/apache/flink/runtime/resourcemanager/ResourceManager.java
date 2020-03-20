@@ -89,6 +89,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 /**
  * ResourceManager implementation. The resource manager is responsible for resource de-/allocation
  * and bookkeeping.
+ * note: ResourceManager 的实现，负责资源的分配/释放和鸡柳
  *
  * <p>It offers the following methods as part of its rpc interface to interact with him remotely:
  * <ul>
@@ -213,7 +214,7 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 
 			//note: 启动 leader 选举的服务
 			leaderElectionService.start(this);
-			//note: 启动 leader 关闭的服务
+			//note: 启动 leader 关闭的服务(如果被选为 leader 的话，将会执行 grantLeadership 这个方法)
 			jobLeaderIdService.start(new JobLeaderIdActionsImpl());
 
 			//note: 相关 metrics 的注册
@@ -364,6 +365,7 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 	}
 
 	@Override
+	//note: 向 RM 注册 TM
 	public CompletableFuture<RegistrationResponse> registerTaskExecutor(
 			final String taskExecutorAddress,
 			final ResourceID taskExecutorResourceId,
@@ -688,6 +690,7 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 	 * @param hardwareDescription of the registering TaskExecutor
 	 * @return RegistrationResponse
 	 */
+	//note: 注册 TM
 	private RegistrationResponse registerTaskExecutorInternal(
 			TaskExecutorGateway taskExecutorGateway,
 			String taskExecutorAddress,
@@ -716,8 +719,10 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 				new WorkerRegistration<>(taskExecutorGateway, newWorker, dataPort, hardwareDescription);
 
 			log.info("Registering TaskManager with ResourceID {} ({}) at ResourceManager", taskExecutorResourceId, taskExecutorAddress);
+			//note: 记录到缓存里
 			taskExecutors.put(taskExecutorResourceId, registration);
 
+			//note: 心跳监控
 			taskManagerHeartbeatManager.monitorTarget(taskExecutorResourceId, new HeartbeatTarget<Void>() {
 				@Override
 				public void receiveHeartbeat(ResourceID resourceID, Void payload) {
@@ -788,6 +793,7 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 			jmResourceIdRegistrations.remove(jobManagerResourceId);
 
 			// tell the job manager about the disconnect
+			//note: 断开 JM 的连接
 			jobMasterGateway.disconnectResourceManager(getFencingToken(), cause);
 		} else {
 			log.debug("There was no registered job manager for job {}.", jobId);
@@ -900,6 +906,7 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 	 */
 	@Override
 	public void grantLeadership(final UUID newLeaderSessionID) {
+		//note: tryAcceptLeadership() 清除之前 leader 的信息，这里会重新初始化 leader 相关的信息，并启动 SlotManager 服务
 		final CompletableFuture<Boolean> acceptLeadershipFuture = clearStateFuture
 			.thenComposeAsync((ignored) -> tryAcceptLeadership(newLeaderSessionID), getUnfencedMainThreadExecutor());
 
@@ -978,6 +985,7 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 			getMainThreadExecutor(),
 			log);
 
+		//note: 创建一个心跳 sender 服务
 		jobManagerHeartbeatManager = heartbeatServices.createHeartbeatManagerSender(
 			resourceId,
 			new JobManagerHeartbeatListener(),
@@ -1179,6 +1187,7 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 		}
 	}
 
+	//note: 对 JM，只会监控是否超时
 	private class JobManagerHeartbeatListener implements HeartbeatListener<Void, Void> {
 
 		@Override
@@ -1190,6 +1199,7 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 				JobManagerRegistration jobManagerRegistration = jmResourceIdRegistrations.get(resourceID);
 
 				if (jobManagerRegistration != null) {
+					//note: 心跳超时，断开连接
 					closeJobManagerConnection(
 						jobManagerRegistration.getJobID(),
 						new TimeoutException("The heartbeat of JobManager with id " + resourceID + " timed out."));

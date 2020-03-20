@@ -170,6 +170,7 @@ class AkkaInvocationHandler implements InvocationHandler, AkkaBasedEndpoint, Rpc
 	}
 
 	@Override
+	//note: start
 	public void start() {
 		rpcEndpoint.tell(ControlMessages.START, ActorRef.noSender());
 	}

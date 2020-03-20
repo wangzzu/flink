@@ -38,7 +38,7 @@ import java.util.concurrent.Executor;
  * are not enough slots available the slot manager will notify the resource manager about it via
  * {@link ResourceActions#allocateResource(ResourceProfile)}.
  *
- * note：SlotManager 会有一个全局的视角关于所有注册过来的 task manager slot、它们的位置以及所有 pending 的 slot request；
+ * note：SlotManager 会有一个全局的视角关于所有注册过来的 task manager slot、它们的分配情况以及所有 pending 的 slot request；
  * note：无论任何注册一个新的 slot 或者释放一个 slot，它都会尽力执行另一个正在 pending 的 slot request；
  * note：如果没有足够可用的 slot，slot manager 将会通过 allocateResource 接口通知 resource manager；
  *

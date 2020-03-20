@@ -81,6 +81,7 @@ public interface BlobWriter {
 	/**
 	 * Serializes the given value and offloads it to the BlobServer if its size exceeds the minimum
 	 * offloading size of the BlobServer.
+	 * note: 将指定的数据上传到 BlobServer
 	 *
 	 * @param value to serialize
 	 * @param jobId to which the value belongs.

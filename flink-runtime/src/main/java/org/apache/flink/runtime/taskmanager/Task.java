@@ -179,6 +179,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 	private final Collection<URL> requiredClasspaths;
 
 	/** The name of the class that holds the invokable code. */
+	//note: task 这个任务的执行代码类
 	private final String nameOfInvokableClass;
 
 	/** Access to task manager configuration and host names. */
@@ -247,6 +248,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 	private final Executor executor;
 
 	/** Future that is completed once {@link #run()} exits. */
+	//note: task 一旦完成退出后，这个才会处理完成
 	private final CompletableFuture<ExecutionState> terminationFuture = new CompletableFuture<>();
 
 	// ------------------------------------------------------------------------
@@ -553,12 +555,14 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 		while (true) {
 			ExecutionState current = this.executionState;
 			if (current == ExecutionState.CREATED) {
+				//note: 状态先从 CREATED 转 DEPLOYING
 				if (transitionState(ExecutionState.CREATED, ExecutionState.DEPLOYING)) {
 					// success, we can start our work
 					break;
 				}
 			}
 			else if (current == ExecutionState.FAILED) {
+				//note: 如果状态是 FAILED 的情况下
 				// we were immediately failed. tell the TaskManager that we reached our final state
 				notifyFinalState();
 				if (metrics != null) {
@@ -567,6 +571,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 				return;
 			}
 			else if (current == ExecutionState.CANCELING) {
+				//note: 如果当前状态是 CANCELING，转为 CANCELED
 				if (transitionState(ExecutionState.CANCELING, ExecutionState.CANCELED)) {
 					// we were immediately canceled. tell the TaskManager that we reached our final state
 					notifyFinalState();
@@ -588,6 +593,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 		// need to be undone in the end
 		//note: 所有资源的获得和注册都是从这里开始
 		Map<String, Future<Path>> distributedCacheEntries = new HashMap<>();
+		//note: task 可以执行的主体
 		AbstractInvokable invokable = null;
 
 		try {
@@ -607,8 +613,9 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 			//note: 首先获得 user-code classloader，这可能涉及到下载 job 的 jar file 或 class
 			LOG.info("Loading JAR files for task {}.", this);
 
+			//note: task 的 ClassLoader
 			userCodeClassLoader = createUserCodeClassloader();
-			//note: 这个 task 的执行配置
+			//note: 这个 task 执行时的一些配置
 			final ExecutionConfig executionConfig = serializedExecutionConfig.deserializeValue(userCodeClassLoader);
 
 			if (executionConfig.getTaskCancellationInterval() >= 0) {
@@ -622,6 +629,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 			}
 
 			if (isCanceledOrFailed()) {
+				//note: task 已经取消或失败
 				throw new CancelTaskException();
 			}
 
@@ -662,7 +670,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 			//  call the user code initialization methods
 			// ----------------------------------------------------------------
 
-			//note: 调用用户的代码初始化方法
+			//note:
 			TaskKvStateRegistry kvStateRegistry = kvStateService.createKvStateTaskRegistry(jobId, getJobVertexId());
 
 			//note: 初始化 RuntimeEnvironment 对象
@@ -695,10 +703,11 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 			// Make sure the user code classloader is accessible thread-locally.
 			// We are setting the correct context class loader before instantiating the invokable
 			// so that it is available to the invokable during its entire lifetime.
+			//note: 设置 ClassLoader
 			executingThread.setContextClassLoader(userCodeClassLoader);
 
 			// now load and instantiate the task's invokable code
-			//note: 加载并实例化 task invokable 代码
+			//note: 加载并实例化 task invokable 代码（主要是 StreamTask 这些，AbstractInvokable 的实现类）
 			invokable = loadAndInstantiateInvokable(userCodeClassLoader, nameOfInvokableClass, env);
 
 			// ----------------------------------------------------------------
@@ -724,7 +733,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 			executingThread.setContextClassLoader(userCodeClassLoader);
 
 			// run the invokable
-			//note: task 开始执行
+			//note: task 执行，会在这里执行，直到运行结束
 			invokable.invoke();
 
 			// make sure, we enter the catch block if the task leaves the invoke() method due
@@ -737,6 +746,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 			// ----------------------------------------------------------------
 			//  finalization of a successful execution
 			// ----------------------------------------------------------------
+			//note: task 执行完成之后要进行的处理
 
 			// finish the produced partitions. if this fails, we consider the execution failed.
 			//note: task 执行完成，如果这里执行失败，我们会认为这个 task 执行失败了
@@ -887,6 +897,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 		}
 	}
 
+	//note:
 	@VisibleForTesting
 	public static void setupPartitionsAndGates(
 		ResultPartitionWriter[] producedPartitions, InputGate[] inputGates) throws IOException, InterruptedException {
@@ -955,6 +966,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 		LOG.debug("Getting user code class loader for task {} at library cache manager took {} milliseconds",
 				executionId, System.currentTimeMillis() - startDownloadTime);
 
+		//note: 从 libraryCache 中获取
 		ClassLoader userCodeClassLoader = libraryCache.getClassLoader(jobId);
 		if (userCodeClassLoader == null) {
 			throw new Exception("No user code classloader available.");
@@ -1199,6 +1211,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 						//note: 触发 checkpoint
 						boolean success = invokable.triggerCheckpoint(checkpointMetaData, checkpointOptions, advanceToEndOfEventTime);
 						if (!success) {
+							//note: 如果 checkpoint 调用失败，这里将会通知 JM 取消这个 checkpoint
 							checkpointResponder.declineCheckpoint(
 									getJobID(), getExecutionId(), checkpointID,
 									new CheckpointException("Task Name" + taskName, CheckpointFailureReason.CHECKPOINT_DECLINED_TASK_NOT_READY));

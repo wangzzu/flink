@@ -105,6 +105,7 @@ public class SlotPoolImpl implements SlotPool {
 	private final HashSet<ResourceID> registeredTaskManagers;
 
 	/** The book-keeping of all allocated slots. */
+	//note: 记录已经分配的 slot 列表
 	private final AllocatedSlots allocatedSlots;
 
 	/** The book-keeping of all available slots. */
@@ -277,7 +278,7 @@ public class SlotPoolImpl implements SlotPool {
 	//  Resource Manager Connection
 	// ------------------------------------------------------------------------
 
-	//note: 向 RM 请求 slot
+	//note: 与 RM 建立连接
 	@Override
 	public void connectToResourceManager(@Nonnull ResourceManagerGateway resourceManagerGateway) {
 		this.resourceManagerGateway = checkNotNull(resourceManagerGateway);
@@ -402,7 +403,7 @@ public class SlotPoolImpl implements SlotPool {
 		releaseSingleSlot(slotRequestId, cause);
 	}
 
-	//note: 将 slotRequestId 分配到 allocationID 中
+	//note: 将指定的 SlotRequestId 分配到指定的 slot 上
 	@Override
 	public Optional<PhysicalSlot> allocateAvailableSlot(
 		@Nonnull SlotRequestId slotRequestId,
@@ -412,6 +413,7 @@ public class SlotPoolImpl implements SlotPool {
 
 		AllocatedSlot allocatedSlot = availableSlots.tryRemove(allocationID);
 		if (allocatedSlot != null) {
+			//note: 记录其关系
 			allocatedSlots.add(slotRequestId, allocatedSlot);
 			return Optional.of(allocatedSlot);
 		} else {
@@ -419,6 +421,7 @@ public class SlotPoolImpl implements SlotPool {
 		}
 	}
 
+	//note: 从 RM 请求一个新的 slot 资源分配，它不会返回 SlotPool 中已经请求到的 slot
 	@Nonnull
 	@Override
 	public CompletableFuture<PhysicalSlot> requestNewAllocatedSlot(
@@ -690,6 +693,7 @@ public class SlotPoolImpl implements SlotPool {
 	 * This may triggered by JobManager when some slot allocation failed with rpcTimeout.
 	 * Or this could be triggered by TaskManager, when it finds out something went wrong with the slot,
 	 * and decided to take it back.
+	 * note: 分配失败，并释放相应的 slot，可能是因为请求超时由 JM 触发或者 TM 分配失败
 	 *
 	 * @param allocationID Represents the allocation which should be failed
 	 * @param cause The cause of the failure
@@ -707,6 +711,7 @@ public class SlotPoolImpl implements SlotPool {
 				pendingRequests.put(pendingRequest.getSlotRequestId(), allocationID, pendingRequest);
 			} else {
 				// request was still pending
+				//note: 请求还在等待，这里直接将其 fail
 				failPendingRequest(pendingRequest, cause);
 			}
 			return Optional.empty();
@@ -751,6 +756,7 @@ public class SlotPoolImpl implements SlotPool {
 	/**
 	 * Register TaskManager to this pool, only those slots come from registered TaskManager will be considered valid.
 	 * Also it provides a way for us to keep "dead" or "abnormal" TaskManagers out of this pool.
+	 * note: 注册 TM，只有那些注册过的 TM 上的 slot 才认为是有效的，才可以分配
 	 *
 	 * @param resourceID The id of the TaskManager
 	 */
@@ -784,6 +790,7 @@ public class SlotPoolImpl implements SlotPool {
 	}
 
 	@Override
+	//note: 汇报指定 TM 上的 slot 分配情况；
 	public AllocatedSlotReport createAllocatedSlotReport(ResourceID taskManagerId) {
 		final Set<AllocatedSlot> availableSlotsForTaskManager = availableSlots.getSlotsForTaskManager(taskManagerId);
 		final Set<AllocatedSlot> allocatedSlotsForTaskManager = allocatedSlots.getSlotsForTaskManager(taskManagerId);
@@ -825,6 +832,7 @@ public class SlotPoolImpl implements SlotPool {
 
 		for (AllocatedSlot removedSlot : removedSlots) {
 			TaskManagerGateway taskManagerGateway = removedSlot.getTaskManagerGateway();
+			//note: 通过 TM 释放其 slot
 			taskManagerGateway.freeSlot(removedSlot.getAllocationId(), cause, rpcTimeout);
 		}
 	}

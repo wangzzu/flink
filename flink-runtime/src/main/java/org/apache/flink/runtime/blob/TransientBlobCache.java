@@ -145,6 +145,7 @@ public class TransientBlobCache extends AbstractBlobCache implements TransientBl
 	public TransientBlobKey putTransient(JobID jobId, InputStream inputStream) throws IOException {
 		checkNotNull(jobId);
 		try (BlobClient bc = createClient()) {
+			//note: 将数据发送到 blob server 后，它会从 blob server 读取到 BlobKey
 			return (TransientBlobKey) bc.putInputStream(jobId, inputStream, TRANSIENT_BLOB);
 		}
 	}

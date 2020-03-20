@@ -201,6 +201,7 @@ public class TaskSlot {
 	 * Allocate the task slot for the given job and allocation id. If the slot could be allocated,
 	 * or is already allocated/active for the given job and allocation id, then the method returns
 	 * true. Otherwise it returns false.
+	 * note: 分配这个 TaskSlot 给指定的 job 的指定的 allocation id
 	 *
 	 * <p>A slot can only be allocated if it's current state is free.
 	 *
@@ -210,6 +211,7 @@ public class TaskSlot {
 	 */
 	public boolean allocate(JobID newJobId, AllocationID newAllocationId) {
 		if (TaskSlotState.FREE == state) {
+			//note: 如果当前的状态是 FREE，直接分配，修改状态即可
 			// sanity checks
 			Preconditions.checkState(allocationId == null);
 			Preconditions.checkState(jobId == null);
@@ -221,6 +223,7 @@ public class TaskSlot {
 
 			return true;
 		} else if (TaskSlotState.ALLOCATED == state || TaskSlotState.ACTIVE == state) {
+			//note: 如果已经分配出去，这里会检查分配是当前这个作业的 allocationId，如果不是，那就分配失败了
 			Preconditions.checkNotNull(newJobId);
 			Preconditions.checkNotNull(newAllocationId);
 

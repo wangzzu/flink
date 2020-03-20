@@ -33,6 +33,7 @@ public interface HeartbeatTarget<I> {
 	/**
 	 * Sends a heartbeat response to the target. Each heartbeat response can carry a payload which
 	 * contains additional information for the heartbeat target.
+	 * note: 向 target 发送一个心跳 response
 	 *
 	 * @param heartbeatOrigin Resource ID identifying the machine for which a heartbeat shall be reported.
 	 * @param heartbeatPayload Payload of the heartbeat. Null indicates an empty payload.
@@ -42,6 +43,7 @@ public interface HeartbeatTarget<I> {
 	/**
 	 * Requests a heartbeat from the target. Each heartbeat request can carry a payload which
 	 * contains additional information for the heartbeat target.
+	 * note: 从 target 请求一个心跳信息
 	 *
 	 * @param requestOrigin Resource ID identifying the machine issuing the heartbeat request.
 	 * @param heartbeatPayload Payload of the heartbeat request. Null indicates an empty payload.

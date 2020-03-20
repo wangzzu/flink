@@ -115,6 +115,7 @@ public class ZooKeeperSubmittedJobGraphStore implements SubmittedJobGraphStore {
 			if (!isRunning) {
 				this.jobGraphListener = jobGraphListener;
 
+				//note: 这里 listener 会开始监听
 				pathCache.start();
 
 				isRunning = true;
@@ -155,6 +156,7 @@ public class ZooKeeperSubmittedJobGraphStore implements SubmittedJobGraphStore {
 
 	@Override
 	@Nullable
+	//note: 根据 Job Id 恢复一个 job
 	public SubmittedJobGraph recoverJobGraph(JobID jobId) throws Exception {
 		checkNotNull(jobId, "Job ID");
 		final String path = getPathForJob(jobId);
@@ -181,6 +183,7 @@ public class ZooKeeperSubmittedJobGraphStore implements SubmittedJobGraphStore {
 				SubmittedJobGraph jobGraph;
 
 				try {
+					//note: 读取这个路径存储的 JobGraph 对象
 					jobGraph = jobGraphRetrievableStateHandle.retrieveState();
 				} catch (ClassNotFoundException cnfe) {
 					throw new FlinkException("Could not retrieve submitted JobGraph from state handle under " + path +
@@ -207,6 +210,7 @@ public class ZooKeeperSubmittedJobGraphStore implements SubmittedJobGraphStore {
 	}
 
 	@Override
+	//note: 将 SubmittedJobGraph 存储到 zk 中
 	public void putJobGraph(SubmittedJobGraph jobGraph) throws Exception {
 		checkNotNull(jobGraph, "Job graph");
 		String path = getPathForJob(jobGraph.getJobId());
@@ -317,6 +321,7 @@ public class ZooKeeperSubmittedJobGraphStore implements SubmittedJobGraphStore {
 
 	/**
 	 * Monitors ZooKeeper for changes.
+	 * note: 监听 zk 目录下变化
 	 *
 	 * <p>Detects modifications from other job managers in corner situations. The event
 	 * notifications fire for changes from this job manager as well.
@@ -338,6 +343,7 @@ public class ZooKeeperSubmittedJobGraphStore implements SubmittedJobGraphStore {
 
 			switch (event.getType()) {
 				case CHILD_ADDED: {
+					//note: 添加一个节点
 					JobID jobId = fromEvent(event);
 
 					LOG.debug("Received CHILD_ADDED event notification for job {}", jobId);
@@ -366,6 +372,7 @@ public class ZooKeeperSubmittedJobGraphStore implements SubmittedJobGraphStore {
 				break;
 
 				case CHILD_REMOVED: {
+					//note: 节点被删除
 					JobID jobId = fromEvent(event);
 
 					LOG.debug("Received CHILD_REMOVED event notification for job {}", jobId);

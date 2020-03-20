@@ -174,11 +174,13 @@ public class FileArchivedExecutionGraphStore implements ArchivedExecutionGraphSt
 		}
 
 		// write the ArchivedExecutionGraph to disk
+		//note: 存储到磁盘中
 		storeArchivedExecutionGraph(archivedExecutionGraph);
 
 		final JobDetails detailsForJob = WebMonitorUtils.createDetailsForJob(archivedExecutionGraph);
 
 		jobDetailsCache.put(jobId, detailsForJob);
+		//note: 存储到内存中
 		archivedExecutionGraphCache.put(jobId, archivedExecutionGraph);
 	}
 
@@ -243,6 +245,7 @@ public class FileArchivedExecutionGraphStore implements ArchivedExecutionGraphSt
 	private void storeArchivedExecutionGraph(ArchivedExecutionGraph archivedExecutionGraph) throws IOException {
 		final File archivedExecutionGraphFile = getExecutionGraphFile(archivedExecutionGraph.getJobID());
 
+		//note: 持久化到文件系统中
 		try (FileOutputStream fileOutputStream = new FileOutputStream(archivedExecutionGraphFile)) {
 			InstantiationUtil.serializeObject(fileOutputStream, archivedExecutionGraph);
 		}
@@ -271,6 +274,7 @@ public class FileArchivedExecutionGraphStore implements ArchivedExecutionGraphSt
 		final int maxAttempts = 10;
 
 		for (int attempt = 0; attempt < maxAttempts; attempt++) {
+			//note: 这里创建一个存储 graph 的临时目录
 			final File storageDirectory = new File(tmpDir, "executionGraphStore-" + UUID.randomUUID());
 
 			if (storageDirectory.mkdir()) {

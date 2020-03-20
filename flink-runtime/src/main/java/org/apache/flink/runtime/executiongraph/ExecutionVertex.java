@@ -153,17 +153,21 @@ public class ExecutionVertex implements AccessExecutionVertex, Archiveable<Archi
 
 		this.resultPartitions = new LinkedHashMap<>(producedDataSets.length, 1);
 
+		//note: 新建 IntermediateResultPartition 对象，并更新到缓存中
 		for (IntermediateResult result : producedDataSets) {
 			IntermediateResultPartition irp = new IntermediateResultPartition(result, this, subTaskIndex);
+			//note: 记录 IntermediateResult 与 IntermediateResultPartition 之间的关系
 			result.setPartition(subTaskIndex, irp);
 
 			resultPartitions.put(irp.getPartitionId(), irp);
 		}
 
+		//note: 创建 input ExecutionEdge 列表，记录输入的 ExecutionEdge 列表
 		this.inputEdges = new ExecutionEdge[jobVertex.getJobVertex().getInputs().size()][];
 
 		this.priorExecutions = new EvictingBoundedList<>(maxPriorExecutionHistoryLength);
 
+		//note: 创建对应的 Execution 对象，初始化时 attemptNumber 为 0，如果后面重新调度这个 task，它会自增加 1
 		this.currentExecution = new Execution(
 			getExecutionGraph().getFutureExecutor(),
 			this,
@@ -372,7 +376,7 @@ public class ExecutionVertex implements AccessExecutionVertex, Archiveable<Archi
 	//  Graph building
 	// --------------------------------------------------------------------------------------------
 
-	//note:
+	//note: 与上游节点连在一起
 	public void connectSource(int inputNumber, IntermediateResult source, JobEdge edge, int consumerNumber) {
 
 		final DistributionPattern pattern = edge.getDistributionPattern();
@@ -387,6 +391,7 @@ public class ExecutionVertex implements AccessExecutionVertex, Archiveable<Archi
 				break;
 
 			case ALL_TO_ALL:
+				//note: 它会连接上游所有的 IntermediateResultPartition
 				edges = connectAllToAll(sourcePartitions, inputNumber);
 				break;
 
@@ -406,6 +411,7 @@ public class ExecutionVertex implements AccessExecutionVertex, Archiveable<Archi
 		}
 	}
 
+	//note: 会连接上游所有的 IntermediateResultPartition
 	private ExecutionEdge[] connectAllToAll(IntermediateResultPartition[] sourcePartitions, int inputNumber) {
 		ExecutionEdge[] edges = new ExecutionEdge[sourcePartitions.length];
 
@@ -418,19 +424,25 @@ public class ExecutionVertex implements AccessExecutionVertex, Archiveable<Archi
 	}
 
 	private ExecutionEdge[] connectPointwise(IntermediateResultPartition[] sourcePartitions, int inputNumber) {
+		//note: 上游的并发数（上游产生的 分区 数）
 		final int numSources = sourcePartitions.length;
+		//note: 当前 ExecutionVertex 的并发数
 		final int parallelism = getTotalNumberOfParallelSubtasks();
 
 		// simple case same number of sources as targets
 		if (numSources == parallelism) {
+			//note: 如果并发相同，这里只会创建一个 ExecutionEdge，使得上下游一对一接收数据
 			return new ExecutionEdge[] { new ExecutionEdge(sourcePartitions[subTaskIndex], this, inputNumber) };
 		}
 		else if (numSources < parallelism) {
+			//note: 相当于下游并发比上游大
 
 			int sourcePartition;
 
 			// check if the pattern is regular or irregular
 			// we use int arithmetics for regular, and floating point with rounding for irregular
+			//note: 如果能整除，刚好是均匀分配，
+			//note: 如果不能整除，分配就是均匀的，索引靠前的 IntermediateResultPartition 分配的 Edge 会多一些
 			if (parallelism % numSources == 0) {
 				// same number of targets per source
 				int factor = parallelism / numSources;
@@ -445,7 +457,9 @@ public class ExecutionVertex implements AccessExecutionVertex, Archiveable<Archi
 			return new ExecutionEdge[] { new ExecutionEdge(sourcePartitions[sourcePartition], this, inputNumber) };
 		}
 		else {
+			//note: 上游比下游并发大的情况
 			if (numSources % parallelism == 0) {
+				//note: 刚好是倍数的关系
 				// same number of targets per source
 				int factor = numSources / parallelism;
 				int startIndex = subTaskIndex * factor;
@@ -631,7 +645,7 @@ public class ExecutionVertex implements AccessExecutionVertex, Archiveable<Archi
 				final Execution newExecution = new Execution(
 					getExecutionGraph().getFutureExecutor(),
 					this,
-					oldExecution.getAttemptNumber() + 1,
+					oldExecution.getAttemptNumber() + 1, //note: 恢复
 					originatingGlobalModVersion,
 					timestamp,
 					timeout);
@@ -728,6 +742,7 @@ public class ExecutionVertex implements AccessExecutionVertex, Archiveable<Archi
 
 	/**
 	 * Schedules or updates the consumer tasks of the result partition with the given ID.
+	 * note: 调度/更新这个 result partition 消费 task
 	 */
 	void scheduleOrUpdateConsumers(ResultPartitionID partitionId) {
 
@@ -744,6 +759,7 @@ public class ExecutionVertex implements AccessExecutionVertex, Archiveable<Archi
 			throw new IllegalStateException("Unknown partition " + partitionId + ".");
 		}
 
+		//note: 标记这个 partition
 		partition.markDataProduced();
 
 		if (partition.getIntermediateResult().getResultType().isPipelined()) {

@@ -223,6 +223,7 @@ public class HeartbeatManagerImpl<I, O> implements HeartbeatManager<I, O> {
 	HeartbeatTarget<O> reportHeartbeat(ResourceID resourceID) {
 		if (heartbeatTargets.containsKey(resourceID)) {
 			HeartbeatMonitor<O> heartbeatMonitor = heartbeatTargets.get(resourceID);
+			//note: 更新心跳时间
 			heartbeatMonitor.reportHeartbeat();
 
 			return heartbeatMonitor.getHeartbeatTarget();

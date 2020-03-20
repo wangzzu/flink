@@ -68,7 +68,7 @@ public class SchedulingUtils {
 
 	/**
 	 * Schedule vertices lazy. That means only vertices satisfying its input constraint will be scheduled.
-	 * note: 从 source 端开始调度
+	 * note: 从 source 端开始调度，下游 task 只有在上游数据就绪后才会调度
 	 *
 	 * @param vertices Topologically sorted vertices to schedule.
 	 * @param executionGraph The graph the given vertices belong to.
@@ -89,6 +89,7 @@ public class SchedulingUtils {
 		for (ExecutionVertex executionVertex : vertices) {
 			// only schedule vertex when its input constraint is satisfied
 			//note: 仅仅调度那些的输入约束被满足的 vertex（是 source 节点或者上游节点数据已经可以消费了）
+			//note: 如果对应 partition 有数据产生了，IntermediateResultPartition 的 hasDataProduced 就被标记为 true
 			if (executionVertex.getJobVertex().getJobVertex().isInputVertex() ||
 				executionVertex.checkInputDependencyConstraints()) {
 
@@ -135,6 +136,7 @@ public class SchedulingUtils {
 		// allocate the slots (obtain all their futures)
 		for (ExecutionVertex ev : vertices) {
 			// these calls are not blocking, they only return futures
+			//note: 给每个 Execution 分配相应的资源
 			CompletableFuture<Execution> allocationFuture = ev.getCurrentExecutionAttempt().allocateResourcesForExecution(
 				slotProviderStrategy,
 				LocationPreferenceConstraint.ALL,
@@ -212,7 +214,7 @@ public class SchedulingUtils {
 	 * Returns the result of {@link #computePriorAllocationIds(Iterable)},
 	 * but only if the scheduling really requires it.
 	 * Otherwise this method simply returns an empty set.
-	 * note: 如果需要之前的调度分配的情况，这里就会返回相应的结果，否则的话，返回的是一个空集合
+	 * note: 如果需要知道之前的调度分配的情况，这里就会返回相应的结果，否则的话，返回的是一个空集合
 	 */
 	private static Set<AllocationID> computePriorAllocationIdsIfRequiredByScheduling(
 			final Iterable<ExecutionVertex> vertices,

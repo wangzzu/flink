@@ -51,6 +51,7 @@ public class RpcResultPartitionConsumableNotifier implements ResultPartitionCons
 	//note: 调度
 	@Override
 	public void notifyPartitionConsumable(JobID jobId, ResultPartitionID partitionId, final TaskActions taskActions) {
+		//note: 通知 JM 当前的 partition 可以消费了
 		CompletableFuture<Acknowledge> acknowledgeFuture = jobMasterGateway.scheduleOrUpdateConsumers(partitionId, timeout);
 
 		acknowledgeFuture.whenCompleteAsync(

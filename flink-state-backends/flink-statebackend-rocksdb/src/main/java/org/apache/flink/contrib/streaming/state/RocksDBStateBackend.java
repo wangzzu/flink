@@ -180,6 +180,7 @@ public class RocksDBStateBackend extends AbstractStateBackend implements Configu
 	 * @param checkpointDataUri The URI describing the filesystem and path to the checkpoint data directory.
 	 * @throws IOException Thrown, if no file system can be found for the scheme in the URI.
 	 */
+	//note: 这里会设置 checkpointDataUri
 	public RocksDBStateBackend(String checkpointDataUri) throws IOException {
 		this(new Path(checkpointDataUri).toUri());
 	}

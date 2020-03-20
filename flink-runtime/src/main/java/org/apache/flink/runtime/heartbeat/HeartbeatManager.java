@@ -32,6 +32,7 @@ public interface HeartbeatManager<I, O> extends HeartbeatTarget<I> {
 	/**
 	 * Start monitoring a {@link HeartbeatTarget}. Heartbeat timeouts for this target are reported
 	 * to the {@link HeartbeatListener} associated with this heartbeat manager.
+	 * note: 向 target 发送心跳信息
 	 *
 	 * @param resourceID Resource ID identifying the heartbeat target
 	 * @param heartbeatTarget Interface to send heartbeat requests and responses to the heartbeat

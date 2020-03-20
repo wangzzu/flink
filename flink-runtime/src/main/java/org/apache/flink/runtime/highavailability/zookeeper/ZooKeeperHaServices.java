@@ -88,6 +88,7 @@ public class ZooKeeperHaServices implements HighAvailabilityServices {
 
 	private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperHaServices.class);
 
+	//note: 用于相关 leader 选举的锁路径
 	private static final String RESOURCE_MANAGER_LEADER_PATH = "/resource_manager_lock";
 
 	private static final String DISPATCHER_LEADER_PATH = "/dispatcher_lock";
@@ -111,6 +112,7 @@ public class ZooKeeperHaServices implements HighAvailabilityServices {
 	private final RunningJobsRegistry runningJobsRegistry;
 
 	/** Store for arbitrary blobs. */
+	//note: 这里记录了文件存储路径等信息
 	private final BlobStoreService blobStoreService;
 
 	public ZooKeeperHaServices(

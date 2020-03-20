@@ -199,9 +199,14 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 
 	private void startDispatcherServices() throws Exception {
 		try {
+			//note: 这里的两个方法都是 HighAvailabilityMode#ZOOKEEPER 情况下才有效
+
+			//note: 只有是 ZooKeeperSubmittedJobGraphStore 时，这个才有效
 			submittedJobGraphStore.start(this);
+			//note: 这里会开始 leader 选举，如果当前是 leader，会走到 grantLeadership() 方法
 			leaderElectionService.start(this);
 
+			//note: 注册一个 metrics
 			registerDispatcherMetrics(jobManagerMetricGroup);
 		} catch (Exception e) {
 			handleStartDispatcherServicesException(e);
@@ -269,10 +274,11 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 
 		try {
 			if (isDuplicateJob(jobGraph.getJobID())) {
+				//note: 重复提交的作业
 				return FutureUtils.completedExceptionally(
 					new JobSubmissionException(jobGraph.getJobID(), "Job has already been submitted."));
 			} else if (isPartialResourceConfigured(jobGraph)) {
-				//note: 如果只有部分 vertice 的资源配置了，当前的版本暂时不支持
+				//note: 如果只有部分 vertex 的资源配置了，当前的版本暂时不支持
 				return FutureUtils.completedExceptionally(
 					new JobSubmissionException(jobGraph.getJobID(), "Currently jobs is not supported if parts of the vertices have " +
 							"resources configured. The limitation will be removed in future versions."));
@@ -347,6 +353,7 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 
 	//note: 持久化和这个 jobGraph 并运行这个作业
 	private CompletableFuture<Void> persistAndRunJob(JobGraph jobGraph) throws Exception {
+		//note: 已经提交的 JobGraph 会记录在缓存里
 		submittedJobGraphStore.putJobGraph(new SubmittedJobGraph(jobGraph));
 
 		final CompletableFuture<Void> runJobFuture = runJob(jobGraph);
@@ -383,6 +390,7 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 
 	//note: 创建 createJobManagerRunner 对象
 	private CompletableFuture<JobManagerRunner> createJobManagerRunner(JobGraph jobGraph) {
+		//note: 获取 rpc service
 		final RpcService rpcService = getRpcService();
 
 		final CompletableFuture<JobManagerRunner> jobManagerRunnerFuture = CompletableFuture.supplyAsync(
@@ -410,12 +418,13 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 			jobManagerRunner.getResultFuture().handleAsync(
 				(ArchivedExecutionGraph archivedExecutionGraph, Throwable throwable) -> {
 					// check if we are still the active JobManagerRunner by checking the identity
+					//note: 这里主要检查的是这个 JobId 对应的 jobManagerRunnerFuture 是不是之前已经存在过了
 					final CompletableFuture<JobManagerRunner> jobManagerRunnerFuture = jobManagerRunnerFutures.get(jobId);
 					final JobManagerRunner currentJobManagerRunner = jobManagerRunnerFuture != null ? jobManagerRunnerFuture.getNow(null) : null;
 					//noinspection ObjectEquality
 					if (jobManagerRunner == currentJobManagerRunner) {
 						if (archivedExecutionGraph != null) {
-							//note: 如果 job 是终止的情况，GLOBALLY(FAILED/CANCELED/FINISHED)
+							//note: 如果 job 是终止状态的话（GLOBALLY(FAILED/CANCELED/FINISHED))
 							jobReachedGloballyTerminalState(archivedExecutionGraph);
 						} else {
 							final Throwable strippedThrowable = ExceptionUtils.stripCompletionException(throwable);
@@ -735,6 +744,7 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 
 	/**
 	 * Recovers all jobs persisted via the submitted job graph store.
+	 * note: 首先会恢复所有存储 job graph store 中的作业
 	 */
 	@VisibleForTesting
 	Collection<JobGraph> recoverJobs() throws Exception {
@@ -761,6 +771,7 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 		final List<JobGraph> jobGraphs = new ArrayList<>(jobIds.size());
 
 		for (JobID jobId : jobIds) {
+			//note: 根据 job id 列表恢复每个作业的 JobGraph
 			final JobGraph jobGraph = recoverJob(jobId);
 
 			if (jobGraph == null) {
@@ -910,10 +921,12 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 			() -> {
 				log.info("Dispatcher {} was granted leadership with fencing token {}", getAddress(), newLeaderSessionID);
 
+				//note: 通过 recoverJobs() 方法先从 job graph store 中恢复所有的 jobs
 				final CompletableFuture<Collection<JobGraph>> recoveredJobsFuture = recoveryOperation.thenApplyAsync(
 					FunctionUtils.uncheckedFunction(ignored -> recoverJobs()),
 					getRpcService().getExecutor());
 
+				//note: 通过 tryAcceptLeadershipAndRunJobs() 调用 runJob 启动前面的每一个 job
 				final CompletableFuture<Boolean> fencingTokenFuture = recoveredJobsFuture.thenComposeAsync(
 					(Collection<JobGraph> recoveredJobs) -> tryAcceptLeadershipAndRunJobs(newLeaderSessionID, recoveredJobs),
 					getUnfencedMainThreadExecutor());
@@ -922,9 +935,11 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 					recoveredJobsFuture,
 					BiFunctionWithException.unchecked((Boolean confirmLeadership, Collection<JobGraph> recoveredJobs) -> {
 						if (confirmLeadership) {
+							//note: 如果是 leader，并且前面两步都完成的话，就会走到这里
 							leaderElectionService.confirmLeaderSessionID(newLeaderSessionID);
 						} else {
 							for (JobGraph recoveredJob : recoveredJobs) {
+								//note: 从 job graph store 中删除这些作业相关的 state
 								submittedJobGraphStore.releaseJobGraph(recoveredJob.getJobID());
 							}
 						}
@@ -1044,6 +1059,7 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 	//------------------------------------------------------
 
 	@Override
+	//note: 监听到 zk 目录上有个 graph 被添加进去了
 	public void onAddedJobGraph(final JobID jobId) {
 		runAsync(
 			() -> {
@@ -1102,6 +1118,7 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 		return CompletableFuture.completedFuture(false);
 	}
 
+	//note: 监听到 zk 目录上有个 graph 被删除了
 	@Override
 	public void onRemovedJobGraph(final JobID jobId) {
 		runAsync(() -> {

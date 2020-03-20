@@ -60,29 +60,33 @@ public class MailboxImpl implements Mailbox {
 
 	/**
 	 * Index of the ring buffer head.
+	 * note：ring buffer 头部，即是读取到的位置
 	 */
 	@GuardedBy("lock")
 	private int headIndex;
 
 	/**
 	 * Index of the ring buffer tail.
+	 * not: ring buffer 尾部，即是最新添加事件的位置
 	 */
 	@GuardedBy("lock")
 	private int tailIndex;
 
 	/**
 	 * Number of letters in the mailbox.
+	 * note: buffer 当前的 letter 数
 	 */
 	@GuardedBy("lock")
 	private volatile int count;
 
 	/**
 	 * A mask to wrap around the indexes of the ring buffer. We use this to avoid ifs or modulo ops.
+	 * note: 一个环状的 buffer
 	 */
 	private final int moduloMask;
 
 	public MailboxImpl() {
-		this(6); // 2^6 = 64
+		this(6); // 2^6 = 64 note: 默认数组是 64 位
 	}
 
 	public MailboxImpl(int capacityPow2) {
@@ -100,6 +104,7 @@ public class MailboxImpl implements Mailbox {
 		return !isEmpty();
 	}
 
+	//note: 从 buffer 中取出一个 letter
 	@Override
 	public Optional<Runnable> tryTakeMail() {
 		final ReentrantLock lock = this.lock;
@@ -111,6 +116,7 @@ public class MailboxImpl implements Mailbox {
 		}
 	}
 
+	//note: 从 buffer 中取出一个 letter，这里区别是，它会一直等待直到取出 letter 为止
 	@Nonnull
 	@Override
 	public Runnable takeMail() throws InterruptedException {
@@ -126,6 +132,7 @@ public class MailboxImpl implements Mailbox {
 		}
 	}
 
+	//note: 等待直到 mailbox 中有 letter 为止
 	@Override
 	public void waitUntilHasMail() throws InterruptedException {
 		final ReentrantLock lock = this.lock;
@@ -141,6 +148,7 @@ public class MailboxImpl implements Mailbox {
 
 	//------------------------------------------------------------------------------------------------------------------
 
+	//note: 添加一个 letter，如果 buffer 满了，这里会返回 false
 	@Override
 	public boolean tryPutMail(@Nonnull Runnable letter) {
 		final ReentrantLock lock = this.lock;
@@ -157,6 +165,7 @@ public class MailboxImpl implements Mailbox {
 		}
 	}
 
+	//note: 添加一个 letter，如果 buffer 满了，会等待直接 buffer 有空余空间可以添加为止
 	@Override
 	public void putMail(@Nonnull Runnable letter) throws InterruptedException {
 		final ReentrantLock lock = this.lock;
@@ -171,6 +180,7 @@ public class MailboxImpl implements Mailbox {
 		}
 	}
 
+	//note: 如果 buffer 满了，会一直等待直到 buffer 有空间释放
 	@Override
 	public void waitUntilHasCapacity() throws InterruptedException {
 		final ReentrantLock lock = this.lock;
@@ -186,19 +196,20 @@ public class MailboxImpl implements Mailbox {
 
 	//------------------------------------------------------------------------------------------------------------------
 
+	//note: 增加一个 event 事件
 	private void putInternal(Runnable letter) {
 		assert lock.isHeldByCurrentThread();
 		this.ringBuffer[tailIndex] = letter;
 		tailIndex = increaseIndexWithWrapAround(tailIndex);
 		++count;
-		notEmpty.signal();
+		notEmpty.signal(); //note: 非空的事件信号，有 event 来了
 	}
 
 	private Runnable takeInternal() {
 		assert lock.isHeldByCurrentThread();
 		final Runnable[] buffer = this.ringBuffer;
 		Runnable letter = buffer[headIndex];
-		buffer[headIndex] = null;
+		buffer[headIndex] = null; //note: 清楚原来 buffer 里的 event
 		headIndex = increaseIndexWithWrapAround(headIndex);
 		--count;
 		notFull.signal();
@@ -217,6 +228,7 @@ public class MailboxImpl implements Mailbox {
 		return count == 0;
 	}
 
+	//note: 先清理 buffer 中的 letter，然后再添加
 	@Override
 	public void clearAndPut(@Nonnull Runnable shutdownAction) {
 		lock.lock();

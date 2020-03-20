@@ -26,6 +26,7 @@ import org.apache.flink.util.Preconditions;
 import java.util.Collection;
 import java.util.HashSet;
 
+//note: TaskManager 相关的注册信息
 public class TaskManagerRegistration {
 
 	private final TaskExecutorConnection taskManagerConnection;
@@ -74,10 +75,12 @@ public class TaskManagerRegistration {
 		numberFreeSlots++;
 
 		if (numberFreeSlots == getNumberRegisteredSlots() && idleSince == Long.MAX_VALUE) {
+			//note: 如果这个 taskManager 的 slot 已经全部空闲了
 			idleSince = System.currentTimeMillis();
 		}
 	}
 
+	//note: 如果这个 taskManager 有 slot 被使用
 	public void occupySlot() {
 		Preconditions.checkState(
 			numberFreeSlots > 0,

@@ -37,7 +37,7 @@ import java.util.Set;
  * register their state under their operator id. Each operator instance is a physical execution responsible for
  * processing a partition of the data that goes through a logical operator. This partitioning happens to parallelize
  * execution of logical operators, e.g. distributing a map function.
- * note: 与某个 task 相关的所有 operator 实例的 snapshot（因为 operator chain 的机制，所有一个 task 是可以运行多个 operator 的，在注册状态时它们使用的也是同一个 operator id）
+ * note: 与某个 task 相关的所有 operator 实例的 snapshot（因为 operator chain 的机制，所以一个 task 是可以运行多个 operator 的，在注册状态时它们使用的也是同一个 operator id）
  * note: 每个 operator 实例都是一个处理数据某个 partition（被一个逻辑 operator 处理） 的实际物理执行
  *
  * <p>One instance of this class contains the information that one task will send to acknowledge a checkpoint request by

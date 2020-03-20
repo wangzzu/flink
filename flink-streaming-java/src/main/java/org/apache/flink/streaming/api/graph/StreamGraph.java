@@ -250,8 +250,10 @@ public class StreamGraph extends StreamingPlan {
 
 		//note: 添加 StreamNode
 		if (operatorFactory.isStreamSource()) {
+			//note: 这里指明了 invoke class 为 SourceStreamTask
 			addNode(vertexID, slotSharingGroup, coLocationGroup, SourceStreamTask.class, operatorFactory, operatorName);
 		} else {
+			//note: 这里执行了 invoke class 为 OneInputStreamTask
 			addNode(vertexID, slotSharingGroup, coLocationGroup, OneInputStreamTask.class, operatorFactory, operatorName);
 		}
 

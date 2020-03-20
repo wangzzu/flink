@@ -134,6 +134,7 @@ public class ZooKeeperLeaderRetrievalService implements LeaderRetrievalService, 
 		}
 	}
 
+	//note: 监控 node 的变化
 	@Override
 	public void nodeChanged() throws Exception {
 		synchronized (lock) {
@@ -173,6 +174,7 @@ public class ZooKeeperLeaderRetrievalService implements LeaderRetrievalService, 
 
 						lastLeaderAddress = leaderAddress;
 						lastLeaderSessionID = leaderSessionID;
+						//note: 通知 leader Address 信息及相应的 session ID
 						leaderListener.notifyLeaderAddress(leaderAddress, leaderSessionID);
 					}
 				} catch (Exception e) {

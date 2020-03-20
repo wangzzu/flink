@@ -90,6 +90,7 @@ public class HeartbeatMonitorImpl<O> implements HeartbeatMonitor<O>, Runnable {
 
 	@Override
 	public void reportHeartbeat() {
+		//note: 更新当前的心跳
 		lastHeartbeat = System.currentTimeMillis();
 		resetHeartbeatTimeout(heartbeatTimeoutIntervalMs);
 	}

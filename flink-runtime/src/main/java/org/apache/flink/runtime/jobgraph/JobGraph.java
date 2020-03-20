@@ -403,7 +403,7 @@ public class JobGraph implements Serializable {
 	//  Topological Graph Access
 	// --------------------------------------------------------------------------------------------
 
-	//note：实际上
+	//note：这里会根据 source 输入端做一个简单的排序
 	public List<JobVertex> getVerticesSortedTopologicallyFromSources() throws InvalidProgramException {
 		// early out on empty lists
 		if (this.taskVertices.isEmpty()) {
@@ -450,7 +450,7 @@ public class JobGraph implements Serializable {
 	private void addNodesThatHaveNoNewPredecessors(JobVertex start, List<JobVertex> target, Set<JobVertex> remaining) {
 
 		// forward traverse over all produced data sets and all their consumers
-		for (IntermediateDataSet dataSet : start.getProducedDataSets()) {
+		for (IntermediateDataSet dataSet : start.getProducedDataSets()) { //note: JobVertex.results
 			for (JobEdge edge : dataSet.getConsumers()) {
 
 				// a vertex can be added, if it has no predecessors that are still in the 'remaining' set

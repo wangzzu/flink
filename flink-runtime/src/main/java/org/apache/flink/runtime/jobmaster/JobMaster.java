@@ -243,8 +243,10 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 
 		resourceManagerLeaderRetriever = highAvailabilityServices.getResourceManagerLeaderRetriever();
 
+		//note: 创建一个 slotPool 对象（SlotPoolImpl）
 		this.slotPool = checkNotNull(slotPoolFactory).createSlotPool(jobGraph.getJobID());
 
+		//note: 会将 SlotPool 传过去
 		this.scheduler = checkNotNull(schedulerFactory).createScheduler(slotPool);
 
 		this.registeredTaskManagers = new HashMap<>(4);
@@ -444,6 +446,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 
 	// TODO: This method needs a leader session ID
 	@Override
+	//note: 当一个 Task 做完 snapshot 后，通过这个接口通知 JM，JM 再做相应的处理，如果这个 checkpoint 所有的 task 都已经 ack 了，那么这个 checkpoint 就完成了
 	public void acknowledgeCheckpoint(
 			final JobID jobID,
 			final ExecutionAttemptID executionAttemptID,
@@ -456,11 +459,13 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 
 	// TODO: This method needs a leader session ID
 	@Override
+	//note: TM 向 JM 发送这个消息，告诉 JM 的 Checkpoint Coordinator 这个 checkpoint request 没有响应，比如：TM 触发 checkpoint 失败
 	public void declineCheckpoint(DeclineCheckpoint decline) {
 		schedulerNG.declineCheckpoint(decline);
 	}
 
 	@Override
+	//note: 请求某个注册过 registrationName 对应的 KvState 的位置信息
 	public CompletableFuture<KvStateLocation> requestKvStateLocation(final JobID jobId, final String registrationName) {
 		try {
 			return CompletableFuture.completedFuture(schedulerNG.requestKvStateLocation(jobId, registrationName));
@@ -471,6 +476,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 	}
 
 	@Override
+	//note: 在注册一个 KvState 的时候，会调用这个方法，一些 operator 在初始化的时候会调用这个方法注册一个 KvState
 	public CompletableFuture<Acknowledge> notifyKvStateRegistered(
 			final JobID jobId,
 			final JobVertexID jobVertexId,
@@ -489,6 +495,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 	}
 
 	@Override
+	//note:  取消一个 KVState 的注册，这里是在 operator 关闭 state backend 时调用的（比如：operator 的生命周期结束了，就会调用这个方法）
 	public CompletableFuture<Acknowledge> notifyKvStateUnregistered(
 			JobID jobId,
 			JobVertexID jobVertexId,
@@ -503,6 +510,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 		}
 	}
 
+	//note: TM 通知 JM 其上面分配的 slot 列表
 	@Override
 	public CompletableFuture<Collection<SlotOffer>> offerSlots(
 			final ResourceID taskManagerId,
@@ -521,12 +529,14 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 		final RpcTaskManagerGateway rpcTaskManagerGateway = new RpcTaskManagerGateway(taskExecutorGateway, getFencingToken());
 
 		return CompletableFuture.completedFuture(
+			//note: 请求 slot
 			slotPool.offerSlots(
 				taskManagerLocation,
 				rpcTaskManagerGateway,
 				slots));
 	}
 
+	//note: 如果 TM 分配 slot 失败（情况可能很多，比如：slot 分配时状态转移失败等），将会通过这个接口告知 JM
 	@Override
 	public void failSlot(
 			final ResourceID taskManagerId,
@@ -542,9 +552,11 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 	}
 
 	private void internalFailAllocation(AllocationID allocationId, Exception cause) {
+		//note: slot 分配失败
 		final Optional<ResourceID> resourceIdOptional = slotPool.failAllocation(allocationId, cause);
 		resourceIdOptional.ifPresent(taskManagerId -> {
 			if (!partitionTracker.isTrackingPartitionsFor(taskManagerId)) {
+				//note: 如果这个 TM 已经没有 slot 在使用了
 				releaseEmptyTaskManager(taskManagerId);
 			}
 		});
@@ -555,6 +567,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 	}
 
 	@Override
+	//note: 向这个 JM 注册 TM，JM 会将 TM 注册到 SlotPool 中（只有注册过的 TM 的 Slot 才被认为是有效的，才可以做相应的分配），并且会通过心跳监控对应的 TM
 	public CompletableFuture<RegistrationResponse> registerTaskManager(
 			final String taskManagerRpcAddress,
 			final TaskManagerLocation taskManagerLocation,
@@ -563,6 +576,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 		final ResourceID taskManagerId = taskManagerLocation.getResourceID();
 
 		if (registeredTaskManagers.containsKey(taskManagerId)) {
+			//note: 这个 TM 已经注册过了，这里会有记录
 			final RegistrationResponse response = new JMTMRegistrationSuccess(resourceId);
 			return CompletableFuture.completedFuture(response);
 		} else {
@@ -574,10 +588,12 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 							return new RegistrationResponse.Decline(throwable.getMessage());
 						}
 
+						//note: 注册这个 TM
 						slotPool.registerTaskManager(taskManagerId);
 						registeredTaskManagers.put(taskManagerId, Tuple2.of(taskManagerLocation, taskExecutorGateway));
 
 						// monitor the task manager as heartbeat target
+						//note: 这里会有一个心跳监控
 						taskManagerHeartbeatManager.monitorTarget(taskManagerId, new HeartbeatTarget<AllocatedSlotReport>() {
 							@Override
 							public void receiveHeartbeat(ResourceID resourceID, AllocatedSlotReport payload) {
@@ -586,6 +602,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 
 							@Override
 							public void requestHeartbeat(ResourceID resourceID, AllocatedSlotReport allocatedSlotReport) {
+								//note: TM 将会发送心跳信息过来
 								taskExecutorGateway.heartbeatFromJobManager(resourceID, allocatedSlotReport);
 							}
 						});
@@ -597,6 +614,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 	}
 
 	@Override
+	//note: 与 ResourceManager 断开连接，这个是有三种情况会触发，JM 与 ResourceManager 心跳超时、作业取消、重连 RM 时会断开连接（比如：RM leader 切换、RM 的心跳超时）
 	public void disconnectResourceManager(
 			final ResourceManagerId resourceManagerId,
 			final Exception cause) {
@@ -612,16 +630,19 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 	}
 
 	@Override
+	//note: TM 向 JM 发送心跳信息
 	public void heartbeatFromTaskManager(final ResourceID resourceID, AccumulatorReport accumulatorReport) {
 		taskManagerHeartbeatManager.receiveHeartbeat(resourceID, accumulatorReport);
 	}
 
+	//note: 向 RM 发送一个心跳信息，RM 只会监听 JM 是否超时
 	@Override
 	public void heartbeatFromResourceManager(final ResourceID resourceID) {
 		resourceManagerHeartbeatManager.requestHeartbeat(resourceID, null);
 	}
 
 	@Override
+	//note: 请求这个执行作业的 JobDetails
 	public CompletableFuture<JobDetails> requestJobDetails(Time timeout) {
 		return CompletableFuture.completedFuture(schedulerNG.requestJobDetails());
 	}
@@ -636,6 +657,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 		return CompletableFuture.completedFuture(schedulerNG.requestJob());
 	}
 
+	//note: 触发一次 savepoint
 	@Override
 	public CompletableFuture<String> triggerSavepoint(
 			@Nullable final String targetDirectory,
@@ -645,6 +667,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 		return schedulerNG.triggerSavepoint(targetDirectory, cancelJob);
 	}
 
+	//note: 停止作业前触发一次 savepoint（触发情况是：用户手动停止作业时指定一个 savepoint 路径，这样的话，会在停止前做一次 savepoint）
 	@Override
 	public CompletableFuture<String> stopWithSavepoint(
 			@Nullable final String targetDirectory,
@@ -655,6 +678,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 	}
 
 	@Override
+	//note: 获取某个 operator 反压的情况
 	public CompletableFuture<OperatorBackPressureStatsResponse> requestOperatorBackPressureStats(final JobVertexID jobVertexId) {
 		try {
 			final Optional<OperatorBackPressureStats> operatorBackPressureStats = schedulerNG.requestOperatorBackPressureStats(jobVertexId);
@@ -667,11 +691,13 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 	}
 
 	@Override
+	//note: 如果 RM 分配 slot 失败的话，将会通过这个接口通知 JM
 	public void notifyAllocationFailure(AllocationID allocationID, Exception cause) {
 		internalFailAllocation(allocationID, cause);
 	}
 
 	@Override
+	//note: 更新 agg 的一个值，并返回最新的值
 	public CompletableFuture<Object> updateGlobalAggregate(String aggregateName, Object aggregand, byte[] serializedAggregateFunction) {
 
 		AggregateFunction aggregateFunction = null;
@@ -742,7 +768,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 		//   - activate leader retrieval for the resource manager
 		//   - on notification of the leader, the connection will be established and
 		//     the slot pool will start requesting slots
-		//note: 作业启动已经 ready，与 resource manager 建立连接
+		//note: 作业启动已经 ready，与 resource manager 建立连接(这里会监控 ResourceManager 的 Leader 变化)
 		//note: 1. 触发 resource manager 的 leader listener
 		//note: 2. leader 收到 notify 信号之后，connection 将会建立，slot pool 将会开始请求 slot；
 		resourceManagerLeaderRetriever.start(new ResourceManagerLeaderListener());
@@ -924,7 +950,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 		validateRunsInMainThread();
 
 		if (newJobStatus.isGloballyTerminalState()) {
-			//note: 如果 jbo 的 zt 变化了（变为终止情况）
+			//note: 如果 jbo 的 状态 变化了（变为终止情况）
 			runAsync(() -> registeredTaskManagers.keySet()
 				.forEach(partitionTracker::stopTrackingAndReleasePartitionsFor));
 
@@ -1044,6 +1070,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 		resourceManagerHeartbeatManager.unmonitorTarget(resourceManagerResourceID);
 
 		ResourceManagerGateway resourceManagerGateway = establishedResourceManagerConnection.getResourceManagerGateway();
+		//note: 断开与 RM 的连接
 		resourceManagerGateway.disconnectJobManager(jobGraph.getJobID(), cause);
 		slotPool.disconnectResourceManager();
 	}

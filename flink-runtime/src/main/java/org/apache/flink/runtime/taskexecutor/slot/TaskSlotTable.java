@@ -187,6 +187,7 @@ public class TaskSlotTable implements TimeoutListener<AllocationID> {
 	/**
 	 * Allocate the slot with the given index for the given job and allocation id. Returns true if
 	 * the slot could be allocated. Otherwise it returns false.
+	 * note: 将这个 slot 分配到指定的 job
 	 *
 	 * @param index of the task slot to allocate
 	 * @param jobId to allocate the task slot for
@@ -199,9 +200,11 @@ public class TaskSlotTable implements TimeoutListener<AllocationID> {
 
 		TaskSlot taskSlot = taskSlots.get(index);
 
+		//note: 分配这个 TaskSlot
 		boolean result = taskSlot.allocate(jobId, allocationId);
 
 		if (result) {
+			//note: 分配成功，记录到缓存中
 			// update the allocation id to task slot map
 			allocationIDTaskSlotMap.put(allocationId, taskSlot);
 
@@ -236,6 +239,7 @@ public class TaskSlotTable implements TimeoutListener<AllocationID> {
 		TaskSlot taskSlot = getTaskSlot(allocationId);
 
 		if (taskSlot != null) {
+			//note: 如果 slot 状态可以转化为 active，这里会返回 true
 			if (taskSlot.markActive()) {
 				// unregister a potential timeout
 				LOG.info("Activate slot {}.", allocationId);
@@ -316,7 +320,7 @@ public class TaskSlotTable implements TimeoutListener<AllocationID> {
 
 			final JobID jobId = taskSlot.getJobId();
 
-			if (taskSlot.markFree()) { //note: 如果 slot 可以被标记为 free 的话
+			if (taskSlot.markFree()) { //note: 如果 slot 可以被标记为 free 的话（前提是 slot 上没有正在运行的 task）
 				//note: 更新相应的状态信息
 
 				// remove the allocation id to task slot mapping
@@ -486,6 +490,7 @@ public class TaskSlotTable implements TimeoutListener<AllocationID> {
 		if (taskSlot != null) {
 			if (taskSlot.isActive(task.getJobID(), task.getAllocationId())) {
 				if (taskSlot.add(task)) {
+					//note: 添加到缓存中
 					taskSlotMappings.put(task.getExecutionId(), new TaskSlotMapping(task, taskSlot));
 
 					return true;

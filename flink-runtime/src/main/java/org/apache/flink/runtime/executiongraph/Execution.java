@@ -510,6 +510,7 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 
 	/**
 	 * Allocates and assigns a slot obtained from the slot provider to the execution.
+	 * note: 从 slot provider 获取一个 slot，将任务分配到这个 slot 上
 	 *
 	 * @param slotProviderStrategy to obtain a new slot from
 	 * @param locationPreferenceConstraint constraint for the location preferences
@@ -783,6 +784,7 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 		}
 	}
 
+	//note: 取消当前这个 Execution
 	public void cancel() {
 		// depending on the previous state, we go directly to cancelled (no cancel call necessary)
 		// -- or to canceling (cancel call needs to be sent to the task manager)
@@ -802,6 +804,7 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 			// these two are the common cases where we need to send a cancel call
 			else if (current == RUNNING || current == DEPLOYING) {
 				// try to transition to canceling, if successful, send the cancel call
+				//note: 如果正在运行，这个会取消
 				if (startCancelling(NUM_CANCEL_CALL_TRIES)) {
 					return;
 				}
@@ -1135,6 +1138,7 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 	private boolean startCancelling(int numberCancelRetries) {
 		if (transitionState(state, CANCELING)) {
 			taskManagerLocationFuture.cancel(false);
+			//note: 发送一个取消的 rpc
 			sendCancelRpcCall(numberCancelRetries);
 			return true;
 		} else {
@@ -1327,6 +1331,7 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 			final ComponentMainThreadExecutor jobMasterMainThreadExecutor =
 				getVertex().getExecutionGraph().getJobMasterMainThreadExecutor();
 
+			//note: 向 TM 发送取消 task 的请求
 			CompletableFuture<Acknowledge> cancelResultFuture = FutureUtils.retry(
 				() -> taskManagerGateway.cancelTask(attemptId, rpcTimeout),
 				numberRetries,
@@ -1463,7 +1468,7 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 
 	/**
 	 * Calculates the preferred locations based on the location preference constraint.
-	 * note: 根据 LocationPreferenceConstraint 策略计算前置输入节点的 TaskManagerLocation（如果有输入节点还没有资源分配，那么这个可能还不会完成）
+	 * note: 根据 LocationPreferenceConstraint 策略计算前置输入节点的 TaskManagerLocation
 	 *
 	 * @param locationPreferenceConstraint constraint for the location preference
 	 * @return Future containing the collection of preferred locations. This might not be completed if not all inputs
@@ -1477,15 +1482,16 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 
 		switch(locationPreferenceConstraint) {
 			case ALL:
+				//note: 默认是 ALL，就是前面拿到的列表，这里都可以使用
 				preferredLocationsFuture = FutureUtils.combineAll(preferredLocationFutures);
 				break;
 			case ANY:
-				//note: 遍历所有 input，先获取已经完成的 input 列表
+				//note: 遍历所有 input，先获取已经完成 assign 的 input 列表
 				final ArrayList<TaskManagerLocation> completedTaskManagerLocations = new ArrayList<>(preferredLocationFutures.size());
 
 				for (CompletableFuture<TaskManagerLocation> preferredLocationFuture : preferredLocationFutures) {
 					if (preferredLocationFuture.isDone() && !preferredLocationFuture.isCompletedExceptionally()) {
-						//note: 在这个 future 完成（没有异常的情况下），这里会理解先得到这个 taskManagerLocation 对象
+						//note: 在这个 future 完成（没有异常的情况下），这里会使用这个 taskManagerLocation 对象
 						final TaskManagerLocation taskManagerLocation = preferredLocationFuture.getNow(null);
 
 						if (taskManagerLocation == null) {

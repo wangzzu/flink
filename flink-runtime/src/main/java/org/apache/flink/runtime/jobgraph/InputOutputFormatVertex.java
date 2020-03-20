@@ -80,6 +80,7 @@ public class InputOutputFormatVertex extends JobVertex {
 						+ t.getMessage(), t);
 				}
 
+				//note: input split
 				setInputSplitSource(inputFormat);
 			}
 

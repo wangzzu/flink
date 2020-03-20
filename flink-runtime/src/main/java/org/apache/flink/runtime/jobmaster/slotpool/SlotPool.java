@@ -152,6 +152,7 @@ public interface SlotPool extends AllocatedSlotActions, AutoCloseable {
 	 * Request the allocation of a new slot from the resource manager. This method will not return a slot from the
 	 * already available slots from the pool, but instead will add a new slot to that pool that is immediately allocated
 	 * and returned.
+	 * note: 从 RM 请求一个新的 slot 资源分配，它不会返回 SlotPool 中已经请求到的 slot，
 	 *
 	 * @param slotRequestId identifying the requested slot
 	 * @param resourceProfile resource profile that specifies the resource requirements for the requested slot

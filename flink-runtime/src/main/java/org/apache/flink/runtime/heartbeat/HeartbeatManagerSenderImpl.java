@@ -90,6 +90,7 @@ public class HeartbeatManagerSenderImpl<I, O> extends HeartbeatManagerImpl<I, O>
 		O payload = getHeartbeatListener().retrievePayload(heartbeatMonitor.getHeartbeatTargetId());
 		final HeartbeatTarget<O> heartbeatTarget = heartbeatMonitor.getHeartbeatTarget();
 
+		//note: 请求 心跳
 		heartbeatTarget.requestHeartbeat(getOwnResourceID(), payload);
 	}
 }

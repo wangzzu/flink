@@ -32,7 +32,7 @@ import java.util.UUID;
  * The HighAvailabilityServices give access to all services needed for a highly-available
  * setup. In particular, the services provide access to highly available storage and
  * registries, as well as distributed counters and leader election.
- * note：
+ * note：HA 服务，提供了以下这些工程
  * 
  * <ul>
  *     <li>ResourceManager leader election and leader retrieval</li>

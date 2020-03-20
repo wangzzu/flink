@@ -58,6 +58,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * A MetricRegistry keeps track of all registered {@link Metric Metrics}. It serves as the
  * connection between {@link MetricGroup MetricGroups} and {@link MetricReporter MetricReporters}.
+ * note: 它会追踪每个注册的 Metrics，并且作为 MetricGroups 和 MetricReporter 之间的 connection
  */
 public class MetricRegistryImpl implements MetricRegistry {
 	static final Logger LOG = LoggerFactory.getLogger(MetricRegistryImpl.class);
@@ -141,6 +142,7 @@ public class MetricRegistryImpl implements MetricRegistry {
 					if (reporterInstance instanceof Scheduled) {
 						LOG.info("Periodically reporting metrics in intervals of {} {} for reporter {} of type {}.", period, timeunit.name(), namedReporter, className);
 
+						//note: 调度启动这个 MetricReporter
 						executor.scheduleWithFixedDelay(
 								new MetricRegistryImpl.ReporterTask((Scheduled) reporterInstance), period, period, timeunit);
 					} else {

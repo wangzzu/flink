@@ -72,6 +72,7 @@ public class KvStateRegistry {
 
 	/**
 	 * Registers the KvState instance and returns the assigned ID.
+	 * note: 注册一个 KvState
 	 *
 	 * @param jobId            JobId the KvState instance belongs to
 	 * @param jobVertexId      JobVertexID the KvState instance belongs to

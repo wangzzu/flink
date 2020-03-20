@@ -127,6 +127,7 @@ public class ZooKeeperLeaderElectionService implements LeaderElectionService, Le
 
 			leaderContender = contender;
 
+			//note: 这里的 leader 选举，使用的是 curator 封装的功能（参考：https://www.cnblogs.com/francisYoung/p/5464789.html）
 			leaderLatch.addListener(this);
 			leaderLatch.start();
 
@@ -225,6 +226,7 @@ public class ZooKeeperLeaderElectionService implements LeaderElectionService, Le
 						issuedLeaderSessionID);
 				}
 
+				//note: 当前的 JobManager 是 leader 的情况下
 				leaderContender.grantLeadership(issuedLeaderSessionID);
 			} else {
 				LOG.debug("Ignoring the grant leadership notification since the service has " +

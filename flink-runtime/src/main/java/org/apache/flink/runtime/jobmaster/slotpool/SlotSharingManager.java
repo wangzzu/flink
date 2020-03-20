@@ -63,6 +63,10 @@ import java.util.stream.Collectors;
  * every {@link TaskSlot} is uniquely identified by a {@link SlotRequestId} identifying
  * the request for the TaskSlot and a {@link AbstractID} identifying the task or the
  * co-location constraint running in this slot.
+ * note: SlotSharingManager 管理着一个有层次结构的 TaskSlot 集合，每一个 TaskSlot 是被唯一的 SlotRequestId 确认（AbstractID 表示每一个 task）
+ *
+ * note: TaskSlot 分为两种: MultiTaskSlot（它可以包含多个 TaskSlot）和 SingleTaskSlot（它是叶子节点）；
+ * note: root 节点（起始节点）是从 root MultiTaskSlot 开始，
  *
  * <p>The {@link TaskSlot} hierarchy is implemented by {@link MultiTaskSlot} and
  * {@link SingleTaskSlot}. The former class represents inner nodes which can contain
@@ -102,7 +106,7 @@ public class SlotSharingManager {
 	private final Map<SlotRequestId, MultiTaskSlot> unresolvedRootSlots;
 
 	/** Root nodes which have been completed (the underlying allocated slot has been assigned). */
-	//note: 已经完成的 node 列表
+	//note: 已经分配完成的 node 列表
 	private final Map<TaskManagerLocation, Map<AllocationID, MultiTaskSlot>> resolvedRootSlots;
 
 	SlotSharingManager(
@@ -147,6 +151,7 @@ public class SlotSharingManager {
 			SlotRequestId slotRequestId,
 			CompletableFuture<? extends SlotContext> slotContextFuture,
 			SlotRequestId allocatedSlotRequestId) {
+		//note: 先创建一个 MultiTaskSlot 对象（root 节点一定是 MultiTaskSlot 类型）
 		final MultiTaskSlot rootMultiTaskSlot = new MultiTaskSlot(
 			slotRequestId,
 			slotContextFuture,
@@ -156,6 +161,7 @@ public class SlotSharingManager {
 
 		allTaskSlots.put(slotRequestId, rootMultiTaskSlot);
 
+		//note: 正在处理，还没完成的记录
 		unresolvedRootSlots.put(slotRequestId, rootMultiTaskSlot);
 
 		// add the root node to the set of resolved root nodes once the SlotContext future has
@@ -173,6 +179,7 @@ public class SlotSharingManager {
 							slotContext.getTaskManagerLocation(),
 							taskManagerLocation -> new HashMap<>(4));
 
+						//note: 这里把 root MultiTaskSlot 放到 TaskManagerLocation 对应的集合中
 						MultiTaskSlot previousValue = innerMap.put(allocationId, resolvedRootNode);
 						Preconditions.checkState(previousValue == null);
 					}
@@ -190,6 +197,7 @@ public class SlotSharingManager {
 			.values()
 			.stream()
 				.flatMap((Map<AllocationID, MultiTaskSlot> map) -> map.values().stream())
+				//note: 过滤出不包括这个 groupId 及还没释放的 slot
 				.filter(validMultiTaskSlotAndDoesNotContain(groupId))
 				.map((MultiTaskSlot multiTaskSlot) -> {
 					SlotInfo slotInfo = multiTaskSlot.getSlotContextFuture().join();
@@ -205,7 +213,9 @@ public class SlotSharingManager {
 
 	@Nullable
 	public MultiTaskSlot getResolvedRootSlot(@Nonnull SlotInfo slotInfo) {
+		//note: 根据 TM 位置信息，拿到对应的 MultiTaskSlot
 		Map<AllocationID, MultiTaskSlot> forLocationEntry = resolvedRootSlots.get(slotInfo.getTaskManagerLocation());
+		//note: 再根据 AbstractID 拿到具体的 MultiTaskSlot
 		return forLocationEntry != null ? forLocationEntry.get(slotInfo.getAllocationId()) : null;
 	}
 
@@ -321,10 +331,12 @@ public class SlotSharingManager {
 	 */
 	public final class MultiTaskSlot extends TaskSlot implements PhysicalSlot.Payload {
 
+		//note: 这个 MultiTaskSlot 包含的 task slot
 		private final Map<AbstractID, TaskSlot> children;
 
 		// the root node has its parent set to null
 		@Nullable
+		//note: 记录这个 slot 父节点，它可能是来自于一个 MultiTaskSlot（也即 parent），有可能是是 root 节点，那这个值就为 null
 		private final MultiTaskSlot parent;
 
 		// underlying allocated slot
@@ -338,7 +350,7 @@ public class SlotSharingManager {
 		private boolean releasingChildren;
 
 		// the total resources reserved by all the descendants.
-		//note: 所有后代保留的资源
+		//note: 记录它所有 children 的资源
 		private ResourceProfile reservedResources;
 
 		private MultiTaskSlot(
@@ -390,6 +402,7 @@ public class SlotSharingManager {
 				}
 
 				if (parent == null) {
+					//note: 对于 root 节点才会做这个操作（统计这个 Root TaskSlot 相关信息）
 					checkOversubscriptionAndReleaseChildren(slotContext);
 				}
 
@@ -404,6 +417,7 @@ public class SlotSharingManager {
 		/**
 		 * Allocates a MultiTaskSlot and registers it under the given groupId at
 		 * this MultiTaskSlot.
+		 * note: 在 MultiTaskSlot 中注册一个 MultiTaskSlot
 		 *
 		 * @param slotRequestId of the new multi task slot
 		 * @param groupId under which the new multi task slot is registered
@@ -445,6 +459,7 @@ public class SlotSharingManager {
 
 			LOG.debug("Create single task slot [{}] in multi task slot [{}] for group {}.", slotRequestId, getSlotRequestId(), groupId);
 
+			//note: 创建一个 SingleTaskSlot 对象
 			final SingleTaskSlot leaf = new SingleTaskSlot(
 				slotRequestId,
 				resourceProfile,
@@ -457,6 +472,7 @@ public class SlotSharingManager {
 			// register the newly allocated slot also at the SlotSharingManager
 			allTaskSlots.put(slotRequestId, leaf);
 
+			// TODO: 2019-12-27 这里应该在创建 allocateSingleTaskSlot 的时候，应该要判断一下资源是否能满足 
 			reserveResource(resourceProfile);
 
 			return leaf;
@@ -596,6 +612,7 @@ public class SlotSharingManager {
 			}
 		}
 
+		//note: 这里主要是为了检查 slot 资源是否满足
 		private void checkOversubscriptionAndReleaseChildren(SlotContext slotContext) {
 			final ResourceProfile slotResources = slotContext.getResourceProfile();
 			final ArrayList<TaskSlot> childrenToEvict = new ArrayList<>();
@@ -605,6 +622,7 @@ public class SlotSharingManager {
 				final ResourceProfile resourcesWithChild = requiredResources.merge(slot.getReservedResources());
 
 				if (slotResources.isMatching(resourcesWithChild)) {
+					//note: 能满足资源需要的情况下
 					requiredResources = resourcesWithChild;
 				} else {
 					childrenToEvict.add(slot);
@@ -632,6 +650,7 @@ public class SlotSharingManager {
 					"The allocated slot does not have enough resource for any task.", false));
 			} else {
 				for (TaskSlot taskSlot : childrenToEvict) {
+					//note: 资源不足，释放了这个资源
 					taskSlot.release(new SharedSlotOversubscribedException(
 						"The allocated slot does not have enough resource for all the tasks.", true));
 				}
@@ -684,9 +703,11 @@ public class SlotSharingManager {
 			super(slotRequestId, groupId);
 
 			this.resourceProfile = Preconditions.checkNotNull(resourceProfile);
+			//note: 记录其 parent
 			this.parent = Preconditions.checkNotNull(parent);
 
 			Preconditions.checkNotNull(locality);
+			//note: 创建这个 SingleTaskSlot 对应的 SingleLogicalSlot
 			singleLogicalSlotFuture = parent.getSlotContextFuture()
 				.thenApply(
 					(SlotContext slotContext) -> {

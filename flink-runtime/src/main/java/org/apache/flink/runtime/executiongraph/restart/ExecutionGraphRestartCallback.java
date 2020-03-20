@@ -54,6 +54,7 @@ public class ExecutionGraphRestartCallback implements RestartCallback {
 	}
 
 	@Override
+	//note: 触发完全的 failover
 	public void triggerFullRecovery() {
 		if (used.compareAndSet(false, true)) {
 			execGraph.restart(expectedGlobalModVersion);

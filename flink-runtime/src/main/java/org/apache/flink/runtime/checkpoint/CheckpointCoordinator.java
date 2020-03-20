@@ -275,6 +275,7 @@ public class CheckpointCoordinator {
 	 * Adds the given master hook to the checkpoint coordinator. This method does nothing, if
 	 * the checkpoint coordinator already contained a hook with the same ID (as defined via
 	 * {@link MasterTriggerRestoreHook#getIdentifier()}).
+	 * note: 注册 hook
 	 *
 	 * @param hook The hook to add.
 	 * @return True, if the hook was added, false if the checkpoint coordinator already
@@ -382,6 +383,7 @@ public class CheckpointCoordinator {
 
 	/**
 	 * Triggers a synchronous savepoint with the given savepoint directory as a target.
+	 * note: 同步地触发一个 savepoint
 	 *
 	 * @param timestamp The timestamp for the savepoint.
 	 * @param advanceToEndOfEventTime Flag indicating if the source should inject a {@code MAX_WATERMARK} in the pipeline
@@ -722,6 +724,7 @@ public class CheckpointCoordinator {
 					message.getTaskExecutionId(),
 					job,
 					taskManagerLocationInfo);
+				//note: 废弃掉这个 checkpoint
 				discardCheckpoint(checkpoint, message.getReason(), message.getTaskExecutionId());
 			}
 			else if (checkpoint != null) {
@@ -746,6 +749,7 @@ public class CheckpointCoordinator {
 	/**
 	 * Receives an AcknowledgeCheckpoint message and returns whether the
 	 * message was associated with a pending checkpoint.
+	 * note：收到一个来自 TM 的 acknowledgeCheckpoint 消息
 	 *
 	 * @param message Checkpoint ack from the task manager
 	 *
@@ -778,6 +782,7 @@ public class CheckpointCoordinator {
 
 			if (checkpoint != null && !checkpoint.isDiscarded()) {
 
+				//note: 接收到了这个 TM 的 checkpoint
 				switch (checkpoint.acknowledgeTask(message.getTaskExecutionId(), message.getSubtaskState(), message.getCheckpointMetrics())) {
 					case SUCCESS:
 						LOG.debug("Received acknowledge message for checkpoint {} from task {} of job {} at {}.",

@@ -160,7 +160,7 @@ public class ExecutionGraphBuilder {
 			jobGraph.getUserJarBlobKeys(),
 			jobGraph.getClasspaths());
 
-		//note: 历史 Execution 保留的最大数
+		//note: Execution 保留的最大历史数
 		final int maxPriorAttemptsHistoryLength =
 				jobManagerConfig.getInteger(JobManagerOptions.MAX_ATTEMPTS_HISTORY_SIZE);
 
@@ -233,6 +233,7 @@ public class ExecutionGraphBuilder {
 				(System.nanoTime() - initMasterStart) / 1_000_000);
 
 		// topologically sort the job vertices and attach the graph to the existing one
+		//note: 这里会先做一个排序，source 会放在最前面，接着开始遍历，必须保证当前添加到集合的节点的前置节点都已经添加进去了
 		List<JobVertex> sortedTopology = jobGraph.getVerticesSortedTopologicallyFromSources();
 		if (log.isDebugEnabled()) {
 			log.debug("Adding {} vertices from job graph {} ({}).", sortedTopology.size(), jobName, jobId);
@@ -245,12 +246,14 @@ public class ExecutionGraphBuilder {
 		}
 
 		//note: cp 相关的配置
-		// configure the state checkpointing
+		// configure the state CheckPointing
 		JobCheckpointingSettings snapshotSettings = jobGraph.getCheckpointingSettings();
 		if (snapshotSettings != null) {
+			//note: cp 时，需要 trigger（插入 barrier）的 JobVertex，这里指的是 source 节点
 			List<ExecutionJobVertex> triggerVertices =
 					idToVertex(snapshotSettings.getVerticesToTrigger(), executionGraph);
 
+			//note: cp 时，需要向 master 返回 ack 信息的 JobVertex 节点的集合
 			List<ExecutionJobVertex> ackVertices =
 					idToVertex(snapshotSettings.getVerticesToAcknowledge(), executionGraph);
 
@@ -282,6 +285,7 @@ public class ExecutionGraphBuilder {
 			}
 
 			// Maximum number of remembered checkpoints
+			//note: cp 保存的最多数量
 			int historySize = jobManagerConfig.getInteger(WebOptions.CHECKPOINTS_HISTORY_SIZE);
 
 			CheckpointStatsTracker checkpointStatsTracker = new CheckpointStatsTracker(

@@ -100,6 +100,7 @@ public class TaskExecutorToResourceManagerConnection
 		log.info("Successful registration at resource manager {} under registration id {}.",
 			getTargetAddress(), success.getRegistrationId());
 
+		//note: 注册成功的话，将会调用这个方法
 		registrationListener.onRegistrationSuccess(this, success);
 	}
 

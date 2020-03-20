@@ -80,7 +80,7 @@ public class HighAvailabilityServicesUtils {
 		Executor executor,
 		AddressResolution addressResolution) throws Exception {
 
-		//note: HA 的模式，可以是 ZOOKEEPR，也可以是 FACTORY_CLASS，默认是 NONE
+		//note: HA 的模式，可以是 ZOOKEEPER，也可以是 FACTORY_CLASS，默认是 NONE
 		HighAvailabilityMode highAvailabilityMode = HighAvailabilityMode.fromConfig(configuration);
 
 		switch (highAvailabilityMode) {

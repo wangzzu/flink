@@ -50,6 +50,7 @@ public interface TaskExecutorGateway extends RpcGateway {
 
 	/**
 	 * Requests a slot from the TaskManager.
+	 * note: RM 过来请求 slot
 	 *
 	 * @param slotId slot id for the request
 	 * @param jobId for which to request a slot
@@ -77,6 +78,7 @@ public interface TaskExecutorGateway extends RpcGateway {
 
 	/**
 	 * Submit a {@link Task} to the {@link TaskExecutor}.
+	 * note: 向 TM 提交一个 task
 	 *
 	 * @param tdd describing the task to submit
 	 * @param jobMasterId identifying the submitting JobMaster
@@ -112,6 +114,7 @@ public interface TaskExecutorGateway extends RpcGateway {
 	/**
 	 * Trigger the checkpoint for the given task. The checkpoint is identified by the checkpoint ID
 	 * and the checkpoint timestamp.
+	 * note: 触发 task 的 checkpoint
 	 *
 	 * @param executionAttemptID identifying the task
 	 * @param checkpointID unique id for the checkpoint

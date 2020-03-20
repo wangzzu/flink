@@ -203,7 +203,7 @@ public abstract class ClusterEntrypoint implements AutoCloseableAsync, FatalErro
 	//note: run cluster real start-point
 	private void runCluster(Configuration configuration) throws Exception {
 		synchronized (lock) {
-			//note: 首先会初始化相关的服务
+			//note: 首先会初始化相关的服务(这里会涉及到一系列的服务)
 			initializeServices(configuration);
 
 			// write host information into configuration
@@ -212,7 +212,7 @@ public abstract class ClusterEntrypoint implements AutoCloseableAsync, FatalErro
 
 			final DispatcherResourceManagerComponentFactory<?> dispatcherResourceManagerComponentFactory = createDispatcherResourceManagerComponentFactory(configuration);
 
-			//note: 创建 DispatcherResourceManagerComponent 对象
+			//note: 创建 DispatcherResourceManagerComponent 对象（前面初始化的服务，都在这里使用了）
 			clusterComponent = dispatcherResourceManagerComponentFactory.create(
 				configuration,
 				commonRpcService,
@@ -261,12 +261,13 @@ public abstract class ClusterEntrypoint implements AutoCloseableAsync, FatalErro
 			configuration.setString(JobManagerOptions.ADDRESS, commonRpcService.getAddress());
 			configuration.setInteger(JobManagerOptions.PORT, commonRpcService.getPort());
 
+			//note: 用于 IO 的线程池
 			ioExecutor = Executors.newFixedThreadPool(
 				Hardware.getNumberCPUCores(),
 				new ExecutorThreadFactory("cluster-io"));
-			//note: HA service
+			//note: HA service（跟用户配置有关，可以是 NONE、ZooKeeper 也可以自定义的类）
 			haServices = createHaServices(configuration, ioExecutor);
-			//note: blob server：process requests
+			//note: 初始化 Blob Server
 			blobServer = new BlobServer(configuration, haServices.createBlobStore());
 			blobServer.start();
 			//note: heartbeat service
@@ -274,11 +275,12 @@ public abstract class ClusterEntrypoint implements AutoCloseableAsync, FatalErro
 			//note: metrics reporter
 			metricRegistry = createMetricRegistry(configuration);
 
+			//note: 创建了一个 Flink 内部的 metrics rpc service
 			final RpcService metricQueryServiceRpcService = MetricUtils.startMetricsRpcService(configuration, bindAddress);
 			//note: start MetricQueryService
 			metricRegistry.startQueryService(metricQueryServiceRpcService, null);
 
-			//note: 创建一个 archivedExecutionGraphStore 对象，用于存储用户作业的物理 graph
+			//note: 创建一个 ArchivedExecutionGraphStore 对象，用于存储用户作业的物理 graph
 			archivedExecutionGraphStore = createSerializableExecutionGraphStore(configuration, commonRpcService.getScheduledExecutor());
 		}
 	}
@@ -477,6 +479,7 @@ public abstract class ClusterEntrypoint implements AutoCloseableAsync, FatalErro
 	// Abstract methods
 	// --------------------------------------------------
 
+	//note: 不同类型的集群有不同的实现
 	protected abstract DispatcherResourceManagerComponentFactory<?> createDispatcherResourceManagerComponentFactory(Configuration configuration);
 
 	protected abstract ArchivedExecutionGraphStore createSerializableExecutionGraphStore(

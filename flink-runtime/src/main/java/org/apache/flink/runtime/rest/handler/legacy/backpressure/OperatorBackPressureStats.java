@@ -99,6 +99,7 @@ public class OperatorBackPressureStats implements Serializable {
 	/**
 	 * Returns the ratio of stack traces indicating back pressure to total
 	 * number of sampled stack traces.
+	 * note: 返回这个 Operator 反压的比例
 	 *
 	 * @param index Subtask index.
 	 *

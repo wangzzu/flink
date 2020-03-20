@@ -131,7 +131,7 @@ public class TaskManagerRunner implements FatalErrorHandler, AutoCloseableAsync 
 			Hardware.getNumberCPUCores(),
 			new ExecutorThreadFactory("taskmanager-future"));
 
-		//note: HA 的配置
+		//note: HA 的配置及服务初始化
 		highAvailabilityServices = HighAvailabilityServicesUtils.createHighAvailabilityServices(
 			configuration,
 			executor,
@@ -152,12 +152,12 @@ public class TaskManagerRunner implements FatalErrorHandler, AutoCloseableAsync 
 		final RpcService metricQueryServiceRpcService = MetricUtils.startMetricsRpcService(configuration, rpcService.getAddress());
 		metricRegistry.startQueryService(metricQueryServiceRpcService, resourceId);
 
-		//note: 初始化 blob 服务（如果不做 HA 的话，这个服务什么都不会做）
+		//note: 初始化 blob 服务
 		blobCacheService = new BlobCacheService(
 			configuration, highAvailabilityServices.createBlobStore(), null
 		);
 
-		//note: 初始化 TaskExecutor 对象
+		//note: 启动 TaskManager 服务及创建 TaskExecutor 对象
 		taskManager = startTaskManager(
 			this.configuration,
 			this.resourceId,
@@ -371,7 +371,7 @@ public class TaskManagerRunner implements FatalErrorHandler, AutoCloseableAsync 
 
 		InetAddress remoteAddress = InetAddress.getByName(rpcService.getAddress());
 
-		//note: TM 相关的配置都在这个对象中
+		//note: TM 服务相关的配置都维护在这个对象中，这里会把使用的相关参数解析并维护起来
 		TaskManagerServicesConfiguration taskManagerServicesConfiguration =
 			TaskManagerServicesConfiguration.fromConfiguration(
 				configuration,
@@ -381,24 +381,25 @@ public class TaskManagerRunner implements FatalErrorHandler, AutoCloseableAsync 
 				EnvironmentInformation.getMaxJvmHeapMemory(),
 				localCommunicationOnly);
 
-		//note: metrics group 相关的初始化
+		//note: 初始化 TM 的 TaskManagerMetricGroup，并相应地初始化 TM 的基本状态（内存、CPU 等）监控
 		Tuple2<TaskManagerMetricGroup, MetricGroup> taskManagerMetricGroup = MetricUtils.instantiateTaskManagerMetricGroup(
 			metricRegistry,
 			TaskManagerLocation.getHostName(remoteAddress),
 			resourceID,
 			taskManagerServicesConfiguration.getSystemResourceMetricsProbingInterval());
 
-		//note: 初始化 TaskManagerServices（TM 相关服务都在这里）
+		//note: 初始化 TaskManagerServices（TM 相关服务的初始化都在这里）
 		TaskManagerServices taskManagerServices = TaskManagerServices.fromConfiguration(
 			taskManagerServicesConfiguration,
 			taskManagerMetricGroup.f1,
 			rpcService.getExecutor()); // TODO replace this later with some dedicated executor for io.
 
+		//note: TaskManager 相关的配置，主要用于 TaskExecutor 的初始化
 		TaskManagerConfiguration taskManagerConfiguration = TaskManagerConfiguration.fromConfiguration(configuration);
 
 		String metricQueryServiceAddress = metricRegistry.getMetricQueryServiceGatewayRpcAddress();
 
-		//note: 创建 TaskExecutor 对象
+		//note: 最后创建 TaskExecutor 对象
 		return new TaskExecutor(
 			rpcService,
 			taskManagerConfiguration,
