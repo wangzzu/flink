@@ -281,6 +281,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 		this.accumulatorMap = getEnvironment().getAccumulatorRegistry().getUserMap();
 		this.recordWriter = createRecordWriterDelegate(configuration, environment);
 		this.actionExecutor = Preconditions.checkNotNull(actionExecutor);
+		//note: 创建 MailboxProcessor
 		this.mailboxProcessor = new MailboxProcessor(this::processInput, mailbox, actionExecutor);
 		this.asyncExceptionHandler = new StreamTaskAsyncExceptionHandler(environment);
 	}
@@ -303,21 +304,26 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	/**
 	 * This method implements the default action of the task (e.g. processing one event from the input). Implementations
 	 * should (in general) be non-blocking.
+	 * note: 这个方法执行这个 task 默认的 action
 	 *
 	 * @param controller controller object for collaborative interaction between the action and the stream task.
 	 * @throws Exception on any problems in the action.
 	 */
 	protected void processInput(MailboxDefaultAction.Controller controller) throws Exception {
-		InputStatus status = inputProcessor.processInput();
+		InputStatus status = inputProcessor.processInput(); //note: event 处理
 		if (status == InputStatus.MORE_AVAILABLE && recordWriter.isAvailable()) {
+			//note: 如果输入还有数据，并且 writer 是可用的，这里就直接返回了
 			return;
 		}
 		if (status == InputStatus.END_OF_INPUT) {
+			//note: 输入已经处理完了，会调用这个方法
 			controller.allActionsCompleted();
 			return;
 		}
 		CompletableFuture<?> jointFuture = getInputOutputJointFuture(status);
+		//note: 告诉 MailBox 先暂停 loop
 		MailboxDefaultAction.Suspension suspendedDefaultAction = controller.suspendDefaultAction();
+		//note: 等待 future 完成后，继续 mailbox loop（等待 input 和 output 可用后，才会继续）
 		jointFuture.thenRun(suspendedDefaultAction::resume);
 	}
 
@@ -326,6 +332,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	 * 1. Both input and output are unavailable.
 	 * 2. Only input is unavailable.
 	 * 3. Only output is unavailable.
+	 * note: input 或 output 不可用的情况下
 	 */
 	private CompletableFuture<?> getInputOutputJointFuture(InputStatus status) {
 		if (status == InputStatus.NOTHING_AVAILABLE && !recordWriter.isAvailable()) {
@@ -411,6 +418,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 		}
 	}
 
+	//note: 初始化操作
 	private void beforeInvoke() throws Exception {
 		disposedOperators = false;
 		LOG.debug("Initializing {}.", getName());
@@ -483,6 +491,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	}
 
 	private void runMailboxLoop() throws Exception {
+		//note: mailbox 处理
 		try {
 			mailboxProcessor.runMailboxLoop();
 		}
@@ -773,6 +782,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 			CheckpointOptions checkpointOptions,
 			boolean advanceToEndOfEventTime) {
 
+		//note: checkpoint 触发时，提交相应的 task
 		return mailboxProcessor.getMainMailboxExecutor().submit(
 				() -> triggerCheckpoint(checkpointMetaData, checkpointOptions, advanceToEndOfEventTime),
 				"checkpoint %s with %s",
@@ -780,6 +790,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 			checkpointOptions);
 	}
 
+	//note: 触发的 task
 	private boolean triggerCheckpoint(
 			CheckpointMetaData checkpointMetaData,
 			CheckpointOptions checkpointOptions,
@@ -920,6 +931,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 
 	@Override
 	public Future<Void> notifyCheckpointCompleteAsync(long checkpointId) {
+		//note: 向 mailbox 提交 task
 		return mailboxProcessor.getMailboxExecutor(TaskMailbox.MAX_PRIORITY).submit(
 				() -> notifyCheckpointComplete(checkpointId),
 				"checkpoint %d complete", checkpointId);
@@ -1505,6 +1517,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 
 	private ProcessingTimeCallback deferCallbackToMailbox(MailboxExecutor mailboxExecutor, ProcessingTimeCallback callback) {
 		return timestamp -> {
+			//note: Timer process 添加到 mailbox 中
 			mailboxExecutor.execute(
 				() -> invokeProcessingTimeCallback(callback, timestamp),
 				"Timer callback for %s @ %d",

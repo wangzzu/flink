@@ -56,12 +56,14 @@ public interface MailboxDefaultAction {
 		/**
 		 * This method must be called to end the stream task when all actions for the tasks have been performed. This
 		 * method can be invoked from any thread.
+		 * note: 在 stream task 结束时，会调用这个方法
 		 */
 		void allActionsCompleted();
 
 		/**
 		 * Calling this method signals that the mailbox-thread should (temporarily) stop invoking the default action,
 		 * e.g. because there is currently no input available. This method must be invoked from the mailbox-thread only!
+		 * note: 这个方法表示 mailbox 线程停止触发默认的 action，因为当前没有可用的 input，它只能由 mailbox 线程自己触发
 		 */
 		Suspension suspendDefaultAction();
 	}

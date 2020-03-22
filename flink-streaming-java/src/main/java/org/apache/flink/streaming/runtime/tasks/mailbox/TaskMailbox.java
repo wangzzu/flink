@@ -29,6 +29,8 @@ import java.util.Optional;
 /**
  * A task mailbox provides read and write access to a mailbox and has a lifecycle of open -> (quiesced) -> closed. Mails
  * have a priority that can be used to retrieve only relevant letters.
+ * note: task MailBox 提供了对一个 MailBox 读写操作的方法，它会绑定到一个线程上
+ * note: 写操作可以通过 put/putFirst；生命周期：open --> quiesced（只允许读取） --> close
  *
  * <h3>Threading model</h3>
  * The mailbox is bound to a mailbox thread passed during creation. Most operations may only occur through that thread.

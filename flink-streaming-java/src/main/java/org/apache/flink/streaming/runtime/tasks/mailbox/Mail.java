@@ -31,11 +31,13 @@ import java.util.concurrent.Future;
 public class Mail {
 	/**
 	 * The action to execute.
+	 * note: 要执行的内容
 	 */
 	private final RunnableWithException runnable;
 	/**
 	 * The priority of the mail. The priority does not determine the order, but helps to hide upstream mails from
 	 * downstream processors to avoid live/deadlocks.
+	 * note: mail 的优先级，它并不决定顺序，只是下游 processor 在处理 mail 时做一个更合理的选择
 	 */
 	private final int priority;
 	/**
@@ -45,6 +47,7 @@ public class Mail {
 
 	private final Object[] descriptionArgs;
 
+	//note: 执行的时候会调用 actionExecutor 这个处理，source 端在 checkpoint 时，也会获取这个锁
 	private final StreamTaskActionExecutor actionExecutor;
 
 	public Mail(RunnableWithException runnable, int priority, String descriptionFormat, Object... descriptionArgs) {

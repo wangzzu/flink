@@ -55,6 +55,7 @@ public final class MailboxExecutorImpl implements MailboxExecutor {
 		final String descriptionFormat,
 		final Object... descriptionArgs) {
 		try {
+			//note: 将 mail 添加到 mailbox 中
 			mailbox.put(new Mail(command, priority, actionExecutor, descriptionFormat, descriptionArgs));
 		} catch (IllegalStateException mbex) {
 			throw new RejectedExecutionException(mbex);

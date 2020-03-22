@@ -114,6 +114,7 @@ public class SourceStreamTask<OUT, SRC extends SourceFunction<OUT>, OP extends S
 	@Override
 	protected void processInput(MailboxDefaultAction.Controller controller) throws Exception {
 
+		//note: 告诉 MailBox 先暂停 loop
 		controller.suspendDefaultAction();
 
 		// Against the usual contract of this method, this implementation is not step-wise but blocking instead for
@@ -122,8 +123,10 @@ public class SourceStreamTask<OUT, SRC extends SourceFunction<OUT>, OP extends S
 		sourceThread.start();
 		sourceThread.getCompletionFuture().whenComplete((Void ignore, Throwable sourceThreadThrowable) -> {
 			if (sourceThreadThrowable == null || isFinished) {
+				//note: sourceThread 完成后，没有抛出异常或 task 完成的情况下
 				mailboxProcessor.allActionsCompleted();
 			} else {
+				//note: 没有完成但结束了或者抛出异常的情况下
 				mailboxProcessor.reportThrowable(sourceThreadThrowable);
 			}
 		});
@@ -181,6 +184,7 @@ public class SourceStreamTask<OUT, SRC extends SourceFunction<OUT>, OP extends S
 
 	/**
 	 * Runnable that executes the the source function in the head operator.
+	 * note: source 产生 data 的一个线程
 	 */
 	private class LegacySourceFunctionThread extends Thread {
 
@@ -193,6 +197,7 @@ public class SourceStreamTask<OUT, SRC extends SourceFunction<OUT>, OP extends S
 		@Override
 		public void run() {
 			try {
+				//note: 调用 source Operator 的 run
 				headOperator.run(getCheckpointLock(), getStreamStatusMaintainer(), operatorChain);
 				completionFuture.complete(null);
 			} catch (Throwable t) {

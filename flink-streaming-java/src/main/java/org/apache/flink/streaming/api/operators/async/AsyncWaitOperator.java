@@ -279,6 +279,7 @@ public class AsyncWaitOperator<IN, OUT>
 			queue.emitCompletedElement(timestampedCollector);
 			// if there are more completed elements, emit them with subsequent mails
 			if (queue.hasCompletedElements()) {
+				//note: 会添加到相应 mailbox 中
 				mailboxExecutor.execute(this::outputCompletedElement, "AsyncWaitOperator#outputCompletedElement");
 			}
 		}

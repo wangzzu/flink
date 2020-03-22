@@ -36,6 +36,7 @@ public interface StreamTaskActionExecutor {
 
 	<R> R call(Callable<R> callable) throws Exception;
 
+	//note: StreamTaskActionExecutor 的一个实现
 	StreamTaskActionExecutor IMMEDIATE = new StreamTaskActionExecutor() {
 		@Override
 		public void run(RunnableWithException runnable) throws Exception {
