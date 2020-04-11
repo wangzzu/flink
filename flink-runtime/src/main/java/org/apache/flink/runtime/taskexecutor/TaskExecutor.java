@@ -710,12 +710,14 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 			.collect(Collectors.toList());
 	}
 
+	//note: task 任务取消
 	@Override
 	public CompletableFuture<Acknowledge> cancelTask(ExecutionAttemptID executionAttemptID, Time timeout) {
 		final Task task = taskSlotTable.getTask(executionAttemptID);
 
 		if (task != null) {
 			try {
+				//note: 取消 task
 				task.cancelExecution();
 				return CompletableFuture.completedFuture(Acknowledge.get());
 			} catch (Throwable t) {

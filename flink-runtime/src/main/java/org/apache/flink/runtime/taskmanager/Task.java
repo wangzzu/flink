@@ -1025,6 +1025,8 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 	 * (such as FINISHED, CANCELED, FAILED), or if the task is already canceling this does nothing.
 	 * Otherwise it sets the state to CANCELING, and, if the invokable code is running,
 	 * starts an asynchronous thread that aborts that code.
+	 * note: 取消 task 的执行，如果 task 已经是终止状态或已经取消，这里什么都不做
+	 * note: 否则会将其状态转为 CANCELING，并启动一个异步线程将正在运行的 invokable code 取消
 	 *
 	 * <p>This method never blocks.</p>
 	 */
@@ -1049,6 +1051,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 		cancelOrFailAndCancelInvokable(ExecutionState.FAILED, cause);
 	}
 
+	//note: task 取消或失败的处理，并取消 invokable 执行
 	private void cancelOrFailAndCancelInvokable(ExecutionState targetState, Throwable cause) {
 		while (true) {
 			ExecutionState current = executionState;
@@ -1480,6 +1483,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 				// the user-defined cancel method may throw errors.
 				// we need do continue despite that
 				try {
+					//note: invokable 取消
 					invokable.cancel();
 				} catch (Throwable t) {
 					ExceptionUtils.rethrowIfFatalError(t);
@@ -1564,6 +1568,7 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 
 					executerThread.interrupt();
 					try {
+						//note: 最多等待 interruptIntervalMillis 这么长时间让线程挂掉
 						executerThread.join(interruptIntervalMillis);
 					}
 					catch (InterruptedException e) {
