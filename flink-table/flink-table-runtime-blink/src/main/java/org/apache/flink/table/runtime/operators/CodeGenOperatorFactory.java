@@ -25,6 +25,7 @@ import org.apache.flink.table.runtime.generated.GeneratedClass;
 
 /**
  * Stream operator factory for code gen operator.
+ * note: Flink SQL 代码可以从这里入手，这个目录有各个算子的实现逻辑
  */
 public class CodeGenOperatorFactory<OUT> extends AbstractStreamOperatorFactory<OUT> {
 

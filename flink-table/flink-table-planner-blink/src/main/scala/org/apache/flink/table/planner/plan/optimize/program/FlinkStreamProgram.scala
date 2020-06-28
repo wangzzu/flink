@@ -27,6 +27,7 @@ import org.apache.calcite.plan.hep.HepMatchOrder
 
 /**
   * Defines a sequence of programs to optimize for stream table plan.
+ * note: 定义Stream模式下Flink job的优化顺序
   */
 object FlinkStreamProgram {
 

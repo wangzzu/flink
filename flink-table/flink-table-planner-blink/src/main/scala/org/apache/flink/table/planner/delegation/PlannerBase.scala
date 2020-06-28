@@ -63,6 +63,7 @@ import _root_.scala.collection.JavaConversions._
   * Implementation of [[Planner]] for blink planner. It supports only streaming use cases.
   * (The new [[org.apache.flink.table.sources.InputFormatTableSource]] should work, but will be
   * handled as streaming sources, and no batch specific optimizations will be applied).
+  * note: blink planner 的一些实现
   *
   * @param executor        instance of [[Executor]], needed to extract
   *                        [[StreamExecutionEnvironment]] for
