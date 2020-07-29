@@ -22,6 +22,7 @@ import org.apache.flink.annotation.PublicEvolving;
 import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.api.common.functions.Function;
 import org.apache.flink.api.common.functions.util.FunctionUtils;
+import org.apache.flink.api.common.io.CleanupWhenUnsuccessful;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.runtime.state.CheckpointListener;
@@ -29,6 +30,7 @@ import org.apache.flink.runtime.state.StateInitializationContext;
 import org.apache.flink.runtime.state.StateSnapshotContext;
 import org.apache.flink.streaming.api.checkpoint.CheckpointedFunction;
 import org.apache.flink.streaming.api.checkpoint.ListCheckpointed;
+import org.apache.flink.streaming.api.functions.sink.OutputFormatSinkFunction;
 import org.apache.flink.streaming.api.graph.StreamConfig;
 import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
 import org.apache.flink.streaming.runtime.tasks.StreamTask;
@@ -56,6 +58,8 @@ public abstract class AbstractUdfStreamOperator<OUT, F extends Function>
 
 	/** The user function. */
 	protected final F userFunction;
+
+	protected boolean tryTriggerCleanupOnError = false;
 
 	/** Flag to prevent duplicate function.close() calls in close() and dispose(). */
 	private transient boolean functionsClosed = false;
@@ -109,13 +113,35 @@ public abstract class AbstractUdfStreamOperator<OUT, F extends Function>
 		FunctionUtils.closeFunction(userFunction);
 	}
 
+	// TODO: 2020/7/23 需要保证这里失败或者task异常的时候会调用这里
 	@Override
 	public void dispose() throws Exception {
 		super.dispose();
+		if (tryTriggerCleanupOnError) {
+			if (userFunction instanceof OutputFormatSinkFunction) {
+				if (((OutputFormatSinkFunction) userFunction)
+					.getFormat() instanceof CleanupWhenUnsuccessful) {
+					((CleanupWhenUnsuccessful) ((OutputFormatSinkFunction) userFunction)
+						.getFormat()).tryCleanupOnError();
+					System.out.println("dfasd");
+				}
+			}
+			if (userFunction instanceof CleanupWhenUnsuccessful) {
+				((CleanupWhenUnsuccessful) userFunction).tryCleanupOnError();
+			}
+		}
 		if (!functionsClosed) {
 			functionsClosed = true;
 			FunctionUtils.closeFunction(userFunction);
 		}
+	}
+
+	public boolean isTryTriggerCleanupOnError() {
+		return tryTriggerCleanupOnError;
+	}
+
+	public void setTryTriggerCleanupOnError(boolean tryTriggerCleanupOnError) {
+		this.tryTriggerCleanupOnError = tryTriggerCleanupOnError;
 	}
 
 	// ------------------------------------------------------------------------

@@ -124,12 +124,14 @@ public abstract class MemorySegment {
 	 * segment will point to undefined addresses outside the heap and may in out-of-order execution
 	 * cases cause segmentation faults.
 	 */
+	// note: 堆内存引用
 	protected final byte[] heapMemory;
 
 	/**
 	 * The address to the data, relative to the heap memory byte array. If the heap memory byte
 	 * array is <tt>null</tt>, this becomes an absolute memory address outside the heap.
 	 */
+	// note: 堆外内存地址
 	protected long address;
 
 	/**
@@ -156,6 +158,7 @@ public abstract class MemorySegment {
 	 *
 	 * @param buffer The byte array whose memory is represented by this memory segment.
 	 */
+	// note: 堆内存初始化
 	MemorySegment(byte[] buffer, Object owner) {
 		if (buffer == null) {
 			throw new NullPointerException("buffer");
@@ -175,6 +178,7 @@ public abstract class MemorySegment {
 	 * @param offHeapAddress The address of the memory represented by this memory segment.
 	 * @param size The size of this memory segment.
 	 */
+	// note: 堆外内存初始化
 	MemorySegment(long offHeapAddress, int size, Object owner) {
 		if (offHeapAddress <= 0) {
 			throw new IllegalArgumentException("negative pointer or size");
@@ -835,6 +839,7 @@ public abstract class MemorySegment {
 	public final long getLong(int index) {
 		final long pos = address + index;
 		if (index >= 0 && pos <= addressLimit - 8) {
+			// note: 使用 Unsafe 来操作 on-heap & off-heap
 			return UNSAFE.getLong(heapMemory, pos);
 		}
 		else if (address > addressLimit) {

@@ -383,6 +383,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 		}
 	}
 
+	// note: Application Mode
 	@Override
 	public ClusterClientProvider<ApplicationId> deployApplicationCluster(
 			final ClusterSpecification clusterSpecification,
@@ -415,6 +416,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 		}
 	}
 
+	// note: pre-job 模式
 	@Override
 	public ClusterClientProvider<ApplicationId> deployJobCluster(
 		ClusterSpecification clusterSpecification,
@@ -453,6 +455,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 
 	/**
 	 * This method will block until the ApplicationMaster/JobManager have been deployed on YARN.
+	 * note: Yarn模式JM拉起
 	 *
 	 * @param clusterSpecification Initial cluster specification for the Flink cluster to be deployed
 	 * @param applicationName name of the Yarn application to start
@@ -521,6 +524,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 
 		flinkConfiguration.setString(ClusterEntrypoint.EXECUTION_MODE, executionMode.toString());
 
+		// note: 拉起 jobMaster
 		ApplicationReport report = startAppMaster(
 				flinkConfiguration,
 				applicationName,
@@ -643,6 +647,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 		}
 	}
 
+	// note: flink pre-job 拉起 Flink AM
 	private ApplicationReport startAppMaster(
 			Configuration configuration,
 			String applicationName,
@@ -721,6 +726,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 							1));
 		}
 
+		// note: userJarFiles
 		final Set<Path> userJarFiles = new HashSet<>();
 		if (jobGraph != null) {
 			userJarFiles.addAll(jobGraph.getUserJars().stream().map(f -> f.toUri()).map(Path::new).collect(Collectors.toSet()));
@@ -762,6 +768,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 		// Plugin files only need to be shipped and should not be added to classpath.
 		if (providedLibDirs == null || providedLibDirs.isEmpty()) {
 			Set<File> shipOnlyFiles = new HashSet<>();
+			// note: plugin
 			addPluginsFoldersToShipFiles(shipOnlyFiles);
 			fileUploader.registerMultipleLocalResources(
 					shipOnlyFiles.stream().map(e -> new Path(e.toURI())).collect(Collectors.toSet()),
@@ -769,6 +776,7 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 		}
 
 		// Upload and register user jars
+		// note: 上传 user jar
 		final List<String> userClassPaths = fileUploader.registerMultipleLocalResources(
 			userJarFiles,
 			userJarInclusion == YarnConfigOptions.UserJarInclusion.DISABLED ?

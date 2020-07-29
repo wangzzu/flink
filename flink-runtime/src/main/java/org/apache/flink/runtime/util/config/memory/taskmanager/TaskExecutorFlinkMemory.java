@@ -63,6 +63,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  *                └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
  *               └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
  * </pre>
+ * note: Flink TM 内存设置，这个相当于是集群 TM 级别的内存描述
  */
 public class TaskExecutorFlinkMemory implements FlinkMemory {
 	private static final long serialVersionUID = 1L;

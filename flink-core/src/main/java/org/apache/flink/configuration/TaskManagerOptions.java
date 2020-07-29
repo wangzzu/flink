@@ -197,6 +197,7 @@ public class TaskManagerOptions {
 
 	/**
 	 * The config parameter defining the number of task slots of a task manager.
+	 * note: TM 上分配的slot数
 	 */
 	@Documentation.Section(Documentation.Sections.ALL_TASK_MANAGER)
 	public static final ConfigOption<Integer> NUM_TASK_SLOTS =
@@ -233,6 +234,7 @@ public class TaskManagerOptions {
 	/**
 	 * Size of memory buffers used by the network stack and the memory manager.
 	 */
+	// note: memory segment size，默认是32KB
 	@Documentation.Section(Documentation.Sections.ALL_TASK_MANAGER)
 	public static final ConfigOption<MemorySize> MEMORY_SEGMENT_SIZE =
 			key("taskmanager.memory.segment-size")
@@ -288,6 +290,7 @@ public class TaskManagerOptions {
 
 	/**
 	 * Total Process Memory size for the TaskExecutors.
+	 * note: TM 的 total Process Memory，包括TM的 total Flink Mem、JVM Metaspace 和 JVM Overhead，container启动时使用这个限制
 	 */
 	@Documentation.Section(Documentation.Sections.COMMON_MEMORY)
 	public static final ConfigOption<MemorySize> TOTAL_PROCESS_MEMORY =
@@ -302,6 +305,7 @@ public class TaskManagerOptions {
 
 	/**
 	 * Total Flink Memory size for the TaskExecutors.
+	 * note: TM total mem，主要包括 JVM Heap 以及 Off-Heap mem
 	 */
 	@Documentation.Section(Documentation.Sections.COMMON_MEMORY)
 	public static final ConfigOption<MemorySize> TOTAL_FLINK_MEMORY =
@@ -316,6 +320,7 @@ public class TaskManagerOptions {
 
 	/**
 	 * Framework Heap Memory size for TaskExecutors.
+	 * note: TM Framework 的 heap mem size
 	 */
 	@Documentation.Section(Documentation.Sections.COMMON_MEMORY)
 	public static final ConfigOption<MemorySize> FRAMEWORK_HEAP_MEMORY =
@@ -327,6 +332,7 @@ public class TaskManagerOptions {
 
 	/**
 	 * Framework Off-Heap Memory size for TaskExecutors.
+	 * note: TM Framework off-heap memory size(JVM direct mem 和 native memory 之和)
 	 */
 	@Documentation.Section(Documentation.Sections.COMMON_MEMORY)
 	public static final ConfigOption<MemorySize> FRAMEWORK_OFF_HEAP_MEMORY =
@@ -340,6 +346,7 @@ public class TaskManagerOptions {
 
 	/**
 	 * Task Heap Memory size for TaskExecutors.
+	 * note: TM的heap mem配置
 	 */
 	@Documentation.Section(Documentation.Sections.COMMON_MEMORY)
 	public static final ConfigOption<MemorySize> TASK_HEAP_MEMORY =
@@ -352,6 +359,7 @@ public class TaskManagerOptions {
 
 	/**
 	 * Task Off-Heap Memory size for TaskExecutors.
+	 * note: TM 的堆外内存设置
 	 */
 	@Documentation.Section(Documentation.Sections.COMMON_MEMORY)
 	public static final ConfigOption<MemorySize> TASK_OFF_HEAP_MEMORY =
@@ -364,6 +372,7 @@ public class TaskManagerOptions {
 
 	/**
 	 * Managed Memory size for TaskExecutors.
+	 * note: TM的managed mem size（它属于off-heap mem的一部分），用于backend及batch作业的状态信息使用
 	 */
 	@Documentation.Section(Documentation.Sections.COMMON_MEMORY)
 	public static final ConfigOption<MemorySize> MANAGED_MEMORY_SIZE =
@@ -380,6 +389,7 @@ public class TaskManagerOptions {
 
 	/**
 	 * Fraction of Total Flink Memory to be used as Managed Memory, if {@link #MANAGED_MEMORY_SIZE} is not specified.
+	 * note: Flink ManagedMemory 可以使用的内存大小限制（如果准确的大小没有限制的话，就会走这个比例限制）
 	 */
 	@Documentation.Section(Documentation.Sections.COMMON_MEMORY)
 	public static final ConfigOption<Float> MANAGED_MEMORY_FRACTION =
@@ -421,6 +431,7 @@ public class TaskManagerOptions {
 
 	/**
 	 * Fraction of Total Flink Memory to be used as Network Memory.
+	 * note: Network Buffer使用的内存（ShuffleEnvironment保留的内存）
 	 */
 	@Documentation.Section(Documentation.Sections.COMMON_MEMORY)
 	public static final ConfigOption<Float> NETWORK_MEMORY_FRACTION =
@@ -446,6 +457,7 @@ public class TaskManagerOptions {
 
 	/**
 	 * Min JVM Overhead size for the TaskExecutors.
+	 * note: TM 除去 direct mem 的 native 的内存设置
 	 */
 	@Documentation.Section(Documentation.Sections.COMMON_MEMORY)
 	public static final ConfigOption<MemorySize> JVM_OVERHEAD_MIN =

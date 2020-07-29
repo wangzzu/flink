@@ -57,6 +57,7 @@ public class AbstractJobClusterExecutor<ClusterID, ClientFactory extends Cluster
 		this.clusterClientFactory = checkNotNull(clusterClientFactory);
 	}
 
+	// note: pre-job模式启动
 	@Override
 	public CompletableFuture<JobClient> execute(@Nonnull final Pipeline pipeline, @Nonnull final Configuration configuration) throws Exception {
 		final JobGraph jobGraph = PipelineExecutorUtils.getJobGraph(pipeline, configuration);

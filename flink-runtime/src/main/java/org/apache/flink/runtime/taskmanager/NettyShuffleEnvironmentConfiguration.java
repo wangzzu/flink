@@ -53,6 +53,7 @@ public class NettyShuffleEnvironmentConfiguration {
 	private final int partitionRequestMaxBackoff;
 
 	/** Number of network buffers to use for each outgoing/incoming channel (subpartition/input channel). */
+	// note: 每个输入输出channel的network buffer数
 	private final int networkBuffersPerChannel;
 
 	/** Number of extra network buffers to use for each outgoing/incoming gate (result partition/input gate). */
@@ -77,12 +78,12 @@ public class NettyShuffleEnvironmentConfiguration {
 	private final int maxBuffersPerChannel;
 
 	public NettyShuffleEnvironmentConfiguration(
-			int numNetworkBuffers,
-			int networkBufferSize,
+			int numNetworkBuffers, // note: memory segment数量
+			int networkBufferSize, // note: memory segment page size
 			int partitionRequestInitialBackoff,
 			int partitionRequestMaxBackoff,
 			int networkBuffersPerChannel,
-			int floatingNetworkBuffersPerGate,
+			int floatingNetworkBuffersPerGate, // note:
 			Duration requestSegmentsTimeout,
 			boolean isNetworkDetailedMetrics,
 			@Nullable NettyConfig nettyConfig,
@@ -177,6 +178,7 @@ public class NettyShuffleEnvironmentConfiguration {
 	/**
 	 * Utility method to extract network related parameters from the configuration and to
 	 * sanity check them.
+	 * note: 从配置中抽取 network相关的参数，并进行校验
 	 *
 	 * @param configuration configuration object
 	 * @param networkMemorySize the size of memory reserved for shuffle environment
@@ -192,10 +194,12 @@ public class NettyShuffleEnvironmentConfiguration {
 
 		final int dataBindPort = getDataBindPort(configuration);
 
+		// note: 获取pageSize
 		final int pageSize = ConfigurationParserUtils.getPageSize(configuration);
 
 		final NettyConfig nettyConfig = createNettyConfig(configuration, localTaskManagerCommunication, taskManagerAddress, dataBindPort);
 
+		// note: memory segment 的数量
 		final int numberOfNetworkBuffers = calculateNumberOfNetworkBuffers(
 			configuration,
 			networkMemorySize,
@@ -204,9 +208,12 @@ public class NettyShuffleEnvironmentConfiguration {
 		int initialRequestBackoff = configuration.getInteger(NettyShuffleEnvironmentOptions.NETWORK_REQUEST_BACKOFF_INITIAL);
 		int maxRequestBackoff = configuration.getInteger(NettyShuffleEnvironmentOptions.NETWORK_REQUEST_BACKOFF_MAX);
 
+		// note: 每个channel的buffer
 		int buffersPerChannel = configuration.getInteger(NettyShuffleEnvironmentOptions.NETWORK_BUFFERS_PER_CHANNEL);
+		// note: 每个Gate的额外buffer
 		int extraBuffersPerGate = configuration.getInteger(NettyShuffleEnvironmentOptions.NETWORK_EXTRA_BUFFERS_PER_GATE);
 
+		// note: 每个channel最大buffer限制（这个不是强限制）
 		int maxBuffersPerChannel = configuration.getInteger(NettyShuffleEnvironmentOptions.NETWORK_MAX_BUFFERS_PER_CHANNEL);
 
 		boolean isNetworkDetailedMetrics = configuration.getBoolean(NettyShuffleEnvironmentOptions.NETWORK_DETAILED_METRICS);
@@ -268,6 +275,7 @@ public class NettyShuffleEnvironmentConfiguration {
 
 	/**
 	 * Calculates the number of network buffers based on configuration and jvm heap size.
+	 * note: 根据network及pageSize配置计算 memory segment的数量
 	 *
 	 * @param configuration configuration object
 	 * @param networkMemorySize the size of memory reserved for shuffle environment
@@ -301,6 +309,7 @@ public class NettyShuffleEnvironmentConfiguration {
 
 	/**
 	 * Generates {@link NettyConfig} from Flink {@link Configuration}.
+	 * note: 从配置构建NettyConfig配置
 	 *
 	 * @param configuration configuration object
 	 * @param localTaskManagerCommunication true, to skip initializing the network stack

@@ -56,10 +56,12 @@ public final class ChildFirstClassLoader extends FlinkUserCodeClassLoader {
 			boolean resolve) throws ClassNotFoundException {
 
 		// First, check if the class has already been loaded
+		// note: 检查这个类是否已经被加载
 		Class<?> c = findLoadedClass(name);
 
 		if (c == null) {
 			// check whether the class should go parent-first
+			// note: 有个 alwaysParentFirstPatterns 的过滤器，用来保证 Java 和 Scala 的内部类和 FLINK 的基础类不会被子加载器篡改
 			for (String alwaysParentFirstPattern : alwaysParentFirstPatterns) {
 				if (name.startsWith(alwaysParentFirstPattern)) {
 					return super.loadClassWithoutExceptionHandling(name, resolve);

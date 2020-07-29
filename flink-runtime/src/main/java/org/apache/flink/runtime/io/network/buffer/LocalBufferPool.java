@@ -38,6 +38,7 @@ import static org.apache.flink.util.Preconditions.checkArgument;
 /**
  * A buffer pool used to manage a number of {@link Buffer} instances from the
  * {@link NetworkBufferPool}.
+ * note: 用于管理 NetworkBufferPool 中的一部分 Buffer实例的 buffer pool
  *
  * <p>Buffer requests are mediated to the network buffer pool to ensure dead-lock
  * free operation of the network stack by limiting the number of buffers per

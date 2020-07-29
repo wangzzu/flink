@@ -52,6 +52,7 @@ public final class ClusterEntrypointUtils {
 		return Optional.of(usrLibDirectory);
 	}
 
+	// note: 从lib的目录来获取Flink_home目录
 	@Nullable
 	private static File deriveFlinkHomeDirectoryFromLibDirectory() {
 		final String libDirectory = System.getenv().get(ConfigConstants.ENV_FLINK_LIB_DIR);

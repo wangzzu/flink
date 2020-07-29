@@ -57,6 +57,7 @@ public class ResourceManagerOptions {
 			" default, the port of the JobManager, because the same ActorSystem is used." +
 			" Its not possible to use this configuration key to define port ranges.");
 
+	// note: Flink 集群运行分配的最大slot数，主要用于限制batch作业的资源占用
 	@Documentation.Section(Documentation.Sections.EXPERT_SCHEDULING)
 	public static final ConfigOption<Integer> MAX_SLOT_NUM = ConfigOptions
 		.key("slotmanager.number-of-slots.max")

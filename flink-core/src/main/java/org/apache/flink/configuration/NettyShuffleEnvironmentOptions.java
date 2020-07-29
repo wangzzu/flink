@@ -66,6 +66,7 @@ public class NettyShuffleEnvironmentOptions {
 	/**
 	 * Boolean flag indicating whether the shuffle data will be compressed for blocking shuffle mode.
 	 *
+	 * note: 对于IO负载比较高的case，可以打开这个开关，走压缩模式，不过会有额外的CPU消耗
 	 * <p>Note: Data is compressed per buffer and compression can incur extra CPU overhead so it is more effective for
 	 * IO bounded scenario when data compression ratio is high. Currently, shuffle data compression is an experimental
 	 * feature and the config option can be changed in the future.
@@ -81,6 +82,7 @@ public class NettyShuffleEnvironmentOptions {
 
 	/**
 	 * The codec to be used when compressing shuffle data.
+	 * note: 压缩格式
 	 */
 	@Documentation.ExcludeFromDocumentation("Currently, LZ4 is the only legal option.")
 	public static final ConfigOption<String> SHUFFLE_COMPRESSION_CODEC =
@@ -91,6 +93,7 @@ public class NettyShuffleEnvironmentOptions {
 	/**
 	 * Boolean flag to enable/disable more detailed metrics about inbound/outbound network queue
 	 * lengths.
+	 * note: 网络队列长度监控的详细metrics开关
 	 */
 	@Documentation.Section(Documentation.Sections.ALL_TASK_MANAGER_NETWORK)
 	public static final ConfigOption<Boolean> NETWORK_DETAILED_METRICS =
@@ -101,6 +104,7 @@ public class NettyShuffleEnvironmentOptions {
 	/**
 	 * Number of buffers used in the network stack. This defines the number of possible tasks and
 	 * shuffles.
+	 * note: 只有在 TotalFlinkMem 及 networkMem 相关的参数都不设置时，才会走这个参数配置
 	 *
 	 * @deprecated use {@link TaskManagerOptions#NETWORK_MEMORY_FRACTION}, {@link TaskManagerOptions#NETWORK_MEMORY_MIN},
 	 * and {@link TaskManagerOptions#NETWORK_MEMORY_MAX} instead
@@ -112,6 +116,7 @@ public class NettyShuffleEnvironmentOptions {
 
 	/**
 	 * Fraction of JVM memory to use for network buffers.
+	 * note: Network Buffer 的JVM内存控制参数
 	 *
 	 * @deprecated use {@link TaskManagerOptions#NETWORK_MEMORY_FRACTION} instead
 	 */
@@ -149,7 +154,8 @@ public class NettyShuffleEnvironmentOptions {
 
 	/**
 	 * Number of network buffers to use for each outgoing/incoming channel (subpartition/input channel).
-	 *
+	 * note: 每个输入输出channel（subpartition/input channel）可以使用的network buffer，默认值是2
+	 * note: 至少应该配置两个，一个buffer用于从sub-partition接收数据，一个用于并发序列化
 	 * <p>Reasoning: 1 buffer for in-flight data in the subpartition + 1 buffer for parallel serialization.
 	 */
 	@Documentation.Section(Documentation.Sections.ALL_TASK_MANAGER_NETWORK)
@@ -162,6 +168,8 @@ public class NettyShuffleEnvironmentOptions {
 
 	/**
 	 * Number of extra network buffers to use for each outgoing/incoming gate (result partition/input gate).
+	 * note: 用于输入输出 gate（result partition/input gate）的额外network buffer（如果集群间数据交互的rt比较高，可以增加这个值）
+	 * note: Gate 级别的设置
 	 */
 	@Documentation.Section(Documentation.Sections.ALL_TASK_MANAGER_NETWORK)
 	public static final ConfigOption<Integer> NETWORK_EXTRA_BUFFERS_PER_GATE =
@@ -175,6 +183,9 @@ public class NettyShuffleEnvironmentOptions {
 
 	/**
 	 * Number of max buffers can be used for each output subparition.
+	 * note: 每个channel可以使用的最大buffer数，如果task超过这个值，就会导致不可用及反压的情况
+	 * note: 这个限制可以防止在数据倾斜并且用户配置了大量缓冲buffer的情况下避免数据快速增长来加快Checkpoint对齐
+	 * note: 这个限制并不是强制，对于某些算子，比如FlatMap可能就不会生效
 	 */
 	@Documentation.Section(Documentation.Sections.ALL_TASK_MANAGER_NETWORK)
 	public static final ConfigOption<Integer> NETWORK_MAX_BUFFERS_PER_CHANNEL =

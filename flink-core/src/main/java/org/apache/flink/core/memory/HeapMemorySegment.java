@@ -45,6 +45,7 @@ public final class HeapMemorySegment extends MemorySegment {
 	 * An extra reference to the heap memory, so we can let byte array checks fail by the built-in
 	 * checks automatically without extra checks.
 	 */
+	// note: 指向heapMemory的额外引用，用来如数组越界的检查
 	private byte[] memory;
 
 	/**
@@ -64,6 +65,7 @@ public final class HeapMemorySegment extends MemorySegment {
 	 * @param memory The byte array that holds the data.
 	 * @param owner The owner referenced by the memory segment.
 	 */
+	// note: 只能初始化堆内存
 	HeapMemorySegment(byte[] memory, Object owner) {
 		super(Objects.requireNonNull(memory), owner);
 		this.memory = memory;

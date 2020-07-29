@@ -118,6 +118,7 @@ public class CoreOptions {
 		.withDescription("Fail Flink JVM processes if 'OutOfMemoryError: Metaspace' is " +
 			"thrown while trying to load a user code class.");
 
+	// note: 首先会加载jar包
 	public static String[] getParentFirstLoaderPatterns(Configuration config) {
 		String base = config.getString(ALWAYS_PARENT_FIRST_LOADER_PATTERNS);
 		String append = config.getString(ALWAYS_PARENT_FIRST_LOADER_PATTERNS_ADDITIONAL);

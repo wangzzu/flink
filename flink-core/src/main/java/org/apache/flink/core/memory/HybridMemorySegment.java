@@ -48,6 +48,7 @@ import static org.apache.flink.core.memory.MemoryUtils.getByteBufferAddress;
  * <p>Note that memory segments should usually not be allocated manually, but rather through the
  * {@link MemorySegmentFactory}.
  */
+// note: off-heap 的 memory segment
 @Internal
 public final class HybridMemorySegment extends MemorySegment {
 	/**
@@ -69,6 +70,7 @@ public final class HybridMemorySegment extends MemorySegment {
 	  * @param owner The owner references by this memory segment.
 	  * @throws IllegalArgumentException Thrown, if the given ByteBuffer is not direct.
 	  */
+	// note: 堆外内存初始化
 	HybridMemorySegment(@Nonnull ByteBuffer buffer, @Nullable Object owner) {
 		super(getByteBufferAddress(buffer), buffer.capacity(), owner);
 		this.offHeapBuffer = buffer;
@@ -82,6 +84,7 @@ public final class HybridMemorySegment extends MemorySegment {
 	 * @param buffer The byte array whose memory is represented by this memory segment.
 	 * @param owner The owner references by this memory segment.
 	 */
+	// note: 堆内存初始化
 	HybridMemorySegment(byte[] buffer, Object owner) {
 		super(buffer, owner);
 		this.offHeapBuffer = null;

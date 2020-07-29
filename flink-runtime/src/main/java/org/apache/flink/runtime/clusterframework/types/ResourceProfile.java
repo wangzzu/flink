@@ -50,6 +50,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  *     <li>Extended resources</li>
  * </ol>
  * The extended resources are compared ordered by the resource names.
+ * note: 对slot的一个资源描述
  */
 public class ResourceProfile implements Serializable {
 

@@ -57,6 +57,7 @@ import org.apache.flink.runtime.util.FatalExitExceptionHandler;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.graph.StreamConfig;
 import org.apache.flink.streaming.api.graph.StreamEdge;
+import org.apache.flink.streaming.api.operators.AbstractUdfStreamOperator;
 import org.apache.flink.streaming.api.operators.MailboxExecutor;
 import org.apache.flink.streaming.api.operators.StreamOperator;
 import org.apache.flink.streaming.api.operators.StreamTaskStateInitializer;
@@ -216,6 +217,8 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	private final ExecutorService channelIOExecutor;
 
 	private Long syncSavepointId = null;
+
+	private boolean tryTriggerCleanupOnError = false;
 
 	// ------------------------------------------------------------------------
 
@@ -538,7 +541,9 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 			afterInvoke();
 		}
 		catch (Exception invokeException) {
+			// note: 抛出了异常，但是下面的 Function 捕获不到
 			try {
+				tryTriggerCleanupOnError = true;
 				cleanUpInvoke();
 			}
 			catch (Throwable cleanUpException) {
@@ -658,6 +663,8 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 		isRunning = false;
 		canceled = true;
 
+		tryTriggerCleanupOnError = true;
+
 		// the "cancel task" call must come first, but the cancelables must be
 		// closed no matter what
 		try {
@@ -667,6 +674,10 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 			mailboxProcessor.allActionsCompleted();
 			cancelables.close();
 		}
+
+		// note: 这里调用 cancel 后，不会再调用 operator.close() 方法，这样的话，就不会出现先调用 close 后调用 cleanup 的问题
+
+		System.out.println("cancel !!!");
 	}
 
 	public MailboxExecutorFactory getMailboxExecutorFactory() {
@@ -692,9 +703,15 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	 * {@link StreamTask}. Disposing happens from <b>tail to head</b> operator in the chain.
 	 */
 	private void disposeAllOperators(boolean logOnlyErrors) throws Exception {
+		System.out.println(" disposeAllOperators ZZZZZ");
 		if (operatorChain != null && !disposedOperators) {
 			for (StreamOperatorWrapper<?, ?> operatorWrapper : operatorChain.getAllOperators(true)) {
 				StreamOperator<?> operator = operatorWrapper.getStreamOperator();
+				if (tryTriggerCleanupOnError) {
+					if (operator instanceof AbstractUdfStreamOperator) {
+						((AbstractUdfStreamOperator) operator).setTryTriggerCleanupOnError(tryTriggerCleanupOnError);
+					}
+				}
 				if (!logOnlyErrors) {
 					operator.dispose();
 				}

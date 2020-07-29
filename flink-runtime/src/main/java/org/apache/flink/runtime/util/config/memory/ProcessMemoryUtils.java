@@ -65,6 +65,7 @@ public class ProcessMemoryUtils<FM extends FlinkMemory> {
 		this.flinkMemoryUtils = checkNotNull(flinkMemoryUtils);
 	}
 
+	// note: 获取TM内存配置信息
 	public CommonProcessMemorySpec<FM> memoryProcessSpecFromConfig(Configuration config) {
 		if (options.getRequiredFineGrainedOptions().stream().allMatch(config::contains)) {
 			// all internal memory options are configured, use these to derive total Flink and process memory
@@ -89,6 +90,7 @@ public class ProcessMemoryUtils<FM extends FlinkMemory> {
 		return new CommonProcessMemorySpec<>(flinkInternalMemory, jvmMetaspaceAndOverhead);
 	}
 
+	// note: 根据 TotalFlinkMem 配置获取 TaskExecutorFlinkMemory 对象
 	private CommonProcessMemorySpec<FM> deriveProcessSpecWithTotalFlinkMemory(Configuration config) {
 		MemorySize totalFlinkMemorySize = getMemorySizeFromConfig(config, options.getTotalFlinkMemoryOption());
 		FM flinkInternalMemory = flinkMemoryUtils.deriveFromTotalFlinkMemory(config, totalFlinkMemorySize);
@@ -96,6 +98,7 @@ public class ProcessMemoryUtils<FM extends FlinkMemory> {
 		return new CommonProcessMemorySpec<>(flinkInternalMemory, jvmMetaspaceAndOverhead);
 	}
 
+	// note: 根据 TotalProcessMem 配置获取 TaskExecutorFlinkMemory 对象
 	private CommonProcessMemorySpec<FM> deriveProcessSpecWithTotalProcessMemory(Configuration config) {
 		MemorySize totalProcessMemorySize = getMemorySizeFromConfig(config, options.getTotalProcessMemoryOption());
 		JvmMetaspaceAndOverhead jvmMetaspaceAndOverhead =
@@ -116,10 +119,12 @@ public class ProcessMemoryUtils<FM extends FlinkMemory> {
 			options.getTotalProcessMemoryOption()));
 	}
 
+	// note: 根据 TotalProcessMem 计算 JvmMetaspaceAndOverheadMem
 	private JvmMetaspaceAndOverhead deriveJvmMetaspaceAndOverheadWithTotalProcessMemory(
 			Configuration config,
 			MemorySize totalProcessMemorySize) {
 		MemorySize jvmMetaspaceSize = getMemorySizeFromConfig(config, options.getJvmOptions().getJvmMetaspaceOption());
+		// note: 根据 TotalProcessMem 及 JvmOverheadRangeFraction 计算 jvmOverheadSize
 		MemorySize jvmOverheadSize = deriveWithFraction(
 			"jvm overhead memory",
 			totalProcessMemorySize,
@@ -136,6 +141,7 @@ public class ProcessMemoryUtils<FM extends FlinkMemory> {
 		return jvmMetaspaceAndOverhead;
 	}
 
+	// note: 根据 TotalFlinkMemory 计算 JvmMetaspaceAndOverheadMem
 	public JvmMetaspaceAndOverhead deriveJvmMetaspaceAndOverheadFromTotalFlinkMemory(
 			Configuration config,
 			MemorySize totalFlinkMemorySize) {
@@ -143,9 +149,12 @@ public class ProcessMemoryUtils<FM extends FlinkMemory> {
 		MemorySize totalFlinkAndJvmMetaspaceSize = totalFlinkMemorySize.add(jvmMetaspaceSize);
 		JvmMetaspaceAndOverhead jvmMetaspaceAndOverhead;
 		if (config.contains(options.getTotalProcessMemoryOption())) {
+			// note: 如果有 TotalProcessMem 设置的情况下
+			// note: 这里用 totalProcessMemorySize 减去 jvmMetaspaceSize 和 totalFlinkMemorySize 计算
 			MemorySize jvmOverheadSize = deriveJvmOverheadFromTotalFlinkMemoryAndOtherComponents(config, totalFlinkMemorySize);
 			jvmMetaspaceAndOverhead = new JvmMetaspaceAndOverhead(jvmMetaspaceSize, jvmOverheadSize);
 		} else {
+			// note: 用 totalFlinkAndJvmMetaspaceSize 和 JvmOverheadRangeFraction 计算
 			MemorySize jvmOverheadSize = deriveWithInverseFraction(
 				"jvm overhead memory",
 				totalFlinkAndJvmMetaspaceSize,
@@ -170,6 +179,7 @@ public class ProcessMemoryUtils<FM extends FlinkMemory> {
 				totalFlinkMemorySize.toHumanReadableString(),
 				jvmMetaspaceSize.toHumanReadableString());
 		}
+		// note: 这里用 totalProcessMemorySize 减去 jvmMetaspaceSize 和 totalFlinkMemorySize 计算
 		MemorySize jvmOverheadSize = totalProcessMemorySize.subtract(totalFlinkAndJvmMetaspaceSize);
 		sanityCheckJvmOverhead(config, jvmOverheadSize, totalProcessMemorySize);
 		return jvmOverheadSize;

@@ -266,6 +266,7 @@ public final class ConfigConstants {
 	/**
 	 * The config parameter defining the number of buffers used in the network stack. This defines the
 	 * number of possible tasks and shuffles.
+	 * note: Flink 网络栈中能使用的 buffer 数，它间接地决定了task和shuffle数
 	 *
 	 * @deprecated Use {@link NettyShuffleEnvironmentOptions#NETWORK_NUM_BUFFERS} instead
 	 */
@@ -1993,6 +1994,7 @@ public final class ConfigConstants {
 
 	// ----------------------------- Environment Variables ----------------------------
 
+	// note: 启动时会设置的一些环境变量
 	/** The environment variable name which contains the location of the configuration directory. */
 	public static final String ENV_FLINK_CONF_DIR = "FLINK_CONF_DIR";
 
@@ -2015,6 +2017,7 @@ public final class ConfigConstants {
 	public static final String ENV_FLINK_HOME_DIR = "FLINK_HOME";
 
 	/** The user lib directory name. */
+	// note: 这里的路径默认是 FLINK_HOME/usrlib
 	public static final String DEFAULT_FLINK_USR_LIB_DIR = "usrlib";
 
 	// ---------------------------- Encoding ------------------------------

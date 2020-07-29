@@ -80,6 +80,7 @@ public class YarnResourceManagerFactory extends ActiveResourceManagerFactory<Yar
 			resourceManagerMetricGroup);
 	}
 
+	// note: 创建对应的资源配置文件
 	@Override
 	protected ResourceManagerRuntimeServicesConfiguration createResourceManagerRuntimeServicesConfiguration(
 		Configuration configuration) throws ConfigurationException {

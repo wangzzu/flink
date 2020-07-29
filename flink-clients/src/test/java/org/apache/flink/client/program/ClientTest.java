@@ -326,6 +326,7 @@ public class ClientTest extends TestLogger {
 
 		public static void main(String[] args) throws Exception {
 			final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+			env.getConfiguration().set(CoreOptions.CLASSLOADER_RESOLVE_ORDER, "parent-first");
 			env.fromElements(1, 2).collect();
 		}
 	}

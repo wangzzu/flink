@@ -160,6 +160,7 @@ public class SlotManagerImpl implements SlotManager {
 		this.waitResultConsumedBeforeRelease = slotManagerConfiguration.isWaitResultConsumedBeforeRelease();
 		this.defaultWorkerResourceSpec = slotManagerConfiguration.getDefaultWorkerResourceSpec();
 		this.numSlotsPerWorker = slotManagerConfiguration.getNumSlotsPerWorker();
+		// note: 默认的slot配置
 		this.defaultSlotResourceProfile = generateDefaultSlotResourceProfile(defaultWorkerResourceSpec, numSlotsPerWorker);
 		this.slotManagerMetricGroup = Preconditions.checkNotNull(slotManagerMetricGroup);
 		this.maxSlotNum = slotManagerConfiguration.getMaxSlotNum();
@@ -1203,7 +1204,7 @@ public class SlotManagerImpl implements SlotManager {
 			.setTaskHeapMemory(workerResourceSpec.getTaskHeapSize().divide(numSlotsPerWorker))
 			.setTaskOffHeapMemory(workerResourceSpec.getTaskOffHeapSize().divide(numSlotsPerWorker))
 			.setManagedMemory(workerResourceSpec.getManagedMemSize().divide(numSlotsPerWorker))
-			.setNetworkMemory(workerResourceSpec.getNetworkMemSize().divide(numSlotsPerWorker))
+			.setNetworkMemory(workerResourceSpec.getNetworkMemSize().divide(numSlotsPerWorker)) // note: 根据TM的network设置计算每个slot的配置
 			.build();
 	}
 

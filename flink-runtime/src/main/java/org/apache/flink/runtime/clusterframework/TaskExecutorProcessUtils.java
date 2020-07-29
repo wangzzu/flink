@@ -105,6 +105,7 @@ public class TaskExecutorProcessUtils {
 		return TaskExecutorProcessSpecBuilder.newBuilder(config);
 	}
 
+	// note: TaskExecutor 进程级别的资源描述
 	public static TaskExecutorProcessSpec processSpecFromConfig(final Configuration config) {
 		return createMemoryProcessSpec(config, PROCESS_MEMORY_UTILS.memoryProcessSpecFromConfig(config));
 	}

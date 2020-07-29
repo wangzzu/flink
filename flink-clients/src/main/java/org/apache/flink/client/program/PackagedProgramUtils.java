@@ -60,6 +60,7 @@ public enum PackagedProgramUtils {
 	/**
 	 * Creates a {@link JobGraph} with a specified {@link JobID}
 	 * from the given {@link PackagedProgram}.
+	 * note: 创建 JobGraph
 	 *
 	 * @param packagedProgram    to extract the JobGraph from
 	 * @param configuration      to use for the optimizer and job graph generator

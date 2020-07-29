@@ -78,6 +78,7 @@ public class JavaCmdTaskManagerDecorator extends AbstractKubernetesStepDecorator
 			mainClassArgs);
 	}
 
+	// note: 得到 TM 启动命令，这里会把相应的配置加上
 	private static String getTaskManagerStartCommand(
 			Configuration flinkConfig,
 			ContaineredTaskManagerParameters tmParams,

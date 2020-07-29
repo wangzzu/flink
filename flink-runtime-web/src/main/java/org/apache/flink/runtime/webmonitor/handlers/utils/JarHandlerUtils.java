@@ -126,7 +126,9 @@ public class JarHandlerUtils {
 			configuration.set(CoreOptions.DEFAULT_PARALLELISM, parallelism);
 
 			final PackagedProgram program = toPackagedProgram(configuration);
+			// note: user依赖包及 classpath添加到configuration中
 			ConfigUtils.encodeCollectionToConfig(configuration, PipelineOptions.JARS, program.getJobJarAndDependencies(), URL::toString);
+			// note: 这里classpath指的是命令行的 classpath参数
 			ConfigUtils.encodeCollectionToConfig(configuration, PipelineOptions.CLASSPATHS, program.getClasspaths(), URL::toString);
 		}
 

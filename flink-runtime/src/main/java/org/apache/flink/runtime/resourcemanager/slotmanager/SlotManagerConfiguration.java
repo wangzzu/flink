@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Configuration for the {@link SlotManager}.
+ * note: SlotManager 的配置
  */
 public class SlotManagerConfiguration {
 

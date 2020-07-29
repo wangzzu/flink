@@ -59,6 +59,7 @@ public enum ClientUtils {
 			List<URL> classpaths,
 			ClassLoader parent,
 			Configuration configuration) {
+		// note: 将user jar和 classpath jar都放到 URL 数组中
 		URL[] urls = new URL[jars.size() + classpaths.size()];
 		for (int i = 0; i < jars.size(); i++) {
 			urls[i] = jars.get(i);
@@ -66,7 +67,10 @@ public enum ClientUtils {
 		for (int i = 0; i < classpaths.size(); i++) {
 			urls[i + jars.size()] = classpaths.get(i);
 		}
+		// note: 不会被子类篡改的内部类
 		final String[] alwaysParentFirstLoaderPatterns = CoreOptions.getParentFirstLoaderPatterns(configuration);
+
+		// note: 选择哪种 classLoad
 		final String classLoaderResolveOrder =
 			configuration.getString(CoreOptions.CLASSLOADER_RESOLVE_ORDER);
 		FlinkUserCodeClassLoaders.ResolveOrder resolveOrder =
@@ -124,6 +128,7 @@ public enum ClientUtils {
 			boolean enforceSingleJobExecution,
 			boolean suppressSysout) throws ProgramInvocationException {
 		checkNotNull(executorServiceLoader);
+		// note: classLoad
 		final ClassLoader userCodeClassLoader = program.getUserCodeClassLoader();
 		final ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
 		try {
@@ -131,6 +136,8 @@ public enum ClientUtils {
 
 			LOG.info("Starting program (detached: {})", !configuration.getBoolean(DeploymentOptions.ATTACHED));
 
+			// TODO: 2020/7/26 这里为什么要设置两个？
+			// note: Execution Environment for remote execution with the Client
 			ContextEnvironment.setAsContext(
 				executorServiceLoader,
 				configuration,

@@ -109,9 +109,10 @@ public class NettyShuffleServiceFactory implements ShuffleServiceFactory<NettySh
 			new NettyConnectionManager(resultPartitionManager, taskEventPublisher, nettyConfig) :
 			new LocalConnectionManager();
 
+		// note: 初始化 NetworkBufferPool 对象
 		NetworkBufferPool networkBufferPool = new NetworkBufferPool(
-			config.numNetworkBuffers(),
-			config.networkBufferSize(),
+			config.numNetworkBuffers(), // note: memory segment 数量
+			config.networkBufferSize(), // note: segment page size
 			config.networkBuffersPerChannel(),
 			config.getRequestSegmentsTimeout());
 
@@ -122,13 +123,13 @@ public class NettyShuffleServiceFactory implements ShuffleServiceFactory<NettySh
 			fileChannelManager,
 			networkBufferPool,
 			config.getBlockingSubpartitionType(),
-			config.networkBuffersPerChannel(),
+			config.networkBuffersPerChannel(), // note: 每个channel的buffer设置
 			config.floatingNetworkBuffersPerGate(),
 			config.networkBufferSize(),
 			config.isForcePartitionReleaseOnConsumption(),
 			config.isBlockingShuffleCompressionEnabled(),
 			config.getCompressionCodec(),
-			config.getMaxBuffersPerChannel());
+			config.getMaxBuffersPerChannel()); // note: 最大buffer限制
 
 		SingleInputGateFactory singleInputGateFactory = new SingleInputGateFactory(
 			taskExecutorResourceId,

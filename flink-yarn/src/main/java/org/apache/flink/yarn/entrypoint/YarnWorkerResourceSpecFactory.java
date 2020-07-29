@@ -42,6 +42,7 @@ public class YarnWorkerResourceSpecFactory extends WorkerResourceSpecFactory {
 
 	private YarnWorkerResourceSpecFactory() {}
 
+	// note: worker默认的资源声明
 	@Override
 	public WorkerResourceSpec createDefaultWorkerResourceSpec(Configuration configuration) {
 		return workerResourceSpecFromConfigAndCpu(configuration, getDefaultCpus(configuration));

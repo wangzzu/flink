@@ -349,6 +349,7 @@ public class ExecutionGraph implements AccessExecutionGraph {
 			scheduleMode,
 			slotProvider,
 			allocationTimeout);
+		// note: 这个本质上还是JobMaster传进来的
 		this.userClassLoader = Preconditions.checkNotNull(userClassLoader, "userClassLoader");
 
 		this.tasks = new HashMap<>(16);

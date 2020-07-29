@@ -157,6 +157,7 @@ public class BlobLibraryCacheManager implements LibraryCacheManager {
 			this.classLoadingExceptionHandler = classLoadingExceptionHandler;
 		}
 
+		// note: Blob library
 		@Override
 		public URLClassLoader createClassLoader(URL[] libraryURLs) {
 			return FlinkUserCodeClassLoaders.create(
@@ -210,6 +211,7 @@ public class BlobLibraryCacheManager implements LibraryCacheManager {
 			this.isReleased = false;
 		}
 
+		// note: 获取 Classload
 		private ClassLoader getOrResolveClassLoader(Collection<PermanentBlobKey> libraries, Collection<URL> classPaths) throws IOException {
 			synchronized (lockObject) {
 				verifyIsNotReleased();

@@ -87,6 +87,7 @@ public class FlinkDistributionOverlay extends AbstractContainerOverlay {
 
 	/**
 	 * A builder for the {@link FlinkDistributionOverlay}.
+	 * note: 获取Flink相关的路径
 	 */
 	public static class Builder {
 		File flinkBinPath;

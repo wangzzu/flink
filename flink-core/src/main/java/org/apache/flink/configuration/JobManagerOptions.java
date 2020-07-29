@@ -125,6 +125,7 @@ public class JobManagerOptions {
 
 	/**
 	 * Total Process Memory size for the JobManager.
+	 * note: JM 的 total process mem，包括JM的total Flink mem、JVM Metaspace 和 JVM Overhead，container启动时使用这个限制
 	 */
 	@Documentation.Section(Documentation.Sections.COMMON_MEMORY)
 	public static final ConfigOption<MemorySize> TOTAL_PROCESS_MEMORY =
@@ -138,6 +139,7 @@ public class JobManagerOptions {
 
 	/**
 	 * Total Flink Memory size for the JobManager.
+	 * note: JM 的total Flink mem
 	 */
 	@Documentation.Section(Documentation.Sections.COMMON_MEMORY)
 	public static final ConfigOption<MemorySize> TOTAL_FLINK_MEMORY =
@@ -163,6 +165,7 @@ public class JobManagerOptions {
 
 	/**
 	 * Off-heap Memory size for the JobManager.
+	 * note: 是否限制 JM 的堆外内存限制
 	 */
 	@Documentation.Section(Documentation.Sections.COMMON_MEMORY)
 	public static final ConfigOption<MemorySize> OFF_HEAP_MEMORY =

@@ -204,6 +204,7 @@ public class TaskManagerConfiguration implements TaskManagerRuntimeInfo {
 			finiteRegistrationDuration = null;
 		}
 
+		// note: OOM时是否退出
 		final boolean exitOnOom = configuration.getBoolean(TaskManagerOptions.KILL_ON_OUT_OF_MEMORY);
 
 		final String taskManagerLogPath = configuration.getString(ConfigConstants.TASK_MANAGER_LOG_PATH_KEY, System.getProperty("log.file"));

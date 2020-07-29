@@ -71,13 +71,13 @@ public class ResultPartitionFactory {
 		FileChannelManager channelManager,
 		BufferPoolFactory bufferPoolFactory,
 		BoundedBlockingSubpartitionType blockingSubpartitionType,
-		int networkBuffersPerChannel,
-		int floatingNetworkBuffersPerGate,
-		int networkBufferSize,
+		int networkBuffersPerChannel, // note: 每个channel的一个network buffer限制
+		int floatingNetworkBuffersPerGate, // note: 每个gate可以浮动的一个buffer大小（当前所有channel都可以使用）
+		int networkBufferSize, // note: pageSize
 		boolean forcePartitionReleaseOnConsumption,
 		boolean blockingShuffleCompressionEnabled,
 		String compressionCodec,
-		int maxBuffersPerChannel) {
+		int maxBuffersPerChannel) { // note: 每个channel最大的一个buffer限制
 
 		this.partitionManager = partitionManager;
 		this.channelManager = channelManager;
@@ -217,10 +217,12 @@ public class ResultPartitionFactory {
 			int numberOfSubpartitions,
 			ResultPartitionType type) {
 		return bufferPoolOwner -> {
+			// note: 计算这个slot需要设置segment数
 			int maxNumberOfMemorySegments = type.isBounded() ?
 				numberOfSubpartitions * networkBuffersPerChannel + floatingNetworkBuffersPerGate : Integer.MAX_VALUE;
 			// If the partition type is back pressure-free, we register with the buffer pool for
 			// callbacks to release memory.
+			// note: create BufferPool
 			return bufferPoolFactory.createBufferPool(
 				numberOfSubpartitions + 1,
 				maxNumberOfMemorySegments,

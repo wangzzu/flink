@@ -75,6 +75,7 @@ public final class JobSubmitHandler extends AbstractRestHandler<DispatcherGatewa
 		this.configuration = configuration;
 	}
 
+	// note: yarn模式提交作业
 	@Override
 	protected CompletableFuture<JobSubmitResponseBody> handleRequest(@Nonnull HandlerRequest<JobSubmitRequestBody, EmptyMessageParameters> request, @Nonnull DispatcherGateway gateway) throws RestHandlerException {
 		final Collection<File> uploadedFiles = request.getUploadedFiles();
@@ -108,6 +109,7 @@ public final class JobSubmitHandler extends AbstractRestHandler<DispatcherGatewa
 
 		Collection<Tuple2<String, Path>> artifacts = getArtifactFilesToUpload(requestBody.artifactFileNames, nameToFile);
 
+		// note: 提交作业时，将相关的jar包上传到blob server
 		CompletableFuture<JobGraph> finalizedJobGraphFuture = uploadJobGraphFiles(gateway, jobGraphFuture, jarFiles, artifacts, configuration);
 
 		CompletableFuture<Acknowledge> jobSubmissionFuture = finalizedJobGraphFuture.thenCompose(jobGraph -> gateway.submitJob(jobGraph, timeout));

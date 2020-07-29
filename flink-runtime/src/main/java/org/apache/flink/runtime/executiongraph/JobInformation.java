@@ -48,10 +48,12 @@ public class JobInformation implements Serializable {
 	/** Configuration of the job */
 	private final Configuration jobConfiguration;
 
+	// note: user jar在blob上地址
 	/** Blob keys for the required jar files */
 	private final Collection<PermanentBlobKey> requiredJarFileBlobKeys;
 
 	/** URLs specifying the classpath to add to the class loader */
+	// note: 用户相关jar包的url
 	private final Collection<URL> requiredClasspathURLs;
 
 

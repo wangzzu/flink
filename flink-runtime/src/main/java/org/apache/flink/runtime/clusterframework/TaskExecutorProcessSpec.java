@@ -74,6 +74,7 @@ import org.apache.flink.runtime.util.config.memory.taskmanager.TaskExecutorFlink
  *                └─────────────────────────────┘
  *               └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
  * </pre>
+ * note: 这个表示Task Executor级别的内存描述，指的是单进程级别
  */
 public class TaskExecutorProcessSpec extends CommonProcessMemorySpec<TaskExecutorFlinkMemory> {
 	private static final long serialVersionUID = 1L;

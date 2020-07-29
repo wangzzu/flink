@@ -105,6 +105,7 @@ public final class TaskDeploymentDescriptor implements Serializable {
 
 	/**
 	 * Serialized job information or <tt>null</tt> if offloaded.
+	 * note: 用户上传的jar包是在这里
 	 */
 	private MaybeOffloaded<JobInformation> serializedJobInformation;
 

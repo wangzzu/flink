@@ -291,6 +291,7 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 		this.jobLeaderService = taskExecutorServices.getJobLeaderService();
 		this.unresolvedTaskManagerLocation = taskExecutorServices.getUnresolvedTaskManagerLocation();
 		this.localStateStoresManager = taskExecutorServices.getTaskManagerStateStore();
+		// note: get netty shuffleEnvironment
 		this.shuffleEnvironment = taskExecutorServices.getShuffleEnvironment();
 		this.kvStateService = taskExecutorServices.getKvStateService();
 		this.ioExecutor = taskExecutorServices.getIOExecutor();

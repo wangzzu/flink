@@ -128,7 +128,9 @@ public class PackagedProgram {
 		assert this.jarFile != null || entryPointClassName != null;
 
 		// now that we have an entry point, we can extract the nested jar files (if any)
+		// note: 如果用户指定了jar包，这里的 extractedTempLibraries 会获取jar内lib目录下的所有的jar包路径
 		this.extractedTempLibraries = this.jarFile == null ? Collections.emptyList() : extractContainedLibraries(this.jarFile);
+		// note: user classload
 		this.userCodeClassLoader = ClientUtils.buildUserCodeClassLoader(
 			getJobJarAndDependencies(),
 			classpaths,
@@ -407,13 +409,16 @@ public class PackagedProgram {
 	/**
 	 * Takes all JAR files that are contained in this program's JAR file and extracts them
 	 * to the system's temp directory.
+	 * note: 如果 user jar 是在一个目录中，这里会将其全部加载到指定目录
 	 *
 	 * @return The file names of the extracted temporary files.
 	 * @throws ProgramInvocationException Thrown, if the extraction process failed.
 	 */
 	public static List<File> extractContainedLibraries(URL jarFile) throws ProgramInvocationException {
+		System.out.println(jarFile.toString());
 		try (final JarFile jar = new JarFile(new File(jarFile.toURI()))) {
-
+			System.out.println(jarFile.toURI());
+			// note: 获取jar包内lib目录下jar包列表
 			final List<JarEntry> containedJarFileEntries = getContainedJarEntries(jar);
 			if (containedJarFileEntries.isEmpty()) {
 				return Collections.emptyList();
@@ -476,6 +481,7 @@ public class PackagedProgram {
 		}
 	}
 
+	// note: 抽取jar包中`lib`目录的jar包列表
 	private static List<JarEntry> getContainedJarEntries(JarFile jar) {
 		return jar.stream()
 				.filter(jarEntry -> {

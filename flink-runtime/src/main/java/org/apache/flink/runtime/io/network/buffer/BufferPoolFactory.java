@@ -55,6 +55,7 @@ public interface BufferPoolFactory {
 	 * @param maxBuffersPerChannel
 	 * 		maximum number of buffers to use for each channel
 	 */
+	// note: create BufferPool
 	BufferPool createBufferPool(
 		int numRequiredBuffers,
 		int maxUsedBuffers,

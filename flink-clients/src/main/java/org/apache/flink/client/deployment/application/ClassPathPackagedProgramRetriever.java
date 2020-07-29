@@ -206,6 +206,7 @@ public class ClassPathPackagedProgramRetriever implements PackagedProgramRetriev
 		static final String PATH_SEPARATOR = "path.separator";
 		static final String DEFAULT_PATH_SEPARATOR = ":";
 
+		// note: 获取当前JVM classpath中的jar列表
 		@Override
 		public Iterable<File> get() {
 			String classPath = System.getProperty(JAVA_CLASS_PATH, "");

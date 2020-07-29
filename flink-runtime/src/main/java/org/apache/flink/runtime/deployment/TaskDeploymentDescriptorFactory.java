@@ -56,6 +56,7 @@ import java.util.Optional;
 public class TaskDeploymentDescriptorFactory {
 	private final ExecutionAttemptID executionId;
 	private final int attemptNumber;
+	// note: JobInformation，包含已经存到BlobServer的用户jar包
 	private final MaybeOffloaded<JobInformation> serializedJobInformation;
 	private final MaybeOffloaded<TaskInformation> taskInfo;
 	private final JobID jobID;
@@ -157,6 +158,7 @@ public class TaskDeploymentDescriptorFactory {
 		if (jobInformationOrBlobKey.isLeft()) {
 			return new TaskDeploymentDescriptor.NonOffloaded<>(jobInformationOrBlobKey.left());
 		} else {
+			// note: 这里的jar包实际上是上传到BlobServer了
 			return new TaskDeploymentDescriptor.Offloaded<>(jobInformationOrBlobKey.right());
 		}
 	}

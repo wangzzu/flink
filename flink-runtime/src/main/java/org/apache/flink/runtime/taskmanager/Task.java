@@ -693,6 +693,7 @@ public class Task implements Runnable, TaskSlotPayload, TaskActions, PartitionPr
 			// Make sure the user code classloader is accessible thread-locally.
 			// We are setting the correct context class loader before instantiating the invokable
 			// so that it is available to the invokable during its entire lifetime.
+			// note: 设置classload
 			executingThread.setContextClassLoader(userCodeClassLoader);
 
 			// now load and instantiate the task's invokable code
@@ -926,6 +927,7 @@ public class Task implements Runnable, TaskSlotPayload, TaskActions, PartitionPr
 		long startDownloadTime = System.currentTimeMillis();
 
 		// triggers the download of all missing jar files from the job manager
+		// note: user ClassLoad
 		final ClassLoader userCodeClassLoader = classLoaderHandle.getOrResolveClassLoader(requiredJarFiles, requiredClasspaths);
 
 		LOG.debug("Getting user code class loader for task {} at library cache manager took {} milliseconds",

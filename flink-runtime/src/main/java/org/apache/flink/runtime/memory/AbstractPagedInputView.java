@@ -30,6 +30,7 @@ import java.io.UTFDataFormatException;
  * The base class for all input views that are backed by multiple memory pages. This base class contains all
  * decoding methods to read data from a page and detect page boundary crossing. The concrete sub classes must
  * implement the methods to provide the next memory page once the boundary is crossed.
+ * note: 如果要操作多块MemorySegment就像操作一块大的连续内存一样，Flink会使用逻辑视图（AbstractPagedInputView）来方便操作
  */
 public abstract class AbstractPagedInputView implements DataInputView {
 

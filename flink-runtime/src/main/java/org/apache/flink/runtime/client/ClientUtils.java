@@ -85,6 +85,7 @@ public enum ClientUtils {
 
 	/**
 	 * Uploads the given user jars using the given {@link BlobClient}, and sets the appropriate blobkeys on the given {@link JobGraph}.
+	 * note: 使用BlobClint 上传用户的jar包到BlobServer，并将blobKey设置到JobGraph配置中
 	 *
 	 * @param jobGraph jobgraph requiring user jars
 	 * @param userJars jars to upload

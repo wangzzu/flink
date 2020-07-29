@@ -117,12 +117,15 @@ public final class YarnApplicationClusterEntryPoint extends ApplicationClusterEn
 		return programRetriever.getPackagedProgram();
 	}
 
+	// note: 作业需要的jar都在这里
 	private static PackagedProgramRetriever getPackagedProgramRetriever(
 			final Configuration configuration,
 			final String[] programArguments,
 			@Nullable final String jobClassName) throws IOException {
 
+		// note: user-lib 目录
 		final File userLibDir = YarnEntrypointUtils.getUsrLibDir(configuration).orElse(null);
+		// note: client user jar
 		final File userApplicationJar = getUserApplicationJar(userLibDir, configuration);
 		final ClassPathPackagedProgramRetriever.Builder retrieverBuilder =
 				ClassPathPackagedProgramRetriever

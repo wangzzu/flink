@@ -77,6 +77,7 @@ public enum ResultPartitionType {
 	private final boolean isPipelined;
 
 	/** Does the partition produce back pressure when not consumed? */
+	// note: 这个parition如果没有没有消费，是否要反压
 	private final boolean hasBackPressure;
 
 	/** Does this partition use a limited number of (network) buffers? */

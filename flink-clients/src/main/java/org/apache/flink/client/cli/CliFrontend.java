@@ -222,6 +222,7 @@ public class CliFrontend {
 		final PackagedProgram program =
 				getPackagedProgram(programOptions);
 
+		// note: 相关的jar包（user jar包及jar内lib下的包）
 		final List<URL> jobJars = program.getJobJarAndDependencies();
 		final Configuration effectiveConfiguration = getEffectiveConfiguration(
 				activeCommandLine, commandLine, programOptions, jobJars);
@@ -859,6 +860,7 @@ public class CliFrontend {
 			throw new FlinkException("No cluster id was specified. Please specify a cluster to which you would like to connect.");
 		}
 
+		// note: 提交作业
 		try (final ClusterDescriptor<ClusterID> clusterDescriptor = clusterClientFactory.createClusterDescriptor(executorConfig)) {
 			try (final ClusterClient<ClusterID> clusterClient = clusterDescriptor.retrieve(clusterId).getClusterClient()) {
 				clusterAction.runAction(clusterClient);
@@ -977,6 +979,7 @@ public class CliFrontend {
 		// 2. load the global configuration
 		final Configuration configuration = GlobalConfiguration.loadConfiguration(configurationDirectory);
 
+		// note: configuration 已经添加进去了
 		// 3. load the custom command lines
 		final List<CustomCommandLine> customCommandLines = loadCustomCommandLines(
 			configuration,

@@ -38,6 +38,7 @@ import static org.apache.flink.util.Preconditions.checkArgument;
  *
  * <p>The required fine-grained components are {@link TaskManagerOptions#TASK_HEAP_MEMORY} and
  * {@link TaskManagerOptions#MANAGED_MEMORY_SIZE}.
+ * note: TM 内存配置
  */
 public class TaskExecutorFlinkMemoryUtils implements FlinkMemoryUtils<TaskExecutorFlinkMemory> {
 	private static final Logger LOG = LoggerFactory.getLogger(TaskExecutorFlinkMemoryUtils.class);
@@ -150,6 +151,7 @@ public class TaskExecutorFlinkMemoryUtils implements FlinkMemoryUtils<TaskExecut
 		return flinkInternalMemory;
 	}
 
+	// note: 获取设置的 ManagedMemory 大小，根据 managed.size 或 managed.fraction 计算
 	private static MemorySize deriveManagedMemoryAbsoluteOrWithFraction(final Configuration config, final MemorySize base) {
 		return isManagedMemorySizeExplicitlyConfigured(config) ? getManagedMemorySize(config) :
 			ProcessMemoryUtils.deriveWithFraction("managed memory", base, getManagedMemoryRangeFraction(config));

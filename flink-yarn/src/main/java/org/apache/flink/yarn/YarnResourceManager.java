@@ -650,6 +650,7 @@ public class YarnResourceManager extends ActiveResourceManager<YarnWorkerNode>
 			RM_REQUEST_PRIORITY);
 	}
 
+	// note: 创建yarn task
 	private ContainerLaunchContext createTaskExecutorLaunchContext(
 		String containerId,
 		String host,

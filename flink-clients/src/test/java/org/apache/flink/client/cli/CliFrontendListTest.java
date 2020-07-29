@@ -18,6 +18,8 @@
 
 package org.apache.flink.client.cli;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Options;
 import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.client.cli.util.MockedCliFrontend;
@@ -85,6 +87,16 @@ public class CliFrontendListTest extends CliFrontendTestBase {
 			assertFalse(options.showAll());
 			assertFalse(options.showRunning());
 			assertTrue(options.showScheduled());
+		}
+
+		{
+			String[] parameters = {"-c", "org.apache.flink.examples.java.wordcount.WordCout", "./examples/batch/WordCount.jar",
+			"--input", "file:///home/user/hamlet.txt", "--output", "file:///home/user/wordcount_out"};
+			Options commandOptions = CliFrontendParser.getRunCommandOptions();
+			Options commandLineOptions = CliFrontendParser.mergeOptions(commandOptions, new Options());
+			CommandLine commandLine = CliFrontendParser.parse(commandLineOptions, parameters, true);
+			ProgramOptions programOptions = ProgramOptions.create(commandLine);
+			System.out.println(programOptions.getJarFilePath());
 		}
 	}
 

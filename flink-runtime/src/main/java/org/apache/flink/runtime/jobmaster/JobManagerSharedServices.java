@@ -142,9 +142,9 @@ public class JobManagerSharedServices {
 			new BlobLibraryCacheManager(
 				blobServer,
 				BlobLibraryCacheManager.defaultClassLoaderFactory(
-					FlinkUserCodeClassLoaders.ResolveOrder.fromString(classLoaderResolveOrder),
-					alwaysParentFirstLoaderPatterns,
-					failOnJvmMetaspaceOomError ? fatalErrorHandler : null));
+					FlinkUserCodeClassLoaders.ResolveOrder.fromString(classLoaderResolveOrder), // note: conf中获取
+					alwaysParentFirstLoaderPatterns, // note: conf中获取
+					failOnJvmMetaspaceOomError ? fatalErrorHandler : null)); // note: metaspace空间不足时，是否fail
 
 		final Duration akkaTimeout;
 		try {

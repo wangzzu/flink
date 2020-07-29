@@ -83,6 +83,7 @@ public class ConfigurationParserUtils {
 
 	/**
 	 * Parses the configuration to get the page size and validates the value.
+	 * note: 解析 pageSize 的值，并验证
 	 *
 	 * @param configuration configuration object
 	 * @return size of memory segment

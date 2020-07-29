@@ -510,6 +510,7 @@ public abstract class ClusterEntrypoint implements AutoCloseableAsync, FatalErro
 	// Helper methods
 	// --------------------------------------------------
 
+	// note: 集群启动
 	public static void runClusterEntrypoint(ClusterEntrypoint clusterEntrypoint) {
 
 		final String clusterEntrypointName = clusterEntrypoint.getClass().getSimpleName();

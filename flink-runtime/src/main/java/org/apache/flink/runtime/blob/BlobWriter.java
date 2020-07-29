@@ -102,6 +102,7 @@ public interface BlobWriter {
 			return Either.Left(new SerializedValue<>(value));
 		} else {
 			try {
+				// note: 上传到Blob Server
 				final PermanentBlobKey permanentBlobKey = blobWriter.putPermanent(jobId, serializedValue.getByteArray());
 
 				return Either.Right(permanentBlobKey);

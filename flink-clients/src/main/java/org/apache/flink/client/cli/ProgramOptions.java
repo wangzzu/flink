@@ -76,8 +76,10 @@ public class ProgramOptions extends CommandLineOptions {
 		this.jarFilePath = line.hasOption(JAR_OPTION.getOpt()) ?
 			line.getOptionValue(JAR_OPTION.getOpt()) : null;
 
+		// note: 解析额外的参数
 		this.programArgs = extractProgramArgs(line);
 
+		// note: classpath 放到Flink参数里的时候才有效，一般情况下，都是放在JVM参数里
 		List<URL> classpaths = new ArrayList<URL>();
 		if (line.hasOption(CLASSPATH_OPTION.getOpt())) {
 			for (String path : line.getOptionValues(CLASSPATH_OPTION.getOpt())) {
@@ -113,11 +115,13 @@ public class ProgramOptions extends CommandLineOptions {
 	}
 
 	protected String[] extractProgramArgs(CommandLine line) {
+		// note:
 		String[] args = line.hasOption(ARGS_OPTION.getOpt()) ?
 			line.getOptionValues(ARGS_OPTION.getOpt()) :
 			line.getArgs();
 
 		if (args.length > 0 && !line.hasOption(JAR_OPTION.getOpt())) {
+			// note: 取第一个作为jar包
 			jarFilePath = args[0];
 			args = Arrays.copyOfRange(args, 1, args.length);
 		}
@@ -136,6 +140,7 @@ public class ProgramOptions extends CommandLineOptions {
 		return jarFilePath;
 	}
 
+	// note: -c 参数添加的mainClass and Jar 包
 	public String getEntryPointClassName() {
 		return entryPointClass;
 	}

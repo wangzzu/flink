@@ -64,6 +64,7 @@ public class BashJavaUtils {
 		}
 	}
 
+	// note: TM run的启动命令
 	private static List<String> runCommand(Command command, String[] commandArgs) throws FlinkException {
 		Configuration configuration = FlinkConfigLoader.loadConfiguration(commandArgs);
 		switch (command) {

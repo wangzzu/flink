@@ -165,8 +165,11 @@ SYMLINK_RESOLVED_BIN=`cd "$bin"; pwd -P`
 if [ -z "$_FLINK_HOME_DETERMINED" ]; then
     FLINK_HOME=`dirname "$SYMLINK_RESOLVED_BIN"`
 fi
+#note flink_lib目录
 FLINK_LIB_DIR=$FLINK_HOME/lib
+#note flink plugin目录
 FLINK_PLUGINS_DIR=$FLINK_HOME/plugins
+#note flink opt 目录
 FLINK_OPT_DIR=$FLINK_HOME/opt
 
 

@@ -267,6 +267,7 @@ public class TaskManagerServices {
 		// start the I/O manager, it will create some temp directories.
 		final IOManager ioManager = new IOManagerAsync(taskManagerServicesConfiguration.getTmpDirPaths());
 
+		// note: Netty Shuffle Environment
 		final ShuffleEnvironment<?, ?> shuffleEnvironment = createShuffleEnvironment(
 			taskManagerServicesConfiguration,
 			taskEventDispatcher,
@@ -313,11 +314,12 @@ public class TaskManagerServices {
 
 		final boolean failOnJvmMetaspaceOomError =
 			taskManagerServicesConfiguration.getConfiguration().getBoolean(CoreOptions.FAIL_ON_USER_CLASS_LOADING_METASPACE_OOM);
+		// note: blob library cache manager
 		final LibraryCacheManager libraryCacheManager = new BlobLibraryCacheManager(
 			permanentBlobService,
 			BlobLibraryCacheManager.defaultClassLoaderFactory(
 				taskManagerServicesConfiguration.getClassLoaderResolveOrder(),
-				taskManagerServicesConfiguration.getAlwaysParentFirstLoaderPatterns(),
+				taskManagerServicesConfiguration.getAlwaysParentFirstLoaderPatterns(), // note: classload
 				failOnJvmMetaspaceOomError ? fatalErrorHandler : null));
 
 		return new TaskManagerServices(
@@ -352,6 +354,7 @@ public class TaskManagerServices {
 			timerService);
 	}
 
+	// note: shuffle相关环境的初始化
 	private static ShuffleEnvironment<?, ?> createShuffleEnvironment(
 			TaskManagerServicesConfiguration taskManagerServicesConfiguration,
 			TaskEventDispatcher taskEventDispatcher,
